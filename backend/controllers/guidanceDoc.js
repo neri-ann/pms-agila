@@ -1,57 +1,72 @@
-// backend/controllers/guidanceController.js
+// Procument-Managemant-System\backend\controllers\guidanceDoc.js
 const fs = require('fs');
 const path = require('path');
 const { google } = require('googleapis');
 const Guidance = require("../Models/guidanceDoc");
-const apiKeyConfig = require('../config');
+//const apiKeyConfig = require('../config');
+
 
 // Load Google API credentials
 const SCOPE = ['https://www.googleapis.com/auth/drive.file'];
 
+
 // Authorize Google API
 async function authorize() {
-    const jwtClient = new google.auth.JWT(
-        apiKeyConfig.client_email,
-        null,
-        apiKeyConfig.private_key,
-        SCOPE
+    const oauth2Client = new google.auth.OAuth2(
+        process.env.GOOGLE_CLIENT_ID,
+        process.env.GOOGLE_CLIENT_SECRET,
+        process.env.GOOGLE_REDIRECT_URI
     );
 
-    await jwtClient.authorize();
-    return jwtClient;ju                                            
+
+    // Set the refresh token
+    oauth2Client.setCredentials({
+        refresh_token: process.env.GOOGLE_REFRESH_TOKEN
+    });
+
+
+    return oauth2Client;
 }
+
 
 // Upload file to Google Drive
 async function uploadFileToGoogleDrive(authClient, filePath, fileName) {
     const drive = google.drive({ version: 'v3', auth: authClient });
 
+
     const fileMetaData = {
         name: fileName,
-        parents: ['1-NmJvQp6PHhibDRr0zyi7eY7LBZeoU7D'] // Replace with your folder ID
+        parents: [process.env.GOOGLE_DRIVE_FOLDER_ID] // Fixed: use correct env variable name
     };
+
 
     const media = {
         mimeType: 'application/pdf',
         body: fs.createReadStream(filePath)
     };
 
+
     const response = await drive.files.create({
         resource: fileMetaData,
-        media: media,
+        media,
         fields: 'id'
     });
 
-    return response.data.id; // Return the file ID from Google Drive
+
+    return response.data.id;
 }
+
 
 // Download file from Google Drive
 async function downloadFileFromGoogleDrive(authClient, fileId, res) {
     const drive = google.drive({ version: 'v3', auth: authClient });
 
+
     const response = await drive.files.get(
         { fileId: fileId, alt: 'media' },
         { responseType: 'stream' }
     );
+
 
     response.data
         .on('end', () => console.log('Download completed'))
@@ -59,36 +74,45 @@ async function downloadFileFromGoogleDrive(authClient, fileId, res) {
         .pipe(res);
 }
 
+
 // Delete file from Google Drive
 async function deleteFileFromGoogleDrive(authClient, fileId) {
     const drive = google.drive({ version: 'v3', auth: authClient });
 
+
     await drive.files.delete({ fileId: fileId });
 }
+
 
 // Upload guidance document
 exports.upload = async (req, res) => {
     try {
         const { name } = req.body;
 
+
         // Check if req.file is defined
         if (!req.file) {
             return res.status(400).json({ error: "No file uploaded" });
         }
 
+
         const file = req.file.path;
         const fileNameWithTimestamp = path.basename(file);
         const actualName = name || fileNameWithTimestamp.split('_').slice(1).join('_');
+
 
         // Authorize and upload to Google Drive
         const authClient = await authorize();
         const googleDriveFileId = await uploadFileToGoogleDrive(authClient, file, actualName);
 
+
         // Create a new guidance document with Google Drive file ID
         const newGuidance = new Guidance({ name: actualName, file: googleDriveFileId });
 
+
         // Save the data in the database
         await newGuidance.save();
+
 
         res.json({ guidance: newGuidance, message: "File successfully uploaded to Google Drive" });
     } catch (error) {
@@ -96,6 +120,7 @@ exports.upload = async (req, res) => {
         res.status(500).json({ error: "Internal Server Error" });
     }
 };
+
 
 // View all guidance documents
 exports.viewGuidance = async (req, res) => {
@@ -108,15 +133,18 @@ exports.viewGuidance = async (req, res) => {
     }
 };
 
+
 // Download guidance document
 exports.downloadGuidance = async (req, res) => {
     try {
         const guidanceId = req.params.id;
         const guidance = await Guidance.findById(guidanceId);
 
+
         if (!guidance) {
             return res.status(404).json({ status: "Guidance not found" });
         }
+
 
         const authClient = await authorize();
         await downloadFileFromGoogleDrive(authClient, guidance.file, res);
@@ -126,15 +154,18 @@ exports.downloadGuidance = async (req, res) => {
     }
 };
 
+
 // View PDF guidance document
 exports.viewPdf = async (req, res) => {
     try {
         const guidanceId = req.params.id;
         const guidance = await Guidance.findById(guidanceId);
 
+
         if (!guidance) {
             return res.status(404).json({ status: "Guidance not found" });
         }
+
 
         const authClient = await authorize();
         res.setHeader("Content-Type", "application/pdf");
@@ -145,20 +176,25 @@ exports.viewPdf = async (req, res) => {
     }
 };
 
+
 // Delete guidance document
 exports.deleteGuidance = async (req, res) => {
     try {
         const guidanceId = req.params.id;
         const guidance = await Guidance.findById(guidanceId);
 
+
         if (!guidance) {
             return res.status(404).json({ status: "Guidance not found" });
         }
 
+
         const authClient = await authorize();
         await deleteFileFromGoogleDrive(authClient, guidance.file);
 
+
         await Guidance.findByIdAndDelete(guidanceId);
+
 
         res.status(200).json({ status: "Guidance deleted" });
     } catch (error) {
@@ -166,3 +202,8 @@ exports.deleteGuidance = async (req, res) => {
         res.status(500).json({ status: "Error with delete guidance", error: error.message });
     }
 };
+
+
+
+
+

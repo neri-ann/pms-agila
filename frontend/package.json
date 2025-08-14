@@ -53,6 +53,8 @@
   "scripts": {
     "start": "react-scripts start",
     "build": "react-scripts build",
+    "start:dev": "GENERATE_SOURCEMAP=false react-scripts start",
+    "build:prod": "GENERATE_SOURCEMAP=false react-scripts build",
     "test": "react-scripts test",
     "eject": "react-scripts eject"
   },
@@ -89,3 +91,6 @@
     "@floating-ui/react": "^0.26.16"
   }
 }
+
+
+
