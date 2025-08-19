@@ -158,7 +158,7 @@ const ManageGuidance = () => {
                       </button>
                     </div>
                     <input
-                      className="border-2 border-gray-300 bg-white h-10 px-10 pr-16 rounded-lg text-sm focus:outline-none flex-grow"
+                      className="border-2 bg-white h-10 px-10 pr-16 rounded-lg text-sm focus:outline-none flex-grow"
                       type="search"
                       name="search"
                       placeholder="Search by File Name"
@@ -166,7 +166,7 @@ const ManageGuidance = () => {
                     />
                   </div>
                   <button
-                    className="select-none font-sans font-bold text-center uppercase transition-all disabled:opacity-50 disabled:shadow-none disabled:pointer-events-none text-xs py-3 px-6 rounded-lg bg-brandPrimary from-gray-900 to-gray-800 text-white shadow-md shadow-gray-900/10 hover:shadow-lg hover:shadow-gray-900/20 active:opacity-[0.85] flex items-center gap-3"
+                    className="select-none font-sans font-bold text-center uppercase transition-all disabled:opacity-50 disabled:shadow-none disabled:pointer-events-none text-xs py-3 px-6 rounded-lg bg-[#961C1E] hover:bg-[#761C1D] from-gray-900 to-gray-800 text-white shadow-md shadow-gray-900/10 hover:shadow-lg hover:shadow-gray-900/20 active:opacity-[0.85] flex items-center gap-3"
                     type="button"
                     onClick={handleUploadClick}
                   >
@@ -194,21 +194,21 @@ const ManageGuidance = () => {
 
           <div className="align-middle inline-block min-w-full  overflow-hidden bg-white shadow-dashboard px-8 pt-3 rounded-bl-lg rounded-br-lg">
             <table className="min-w-full">
-              <thead className="text-xs text-white uppercase bg-NeutralBlack   dark:text-gray-400">
+              <thead className="text-xs text-black uppercase bg-[#D8D8D8] dark:text-gray-400">
                 {" "}
                 <tr>
-                  <th className="px-6 py-3 border-b-2 border-gray-300 text-left text-sm leading-4 text-white tracking-wider">
+                  <th className="px-6 py-3 border-y border-[#B3B3B3] text-left text-sm leading-4 text-black tracking-wider">
                     No
                   </th>
                   <th
-                    className="px-6 py-3 border-b-2 border-gray-300 text-left text-sm leading-4 text-white tracking-wider"
+                    className="px-6 py-3 border-y border-[#B3B3B3] text-left text-sm leading-4 text-black tracking-wider"
                     style={{ width: "500px" }}
                   >
                     File Name
                   </th>
 
-                  <th className="px-6 py-3 border-b-2 border-gray-300 text-left text-sm leading-4 text-white-900 tracking-wider">
-                    Operations
+                  <th className="px-6 py-3 border-y border-[#B3B3B3] text-left text-sm leading-4 text-black tracking-wider">
+                    Actions
                   </th>
                 </tr>
               </thead>

@@ -159,7 +159,7 @@ const ManageNotices = () => {
                 />
               </div>
                   <button
-                    class="select-none font-sans font-bold text-center uppercase transition-all disabled:opacity-50 disabled:shadow-none disabled:pointer-events-none text-xs py-3 px-6 rounded-lg bg-brandPrimary text-white shadow-md shadow-gray-900/10 hover:shadow-lg hover:shadow-gray-900/20 active:opacity-[0.85] flex items-center gap-3"
+                    className="select-none font-sans font-bold text-center uppercase transition-all disabled:opacity-50 disabled:shadow-none disabled:pointer-events-none text-xs py-3 px-6 rounded-lg bg-[#961C1E] hover:bg-[#761C1D] from-gray-900 to-gray-800 text-white shadow-md shadow-gray-900/10 hover:shadow-lg hover:shadow-gray-900/20 active:opacity-[0.85] flex items-center gap-3"
                     type="button"
                     onClick={handleUploadClick}
                   >
@@ -189,22 +189,20 @@ const ManageNotices = () => {
 
           <div class="align-middle inline-block min-w-full  overflow-hidden bg-white shadow-dashboard px-8 pt-3 rounded-bl-lg rounded-br-lg">
             <table class="min-w-full">
-              <thead class="text-xs text-white-700 uppercase bg-NeutralBlack  dark:text-gray-400">
+              <thead className="text-xs text-black uppercase bg-[#D8D8D8] dark:text-gray-400">
                 {" "}
                 <tr>
-                  <th class="px-6 py-3 border-b-2 border-gray-300 text-left text-sm leading-4 text-white tracking-wider">
+                  <th className="px-6 py-3 border-y border-[#B3B3B3] text-left text-sm leading-4 text-black tracking-wider">
                     No
                   </th>
                   <th
-                    class="px-6 py-3 border-b-2 border-gray-300 text-left text-sm leading-4 text-white tracking-wider"
+                    className="px-6 py-3 border-y border-[#B3B3B3] text-left text-sm leading-4 text-black tracking-wider"
                     style={{ width: "500px" }} // Adjust the width as needed
                   >
                     File Name
-                  </th>
-
-               
-                  <th class="px-6 py-3 border-b-2 border-gray-300 text-left text-sm leading-4 text-white tracking-wider">
-                    Operations
+                  </th> 
+                  <th className="px-6 py-3 border-y border-[#B3B3B3] text-left text-sm leading-4 text-black tracking-wider">
+                    Actions
                   </th>
                 </tr>
               </thead>

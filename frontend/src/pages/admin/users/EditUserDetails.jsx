@@ -309,14 +309,14 @@ export default function EditUserDetails() {
       <Link to="/userList">
       <button
         type="button"
-        className="rounded-md h-12 w-20 bg-pink-500 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-red-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
+        className="rounded-md h-12 w-24 bg-[#404040] px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-black"
       >
         Cancel
       </button>
       </Link>
         <button
           type="submit"
-          className="rounded-md bg-blue-600 h-12 w-20 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-green-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
+          className="rounded-md bg-[#961C1E] h-12 w-24 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-[#761C1D]"
         >
           Save
         </button>

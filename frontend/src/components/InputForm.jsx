@@ -490,14 +490,14 @@ const FileUploadModal = () => {
           <footer className="flex justify-end px-8 pb-8 pt-4">
             <button
               id="submit"
-              className="rounded-sm px-3 py-1 bg-brandPrimary hover:bg-brandPrimary text-white focus:shadow-outline focus:outline-none"
+              className="rounded-md px-3 py-1 bg-brandPrimary hover:bg-brandPrimary text-white focus:shadow-outline focus:outline-none"
               onClick={handleSubmit}
             >
               Upload now
             </button>
             <button
               id="cancel"
-              className="ml-3 rounded-sm px-3 py-1 hover:bg-gray-300 focus:shadow-outline focus:outline-none"
+              className="ml-3 rounded-md px-3 py-1 hover:bg-gray-300 focus:shadow-outline focus:outline-none"
               onClick={handleCancel}
             >
               Cancel

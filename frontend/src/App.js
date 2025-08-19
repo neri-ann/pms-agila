@@ -62,7 +62,7 @@ import EventPlanner from "./pages/admin/eventPlanner/EventPlanner.jsx";
 import ContextWrapper from "./context/ContextWrapper.js";
 import ViewVendorDetails from "./pages/generalUsers/ViewVenderDetails.jsx";
 import ProjectList from "./pages/PO_BU/ProjectList.jsx";
-import {ViewShoppingPdf} from "./pages/PO_BU/ViewShoppingPdf.jsx"
+import { ViewShoppingPdf } from "./pages/PO_BU/ViewShoppingPdf.jsx"
 import ViewNoticePdf from "./pages/admin/notices/viewNoticePdf.jsx";
 import { ViewDirectPurchasingPdf } from "./pages/PO_BU/ViewDirectPurchasingPdf.jsx";
 import { ViewShippingPdf } from "./pages/PO_BU/ViewBidDocument.jsx";
@@ -81,12 +81,15 @@ import ManageBudget from "./pages/admin/budgetPlaning/ManageBudget.jsx";
 import DeleteBudget from "./pages/admin/budgetPlaning/DeleteBudget.jsx";
 import UpdateBudget from "./pages/admin/budgetPlaning/UpdateBudget.jsx";
 import PreviewVendor from "./pages/PO_BU/PreviewVondor.jsx";
+import UserTypeNavbar from "./components/UserTypeNavbar";
 
 
 const App = () => {
-  const navigate = useNavigate(); // Initialize the useNavigate hook
+  const navigate = useNavigate();
   const location = useLocation();
   const { isAuthenticated, loggedInUser, handleSignOut, handleSignIn } = useAuth();
+
+  const isLoginPage = location.pathname === "/loginpage";
 
 
   const renderNavbar = () => {
@@ -96,9 +99,9 @@ const App = () => {
 
 
     return isAuthenticated ? (
-      <Navbar isAuthenticated={isAuthenticated} handleSignOut={handleSignOut}  userId={loggedInUser?.id}  username={loggedInUser?.username}/>
+      <Navbar isAuthenticated={isAuthenticated} handleSignOut={handleSignOut} userId={loggedInUser?.id} username={loggedInUser?.username} />
     ) : (
-      <Navbar isAuthenticated={isAuthenticated} handleSignIn={handleSignIn}   userId={loggedInUser?.id}  username={loggedInUser?.username} />
+      <Navbar isAuthenticated={isAuthenticated} handleSignIn={handleSignIn} userId={loggedInUser?.id} username={loggedInUser?.username} />
     );
   };
 
@@ -131,183 +134,197 @@ const App = () => {
   //   navigate("/");
   // };
   return (
-    <div>
-      {renderNavbar()}
+    <>
+      {/* Show sidebar only if not on login page */}
+      {!isLoginPage && <UserTypeNavbar userType={loggedInUser?.role} />}
+      <div className={`${!isLoginPage ? "ml-64" : ""} pt-16 min-h-screen bg-gray-50`}>
+        {renderNavbar()}
 
 
-      <Routes>
-        <Route path="/" element={<Home />} />
-        <Route path="/viewVendors" element={<ViewVendorDetails />} />
-        <Route path="/loginpage" element={isAuthenticated ? <Navigate to="/" /> : <LoginPage />} />
+        {/* <Routes>
+          <Route path="/" element={<Home />} />
+          <Route path="/viewVendors" element={<ViewVendorDetails />} />
+          <Route path="/loginpage" element={isAuthenticated ? <Navigate to="/" /> : <LoginPage />} /> */}
+
+        <Routes>
+          <Route
+            path="/"
+            element={
+              isAuthenticated ? <Home /> : <Navigate to="/loginpage" replace />
+            }
+          />
+          <Route path="/viewVendors" element={<ViewVendorDetails />} />
+          <Route path="/loginpage" element={isAuthenticated ? <Navigate to="/" /> : <LoginPage />} />
 
 
-        <Route path="/adminhome/:id" element={<AdminHome />} />
+          <Route path="/adminhome/:id" element={<AdminHome />} />
 
 
-        <Route path="/addUsers" element={<AddUsers />} />
-        <Route path="/editUsers/:id" element={<EditUserDetails />} />
-        <Route path="/userList" element={<UserList />} />
-        <Route path="/deleteUserDetails/:id" element={<DeleteUserDetails />} />
+          <Route path="/addUsers" element={<AddUsers />} />
+          <Route path="/editUsers/:id" element={<EditUserDetails />} />
+          <Route path="/userList" element={<UserList />} />
+          <Route path="/deleteUserDetails/:id" element={<DeleteUserDetails />} />
 
 
-        <Route
-          path="/previewUserDetails/:id"
-          element={<PreviewUserDetails />}
-        />
+          <Route
+            path="/previewUserDetails/:id"
+            element={<PreviewUserDetails />}
+          />
 
 
-        <Route path="/allvendors" element={<VendorDetails />} />
-        <Route
-          path="/previewVendorDetails/:id"
-          element={<PreviewVendorDetails />}
-        />
-        <Route path="/addSupplier" element={<AddSupplier />} />
-        <Route path="/updateSupplier/:id" element={<UpdateSupplier />} />
-        <Route path="/deleteSupplier/:id" element={<DeleteSupplier />} />
+          <Route path="/allvendors" element={<VendorDetails />} />
+          <Route
+            path="/previewVendorDetails/:id"
+            element={<PreviewVendorDetails />}
+          />
+          <Route path="/addSupplier" element={<AddSupplier />} />
+          <Route path="/updateSupplier/:id" element={<UpdateSupplier />} />
+          <Route path="/deleteSupplier/:id" element={<DeleteSupplier />} />
 
 
-        <Route path="/reqform" element={<ReqForm />} />
-        <Route path="/department/:departmentId/:userId" element={<DepartmentHome />} />
-        <Route path="/ProgressTrack" element={<ProgressTracker />} />
-        <Route
-          path="/DeleteItem/:requestId/:itemId"
-          element={<DeleteProcItem />}
-        />
+          <Route path="/reqform" element={<ReqForm />} />
+          <Route path="/department/:departmentId/:userId" element={<DepartmentHome />} />
+          <Route path="/ProgressTrack" element={<ProgressTracker />} />
+          <Route
+            path="/DeleteItem/:requestId/:itemId"
+            element={<DeleteProcItem />}
+          />
 
 
-        <Route path="/ManageGuidance" element={<ManageGuidance />} />
-        <Route path="/UploadGuidance" element={<UploadGuidance />} />
-        <Route path="/DeleteGuidance/:id" element={<DeleteGuidance />} />
-        <Route path="/ViewGuidances" element={<ViewGuidances />} />
-        <Route path="/viewPdf/:guidanceId" element={<ViewPdf />} />
+          <Route path="/ManageGuidance" element={<ManageGuidance />} />
+          <Route path="/UploadGuidance" element={<UploadGuidance />} />
+          <Route path="/DeleteGuidance/:id" element={<DeleteGuidance />} />
+          <Route path="/ViewGuidances" element={<ViewGuidances />} />
+          <Route path="/viewPdf/:guidanceId" element={<ViewPdf />} />
 
 
-        <Route path="/ManageNotice" element={<ManageNotices />} />
-        <Route path="/UploadNotice" element={<UploadNotice />} />
-        <Route path="/DeleteNotice/:id" element={<DeleteNotice />} />
-        <Route path="/ViewNotices" element={<ViewNotice />} />
-        <Route path="/viewNoticePdf/:noticeId" element={<ViewNoticePdf />} />
+          <Route path="/ManageNotice" element={<ManageNotices />} />
+          <Route path="/UploadNotice" element={<UploadNotice />} />
+          <Route path="/DeleteNotice/:id" element={<DeleteNotice />} />
+          <Route path="/ViewNotices" element={<ViewNotice />} />
+          <Route path="/viewNoticePdf/:noticeId" element={<ViewNoticePdf />} />
 
 
-        <Route path="/ManageBudget" element={<ManageBudget />} />
-        <Route path="/DeleteBudget/:id" element={<DeleteBudget />} />
-        <Route path="/UpdateBudget/:id" element={<UpdateBudget />} />
-       
-       
-        <Route path="/AllItem" element={<ItemDetails />} />
-        <Route path="/PreviewItem/:id" element={<PreviewItem />} />
-        <Route path="/DeleteItem/:id" element={<DeleteItem />} />
-        <Route path="/AddItem" element={<AddItem />} />
+          <Route path="/ManageBudget" element={<ManageBudget />} />
+          <Route path="/DeleteBudget/:id" element={<DeleteBudget />} />
+          <Route path="/UpdateBudget/:id" element={<UpdateBudget />} />
 
 
-        <Route path="/reqform" element={<ReqForm />} />
-        <Route path="/additem/:requestId" element={<AddItemCard />} />
+          <Route path="/AllItem" element={<ItemDetails />} />
+          <Route path="/PreviewItem/:id" element={<PreviewItem />} />
+          <Route path="/DeleteItem/:id" element={<DeleteItem />} />
+          <Route path="/AddItem" element={<AddItem />} />
 
 
-        <Route path="/AddItems" element={<AddItems />} />
-        <Route path="/updateItems/:id" element={<UpdateItems />} />
-        <Route path="/formview/:requestId" element={<FormView />} />
-        <Route path="/additem/:requestId" element={<AddItemCard />} />
+          <Route path="/reqform" element={<ReqForm />} />
+          <Route path="/additem/:requestId" element={<AddItemCard />} />
 
 
-        <Route path="/AddItems" element={<AddItems />} />
-        <Route path="/updateItems/:id" element={<UpdateItems />} />
-        <Route path="/DeleteItems/:id" element={<DeleteItems />} />
-        <Route
-          path="/previewItemDetails/:id"
-          element={<PreviewItemDetails />}
-        />
+          <Route path="/AddItems" element={<AddItems />} />
+          <Route path="/updateItems/:id" element={<UpdateItems />} />
+          <Route path="/formview/:requestId" element={<FormView />} />
+          <Route path="/additem/:requestId" element={<AddItemCard />} />
 
 
-        <Route path="/approver/:id" element={<ApproverHome />} />
-        <Route path="/ViewForApproval" element={<ApprovalList />} />
-        <Route path="/DenyApproval/:id" element={<DenyRequest />} />
-        <Route path="/ApprovalForm/:id" element={<EditApproval />} />
-        <Route
-          path="/SubmitApprovalForm/:requestId"
-          element={<SubmitReqForm />}
-        />
-        <Route path="/SendApproval/:requestId" element={<SendApproval />} />
-        <Route path="/ViewForRequest" element={<RequestList />} />
-        <Route
-          path="/DownloadRequest/:requestId"
-          element={<DownloadRequest />}
-        />
-        <Route
-          path="/SendRequest/:requestId/:sendTo"
-          element={<SendRequest />}
-        />
-        <Route path="/ProjectCreationForm/" element={<ProjectCreationForm />} />
-        <Route path="/ReqSelection/:projectId" element={<AddReqCard/>} />
-        <Route path="/ViewShoppingPdf/:projectId" element={<ViewShoppingPdf />} />
-        <Route path="/ViewDirectPurchasingPdf/:projectId" element={<ViewDirectPurchasingPdf />} />
-        <Route path="/ReqSelection/:projectId" element={<AddReqCard />} />
+          <Route path="/AddItems" element={<AddItems />} />
+          <Route path="/updateItems/:id" element={<UpdateItems />} />
+          <Route path="/DeleteItems/:id" element={<DeleteItems />} />
+          <Route
+            path="/previewItemDetails/:id"
+            element={<PreviewItemDetails />}
+          />
 
 
-        <Route
-          path="/PO_BuHome/:id"
-          element={
-            <PO_BuHome
-              isAuthenticated={isAuthenticated}
-              loggedInUser={loggedInUser}
-              handleSignOut={handleSignOut}
-              handleSignIn={handleSignIn}
-            />
-          }
-        />
-        <Route path="/ApprovedRequestList" element={<ApprovedRequestList />} />
-        <Route path="/ViewApprovedForm/:requestId" element={<ViewApprovedForm />} />
-        <Route path="/ViewFormRequest/:requestId" element={<ViewFormRequest />} />
-        <Route path="/ViewForApproval/:requestId" element={<ViewFormApproval />} />
-        <Route path="/projectList" element={<ProjectList/>}/>
- <Route path="/PreviewProjectDetails/:projectId" element={<PreviewProjectDetails/>} />
- <Route path="/deleteProject/:projectId" element={<DeleteProject/>} />
- <Route path="/biddingDocuments" element={<BiddingDocumentsList/>}/>
-  <Route path="/ViewBidDoc/:projectId" element={<ViewShippingPdf />} />
-  <Route path="/DownloadBidDoc/:projectId/:biddingType" element={<DownloadBidDoc />} />
-  <Route path="/InvitesBids" element={<InvitesBids />} />
-  <Route path="/VendorsList" element={<VendorsList />} />
-  <Route path="/PreviewVendor/:id" element={<PreviewVendor />} />
- 
-  <Route path="/PreviewSupplyerDetails/:id" element={<PreviewSupplyerDetails />} />
+          <Route path="/approver/:id" element={<ApproverHome />} />
+          <Route path="/ViewForApproval" element={<ApprovalList />} />
+          <Route path="/DenyApproval/:id" element={<DenyRequest />} />
+          <Route path="/ApprovalForm/:id" element={<EditApproval />} />
+          <Route
+            path="/SubmitApprovalForm/:requestId"
+            element={<SubmitReqForm />}
+          />
+          <Route path="/SendApproval/:requestId" element={<SendApproval />} />
+          <Route path="/ViewForRequest" element={<RequestList />} />
+          <Route
+            path="/DownloadRequest/:requestId"
+            element={<DownloadRequest />}
+          />
+          <Route
+            path="/SendRequest/:requestId/:sendTo"
+            element={<SendRequest />}
+          />
+          <Route path="/ProjectCreationForm/" element={<ProjectCreationForm />} />
+          <Route path="/ReqSelection/:projectId" element={<AddReqCard />} />
+          <Route path="/ViewShoppingPdf/:projectId" element={<ViewShoppingPdf />} />
+          <Route path="/ViewDirectPurchasingPdf/:projectId" element={<ViewDirectPurchasingPdf />} />
+          <Route path="/ReqSelection/:projectId" element={<AddReqCard />} />
 
 
- 
+          <Route
+            path="/PO_BuHome/:id"
+            element={
+              <PO_BuHome
+                isAuthenticated={isAuthenticated}
+                loggedInUser={loggedInUser}
+                handleSignOut={handleSignOut}
+                handleSignIn={handleSignIn}
+              />
+            }
+          />
+          <Route path="/ApprovedRequestList" element={<ApprovedRequestList />} />
+          <Route path="/ViewApprovedForm/:requestId" element={<ViewApprovedForm />} />
+          <Route path="/ViewFormRequest/:requestId" element={<ViewFormRequest />} />
+          <Route path="/ViewForApproval/:requestId" element={<ViewFormApproval />} />
+          <Route path="/projectList" element={<ProjectList />} />
+          <Route path="/PreviewProjectDetails/:projectId" element={<PreviewProjectDetails />} />
+          <Route path="/deleteProject/:projectId" element={<DeleteProject />} />
+          <Route path="/biddingDocuments" element={<BiddingDocumentsList />} />
+          <Route path="/ViewBidDoc/:projectId" element={<ViewShippingPdf />} />
+          <Route path="/DownloadBidDoc/:projectId/:biddingType" element={<DownloadBidDoc />} />
+          <Route path="/InvitesBids" element={<InvitesBids />} />
+          <Route path="/VendorsList" element={<VendorsList />} />
+          <Route path="/PreviewVendor/:id" element={<PreviewVendor />} />
+
+          <Route path="/PreviewSupplyerDetails/:id" element={<PreviewSupplyerDetails />} />
+
+
+
           <Route path="/EventPlanner" element={<ContextWrapper><EventPlanner />  </ContextWrapper>} />
           <Route path="/viewNoticePdf/:noticeId" element={<ViewNoticePdf />} />
-                   
+
           <Route
-              path="/profile/:userId"
-              element={
-                  loggedInUser?.id ? (
-                      <ProfilePage
-                          isAuthenticated={isAuthenticated}
-                          loggedInUser={loggedInUser}
-                          userId={loggedInUser.id}
-                          username={loggedInUser.username}
-                      />
-                  ) : (
-                      <Navigate to="/loginpage" />
-                  )
-              }
-        />
- <Route
-          path="/UserProfile/:userId"
-          element={
-            <UserProfile
-              isAuthenticated={isAuthenticated}
-              loggedInUser={loggedInUser}
-              userId={loggedInUser?.id}
-              username={loggedInUser?.username}
-            />
-          }
-        />
+            path="/profile/:userId"
+            element={
+              loggedInUser?.id ? (
+                <ProfilePage
+                  isAuthenticated={isAuthenticated}
+                  loggedInUser={loggedInUser}
+                  userId={loggedInUser.id}
+                  username={loggedInUser.username}
+                />
+              ) : (
+                <Navigate to="/loginpage" />
+              )
+            }
+          />
+          <Route
+            path="/UserProfile/:userId"
+            element={
+              <UserProfile
+                isAuthenticated={isAuthenticated}
+                loggedInUser={loggedInUser}
+                userId={loggedInUser?.id}
+                username={loggedInUser?.username}
+              />
+            }
+          />
 
 
-      </Routes>
-     
-      {renderCommonFooter()}
-    </div>
+        </Routes>
+
+        {/* {renderCommonFooter()} */}
+      </div>
+    </>
   );
 };
 reportWebVitals();

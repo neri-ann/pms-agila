@@ -40,7 +40,7 @@ const DeleteNotice = () => {
   };
   return (
     <div>
-      <ManageNotices/>
+      <ManageNotices />
       <Transition.Root show={open} as={Fragment}>
         <Dialog
           as="div"
@@ -75,7 +75,7 @@ const DeleteNotice = () => {
                   <div className="bg-white px-4 pb-4 pt-5 sm:p-6 sm:pb-4">
                     <div className="sm:flex sm:items-start">
                       <div className="mt-3 text-center sm:ml-4 sm:mt-0 sm:text-left">
-                        <div className="mx-auto flex h-32 w-32 flex-shrink-0 items-center justify-center rounded-full bg-red-100 sm:mx-0 sm:h-10 sm:w-10">
+                        <div className="mx-auto mb-4 flex h-32 w-32 flex-shrink-0 items-center justify-center rounded-full bg-red-100 sm:mx-0 sm:h-10 sm:w-10">
                           <ExclamationTriangleIcon
                             className="h-24 w-24 text-red-600"
                             aria-hidden="true"
@@ -83,21 +83,20 @@ const DeleteNotice = () => {
                         </div>
                         <Dialog.Title
                           as="h1"
-                          className="text-3xl font-bold leading-6 text-black-500"
+                          className="text-3xl mb-16 font-bold leading-6 text-black-500"
                         >
                           Are you sure?
                         </Dialog.Title>
 
                         <div className="mt-2">
                           <p className="text-xl text-black">
-                          Are you sure want to delete this notice document?                            
-                            <br />
-                            <span className="text-red-500">
-                            
-                              Note : Once you delete this notice document 
+                            Are you sure want to delete this notice document?
+                          </p>
+                          <p className="text-red-500 mt-8 text-medium">
 
-                              it will be permanently deleted from database!!{" "}
-                            </span>
+                            Note : Once you delete this notice document
+
+                            it will be permanently deleted from database!!{" "}
                           </p>
                         </div>
                       </div>
@@ -107,7 +106,7 @@ const DeleteNotice = () => {
                   <div className="bg-gray-50 px-4 py-3 sm:flex sm:flex-row-reverse sm:px-6">
                     <button
                       type="button"
-                      className="mt-3 inline-flex w-full justify-center rounded-md bg-red-600 px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 sm:mt-0 sm:w-auto"
+                      className="rounded-md bg-[#961C1E] h-12 w-24 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-[#761C1D]"
                       onClick={handleDeleteNotice}
                     >
                       Delete

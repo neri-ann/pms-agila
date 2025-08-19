@@ -97,19 +97,14 @@ const LoginPage = () => {
       <div className="flex  flex-1 flex-col justify-center px-6 py-20 lg:px-8 bg-white min-h-screen">
         <div className="sm:mx-auto sm:w-full ">
           <img
-            className="mx-auto h-15 w-20 mt-2"
-            src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQCt-SLcMs8hS4aNdbyYIn9lQNRXX55C2ZsQO0SHz9j-g&s"
-            alt="FoE,UoR-"
+            className="mx-auto h-40 mt-2 mb-15"
+            src="/logo.png"
+            alt="Agila"
           />
-          <h1 className="mt-4 text-center text-4xl font-bold leading-9 tracking-tight text-gray-900">
+          <h1 className="mt-4 text-center text-3xl font-bold leading-9 tracking-tight text-gray-900">
             Procurement Management System
           </h1>
-          <h1 className="mt-2 text-center text-4xl font-bold leading-9 tracking-tight text-gray-900">
-            Faculty of Engineering
-          </h1>
-          <h1 className="mt-1 text-center text-3xl font-bold leading-9 tracking-tight text-gray-900">
-            University of Ruhuna
-          </h1>
+          
           <h2 className="mt-4 text-center text-2xl font-bold leading-9 tracking-tight text-gray-900">
             LOGIN
           </h2>
@@ -120,7 +115,7 @@ const LoginPage = () => {
             <div>
               <label
                 htmlFor="role"
-                className="block text-2xl font-medium leading-6 text-gray-900"
+                className="block text-lg font-medium leading-6 text-gray-900"
               >
                 Role
               </label>
@@ -137,9 +132,9 @@ const LoginPage = () => {
                   <option value="role">Select your role</option>
                   <option value="admin">Admin</option>
                   <option value="procurmentofficer">Procurement Officer</option>
-                  <option value="financeofficers">Finance Officers</option>
+                  {/* <option value="financeofficers">Finance Officers</option>
                   <option value="department">User Department</option>
-                  <option value="approver">Approver</option>
+                  <option value="approver">Approver</option> */}
                 </select>
                 {errors.role && (
                   <p className="text-red-500 text-sm">{errors.role}</p>
@@ -150,7 +145,7 @@ const LoginPage = () => {
             <div>
               <label
                 htmlFor="email"
-                className="block text-2xl font-medium leading-6 text-gray-900"
+                className="block text-lg font-medium leading-6 text-gray-900"
               >
                 Email address
               </label>
@@ -175,7 +170,7 @@ const LoginPage = () => {
               <div className="flex items-center justify-between">
                 <label
                   htmlFor="password"
-                  className="block text-2xl font-medium leading-6 text-gray-900"
+                  className="block text-lg font-medium leading-6 text-gray-900"
                 >
                   Password
                 </label>
@@ -199,20 +194,20 @@ const LoginPage = () => {
               </div>
             </div>
 
-            <div className="text-l">
+            {/* <div className="text-l">
               <a
                 href="#"
                 className="font-semibold text-indigo-600 hover:text-indigo-500"
               >
                 Forgot password?
               </a>
-            </div>
+            </div> */}
 
             <div>
               <button
                 type="button"
                 onClick={handleSignInClick}
-                className="flex w-full justify-center rounded-md bg-blue-600 px-3 py-3 text-sm font-semibold leading-6 text-white shadow-sm hover:bg-black focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-black"
+                className="flex w-full justify-center mt-12 rounded-md bg-[#961C1E] px-3 py-3 text-lg font-semibold leading-6 text-white shadow-sm hover:bg-[#761C1D] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-black"
               >
                 Login
               </button>

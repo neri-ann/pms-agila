@@ -29,15 +29,15 @@ import DefaultPagination from "../../../components/DefaultPagination.js";
 
 const TABLE_HEAD = [
   "No",
-  "SupplierID",
-  "SupplierName",
+  "Supplier ID",
+  "Supplier Name",
   "Address",
-  "ContactOfficer",
-  "FaxNumber",
-  "ContactNumber",
-  "ContactEmail",
-  "TypeofBusiness",
-  "Operations",
+  "Contact Officer",
+  "Fax Number",
+  "Contact Number",
+  "Contact Email",
+  "Type of Business",
+  "Actions",
 ];
 
 const TABLE_ROWS = [
@@ -176,11 +176,11 @@ export default function VendorDetails() {
         ]}
         selected={(crumb) => console.log(`Selected: ${crumb.label}`)}
       />
-      <Card className="h-full w-full  mt-20  flex justify-center items-center">
+      <Card className="h-full w-full mt-10 flex justify-center items-center">
         <CardHeader
           floated={false}
           shadow={false}
-          className="rounded-none w-4/5"
+          className="rounded-none w-full p-10 pt-4"
         >
           <div className="mb-8 flex items-center justify-between gap-8 w-full">
             <div>
@@ -192,15 +192,15 @@ export default function VendorDetails() {
               </Typography>
             </div>
             <div className="flex shrink-0 flex-col gap-2 sm:flex-row">
-              <Button
+              {/* <Button
                 variant="outlined"
                 size="sm"
-                className="text-white bg-brandPrimary  h-10"
+                className="text-white bg-[#FEB71F] h-10"
               >
                 <h6 className="mt-0">view all</h6>
-              </Button>
+              </Button> */}
               <Button
-                className="flex items-center gap-3 h-10 bg-NeutralBlack"
+                className="flex items-center gap-3 h-10 bg-[#961C1E]"
                 size="sm"
               >
                 <UserPlusIcon strokeWidth={2} className="h-5 w-5" />{" "}
@@ -259,21 +259,21 @@ export default function VendorDetails() {
             </div>
           </div>
         </CardHeader>
-        <CardBody className="w-5/5  overflow-scroll px-0 ">
-          <table className="mt-4 w-full  table-auto text-center ">
-            <thead className="bg-NeutralBlack">
+        <CardBody className="w-[95%] overflow-scroll px-0 ">
+          <table className="w-full table-auto text-center ">
+            <thead className="bg-[#D8D8D8]">
               <tr>
                 {TABLE_HEAD.map((head) => (
                   <th
                     key={head}
-                    className="border-y border-blue-gray-100 bg-blue-gray-50/50 p-1"
+                    className="border-y border-[#B3B3B3] flex-row justify-center items-center p-1"
                   >
                     <Typography
                       variant="small"
                       color="blue-gray-900"
                       className="font-normal leading-none "
                     >
-                      <h6 className="font-bold text-white mt-2">{head}</h6>
+                      <h6 className="font-bold text-black mt-2">{head}</h6>
                     </Typography>
                   </th>
                 ))}

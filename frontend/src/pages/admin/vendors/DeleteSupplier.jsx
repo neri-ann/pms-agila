@@ -78,7 +78,7 @@ const DeleteSupplier = () => {
               >
                 <Dialog.Panel className="relative transform overflow-hidden rounded-lg bg-white text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-lg">
                   <DialogHeader className="grid place-items-center">
-                    <Typography variant="h5" color="red" className="text-center">
+                    <Typography variant="h5" color="black">
                       <h4>Delete Supplier Details</h4>
                     </Typography>
                   </DialogHeader>
@@ -86,37 +86,35 @@ const DeleteSupplier = () => {
                     <img
                       src="https://www.bitdefender.com/images/Knowledge%20Base%20SMB/admonitions/important.png"
                       alt=""
-                      className="max-w-24 h-24  md:max-w-md lg:max-w-24 md:h-24 w-24"
+                      className="max-w-24 h-24 md:max-w-md lg:max-w-24 md:h-24 w-24"
                     ></img>
                    
-                    <Typography className="text-center font-normal">
-                      <h3>
-                        Are you sure want to delete this Supplier details?
-                      </h3>
+                    <Typography className="text-center font-normal mt-8">
+                      <h4>Are you sure want to delete this Supplier details?</h4>
                     </Typography>
 
-                    <Typography className="text-center font-normal" color="red">
+                    <Typography className="text-center font-normal text-sm" color="red">
                       <h6>
                         Note : Once you delete this Supplier all details of the
-                        supplier will be removed from the system.
+                        supplier will be removed.
                       </h6>
                     </Typography>
                   </DialogBody>
                   <DialogFooter className="space-x-6">
                     <button
                       type="submit"
-                      className="rounded-md bg-green-500 h-12 w-30 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-green-300 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
+                      className="rounded-md bg-[#961C1E] h-12 w-24 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-[#761C1D]"
                       onClick={handleDeleteVendor}
                     >
-                      <h6 className="mt-2">Yes, Delete it</h6>
+                      <h6 className="mt-2">Yes</h6>
                     </button>
                     <button
                       type="submit"
-                      className="rounded-md bg-red-600 h-12 w-30 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-pink-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
+                      className="rounded-md h-12 w-24 bg-[#404040] px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-black"
                       onClick={() => setOpen(false)}
                       ref={cancelButtonRef}
                     >
-                      No, Cancel
+                      Cancel
                     </button>
                   </DialogFooter>
                 </Dialog.Panel>

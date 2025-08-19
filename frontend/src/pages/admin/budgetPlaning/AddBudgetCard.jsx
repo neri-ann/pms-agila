@@ -83,15 +83,15 @@ const AddBudgetCard = ({ onSave, onCancel }) => {
             className="w-full px-3 py-2 border rounded"
           />
         </div>
-        <div className="flex justify-end">
+        <div className="flex justify-center gap-3">
           <button
-            className="px-4 py-2 bg-gray-300 rounded mr-2"
+            className="rounded-md h-12 w-24 bg-[#404040] px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-black"
             onClick={onCancel}
           >
             Cancel
           </button>
           <button
-            className="px-4 py-2 bg-blue-500 text-white rounded"
+            className="rounded-md bg-[#961C1E] h-12 w-24 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-[#761C1D]"
             onClick={handleSave}
           >
             Save

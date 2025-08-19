@@ -135,17 +135,17 @@ export default function UpdateBudget() {
         </div>
       </div>
 
-      <div className="flex justify-end mt-6">
+      <div className="flex justify-end gap-3 mt-6">
         <button
           type="button"
           onClick={() => navigate("/ManageBudgets")}
-          className="mr-4 bg-gray-300 px-4 py-2 rounded-md"
+          className="rounded-md h-12 w-24 bg-[#404040] px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-black"
         >
           Cancel
         </button>
         <button
           type="submit"
-          className="bg-blue-500 px-4 py-2 text-white rounded-md"
+          className="rounded-md bg-[#961C1E] h-12 w-24 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-[#761C1D]"
         >
           Save
         </button>

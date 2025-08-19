@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { Link as ScrollLink } from "react-scroll";
-import logo from "../assets/unilogo.png";
+// import logo from "../assets/agilalogo.png";
 import axios from "axios";
 import { useSnackbar } from "notistack";
 import { FaXmark, FaBars } from "react-icons/fa6";
@@ -72,13 +72,10 @@ const Navbar = ({
 
   return (
     <header
-      className={`w-full bg-white md:bg-transparent fixed top-0 left-0 right-0 ${
-        isSticky ? "sticky" : ""
-      }`}
-      style={{ zIndex: 2000 }}
+      className="fixed top-0 left-64 w-[calc(100%-16rem)] bg-white shadow-md z-30"
     >
       <nav
-        className={`py-2 lg:px-14 px-4 ${
+        className={`py-[12px] lg:px-14 px-4 ${
           isSticky
             ? "sticky top-0 left-0 right-0 border-b bg-white duration-300 items-center"
             : ""
@@ -86,17 +83,15 @@ const Navbar = ({
         style={{ zIndex: 2000 }}
       >
         <div className="flex justify-between items-center text-base gap-8">
-          <p className="text-2xl font-semibold flex items-center space-x-3">
-            <span className="text-brandPrimary">ENG</span>
+          {/* <p className="text-2xl font-semibold flex items-center">
             <img
               src={logo}
               alt=" "
-              className="w-10 inline-block item-center "
+              className="w-[90px] h-[50px] inline-block item-center "
             />
-            <span className="text-brandPrimary">PMS</span>
-          </p>
+          </p> */}
 
-          <div className="md:flex space-x-12 hidden">
+          <div className="md:flex space-x-12 hidden justify-center w-full">
             {navItems.map(({ link, path }) => (
               <ScrollLink
                 to={path}
@@ -104,7 +99,7 @@ const Navbar = ({
                 smooth={true}
                 offset={-100}
                 key={path}
-                className="text-base text-brandPrimary hover:font-bold cursor-pointer no-underline"
+                className="text-base text-[#961C1E] hover:font-bold cursor-pointer no-underline"
               >
                 {link}
               </ScrollLink>
@@ -124,7 +119,7 @@ const Navbar = ({
                     className="flex items-center gap-2"
                     style={{ textDecoration: "none" }}
                   >
-                    <UserCircleIcon className="h-10 w-10 text-blue-500 hover:bg-blue-500/10 focus:bg-blue-500/10 active:bg-blue-500/10" />
+                    <UserCircleIcon className="h-10 w-10 text-[#961C1E]" />
                     <Typography
                       as="span"
                       variant="small"
@@ -143,12 +138,12 @@ const Navbar = ({
                   style={{ textDecoration: "none" }}
                   title="Sign Out"
                 >
-                  <PowerIcon className="h-6 w-6 text-red-500 hover:bg-red-500/10 focus:bg-red-500/10 active:bg-red-500/10" />
+                  <PowerIcon className="h-6 w-6 text-[#961C1E]" />
                 </button>
               </div>
             ) : (
               <Link
-                className="bg-brandPrimary text-white py-2 px-4 no-underline transition-all duration-300 rounded hover:bg-neutralDGrey items-center mr-4 inline-block"
+                className="bg-[#961C1E] text-white w-32 py-2 px-4 no-underline transition-all duration-300 rounded hover:bg-neutralDGrey items-center mr-4 ml-4 inline-block"
                 to="/loginpage"
               >
                 Sign In
@@ -173,7 +168,7 @@ const Navbar = ({
           <div className="md:hidden">
             <button
               onClick={toggleMenu}
-              className="text-brandPrimary focus:outline-none focus:text-brandPrimary"
+              className="text-[#961C1E] focus:outline-none focus:text-[#961C1E]"
             >
               {isMenuOpen ? (
                 <FaXmark className="h-6 w-6 items-center " />
@@ -185,7 +180,7 @@ const Navbar = ({
         </div>
 
         <div
-          className={`space-y-4 px-4 mt-16 py-7 bg-brandPrimary md:hidden ${
+          className={`space-y-4 px-4 mt-16 py-7 bg-[#961C1E] md:hidden ${
             isMenuOpen ? "block fixed top-6 right-0 left-80" : "hidden"
           }`}
         >

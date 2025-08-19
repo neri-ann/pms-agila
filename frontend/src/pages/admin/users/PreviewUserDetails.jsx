@@ -82,7 +82,7 @@ const PreviewUserDetails = () => {
                     <div class="max-w-4xl  bg-white w-full rounded-lg shadow-xl     mt-11 p-12">
                       <div class="p-2 border-b">
                         <h1 class="text-2xl ">USER DETAILS</h1>
-                        <h3 class="text-xl text-brandPrimary">
+                        <h3 class="text-lg text-[#404040]">
                           Registered User Details.
                         </h3>
                       </div>
@@ -130,7 +130,7 @@ const PreviewUserDetails = () => {
                         <div className="flex gap-2 mt-4 justify-end">
                           <Button
                             variant="outlined"
-                            className="rounded-md bg-red-600 h-12 w-30 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-pink-600 focus-visible:outline "
+                            class="rounded-md bg-[#961C1E] h-12 w-30 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-[#761C1D] focus-visible:outline "
                             onClick={() => setOpen(false)}
                             ref={cancelButtonRef}
                           >

@@ -1,40 +1,11 @@
-import React, { useEffect, useState } from "react";
-import { Link } from "react-router-dom"; // Import Link from React Router
-// import { FaXmark, Fabars } from "react-icons/fa";
-
-import { FaXmark, FaBars } from "react-icons/fa6";
+import React from "react";
+import { Link } from "react-router-dom";
 import "../styles/Navbar.css";
 import "../pages/Home";
+import logo from "../assets/agilalogo2.png";
 
 const UserTypeNavbar = ({ userType }) => {
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [isSticky, setIsSticky] = useState(false);
-
-  // set toggle Menu
-  const toggleMenu = () => {
-    setIsMenuOpen(!isMenuOpen);
-  };
-
-  const closeMenu = () => {
-    setIsMenuOpen(false);
-  };
-
-  useEffect(() => {
-    console.log("UserTypeNavbar received userType:", userType);
-    const handleScroll = () => {
-      if (window.scrollY > 100) {
-        setIsSticky(true);
-      } else {
-        setIsSticky(false);
-      }
-    };
-    window.addEventListener("scroll", handleScroll);
-    return () => {
-      window.removeEventListener("scroll", handleScroll); // Change to removeEventListener
-    };
-  }, []);
-
-  //NAVITEMS ARRAY
+  // NAVITEMS ARRAY
   const AdminOptions = [
     { link: "Manage Users", path: "/userList" },
     { link: "Manage Vendors", path: "/allvendors" },
@@ -85,188 +56,46 @@ const UserTypeNavbar = ({ userType }) => {
     { link: "Pending Approval list", path: "/ViewForApproval" },
   ];
 
+  // Choose options based on userType
+  const options =
+    userType === "admin"
+      ? AdminOptions
+      : userType === "department"
+        ? DepartmentOptions
+        : userType === "TECofficer"
+          ? TECofficerOptions
+          : userType === "procurement Officer"
+            ? procOfficerOptions
+            : userType === "Finance officers"
+              ? FinanceOfficersOptions
+              : userType === "approver"
+                ? ApproverOptions
+                : [];
+
   return (
-    <header className="w-full mt-20 bg-brandPrimary items-center md:bg-brandPrimary fixed top-2 left-0 right-0 ${isSticky ? 'sticky' : ''}">
-      <nav
-        className={`py-2.5 lg:px-14 px-4 ${
-          isSticky
-            ? "sticky top-0 left-0 right-0 border-b bg-brandPrimary duration-300"
-            : ""
-        }`}
-      >
-        <div className="flex justify-between items-center text-m gap-8 text-center">
-          {/* Nav bar items for large devices */}
-          <ul className="md:flex space-x-20 hidden ml-auto mr-auto ">
-            {userType === "admin" &&
-              AdminOptions.map(({ link, path }) => (
-                <Link
-                  to={path}
-                  offset={-100}
-                  key={path}
-                  className="block no-underline text-white hover:font-bold hover:font-medium cursor-pointer"
-                >
-                  {link}
-                </Link>
-              ))}
-            {userType === "department" &&
-              DepartmentOptions.map(({ link, path }) => (
-                <Link
-                  to={path}
-                  offset={-100}
-                  key={path}
-                  className="block no-underline text-white hover:font-bold hover:font-medium cursor-pointer"
-                >
-                  {link}
-                </Link>
-              ))}
-            {userType === "TECofficer" &&
-              TECofficerOptions.map(({ link, path }) => (
-                <Link
-                  to={path}
-                  offset={-100}
-                  key={path}
-                  className="block no-underline text-white hover:font-bold hover:font-medium cursor-pointer"
-                >
-                  {link}
-                </Link>
-              ))}
-            {userType === "procurement Officer" &&
-              procOfficerOptions.map(({ link, path }) => (
-                <Link
-                  to={path}
-                  offset={-100}
-                  key={path}
-                  className="block no-underline text-white hover:font-bold hover:font-medium cursor-pointer"
-                >
-                  {link}
-                </Link>
-              ))}
-            {userType === "Finance officers" &&
-              FinanceOfficersOptions.map(({ link, path }) => (
-                <Link
-                  to={path}
-                  offset={-100}
-                  key={path}
-                  className="block no-underline text-white hover:font-bold hover:font-medium cursor-pointer"
-                >
-                  {link}
-                </Link>
-              ))}
+    <aside className="fixed top-0 left-0 h-screen w-64 bg-[#961C1E] shadow-lg z-40 flex flex-col items-center pt-6">
+      <div className="flex justify-center items-center w-full mb-16">
+        <img
+          src={logo}
+          alt="Logo"
+          className="w-[140px] h-[80px] object-contain"
+        />
+      </div>
 
-            {userType === "approver" &&
-              ApproverOptions.map(({ link, path }) => (
-                <Link
-                  to={path}
-                  offset={-100}
-                  key={path}
-                  className="block no-underline text-white hover:font-bold hover:font-medium cursor-pointer"
-                >
-                  {link}
-                </Link>
-              ))}
-          </ul>
-
-          {/*menu btn for only mobile devices */}
-          <div className="md:hidden">
-            <button
-              onClick={toggleMenu}
-              className=" text-white focus:outline-none focus:text-white "
+      <ul className="flex flex-col space-y-6 px-6 w-full">
+        {options.map(({ link, path }) => (
+          <li key={path}>
+            <Link
+              to={path}
+              className="block no-underline text-white hover:font-bold py-2 px-3 rounded transition-all duration-150"
             >
-              {isMenuOpen ? (
-                <FaXmark className="h-6 w-6 items-center " />
-              ) : (
-                <FaBars className="h-6 w-6 items-center" />
-              )}
-            </button>
-          </div>
-        </div>
+              {link}
+            </Link>
+          </li>
+        ))}
+      </ul>
+    </aside>
 
-        {/*nav items for mobile devices */}
-        <div
-          className={`space-y-4 px-4 mt-24  py-7 bg-brandPrimary md:hidden ${
-            isMenuOpen ? "block fixed top-6 right-0 left-0" : "hidden"
-          }`}
-        >
-          {userType === "admin" &&
-            AdminOptions.map(({ link, path }) => (
-              <Link
-                to={path}
-                offset={-100}
-                key={path}
-                onClick={closeMenu}
-                className="block no-underline cursor-pointer text-base text-white  hover:text-bold  hover:font-medium"
-              >
-                {link}
-              </Link>
-            ))}
-
-          {userType === "department" &&
-            DepartmentOptions.map(({ link, path }) => (
-              <Link
-                to={path}
-                offset={-100}
-                key={path}
-                onClick={closeMenu}
-                className="block no-underline cursor-pointer text-base text-white  hover:text-bold  hover:font-medium"
-              >
-                {link}
-              </Link>
-            ))}
-
-          {userType === "TECofficer" &&
-            TECofficerOptions.map(({ link, path }) => (
-              <Link
-                to={path}
-                offset={-100}
-                key={path}
-                onClick={closeMenu}
-                className="block no-underline cursor-pointer text-base text-white  hover:text-bold  hover:font-medium"
-              >
-                {link}
-              </Link>
-            ))}
-
-          {userType === "procurement Officer" &&
-            procOfficerOptions.map(({ link, path }) => (
-              <Link
-                to={path}
-                offset={-100}
-                key={path}
-                onClick={closeMenu}
-                className="block no-underline cursor-pointer text-base text-white  hover:text-bold  hover:font-mediumm"
-              >
-                {link}
-              </Link>
-            ))}
-
-          {userType === "Finance officers" &&
-            FinanceOfficersOptions.map(({ link, path }) => (
-              <Link
-                to={path}
-                offset={-100}
-                key={path}
-                onClick={closeMenu}
-                className="block no-underline cursor-pointer text-base text-white  hover:text-bold  hover:font-medium"
-              >
-                {link}
-              </Link>
-            ))}
-
-          {userType === "approver" &&
-            ApproverOptions.map(({ link, path }) => (
-              <Link
-                to={path}
-                offset={-100}
-                key={path}
-                onClick={closeMenu}
-                className="block no-underline cursor-pointer text-base text-white  hover:text-bold  hover:font-medium"
-              >
-                {link}
-              </Link>
-            ))}
-        </div>
-      </nav>
-    </header>
   );
 };
 
