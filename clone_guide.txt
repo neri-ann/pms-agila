@@ -1,0 +1,20 @@
+# Cloning
+git clone -b BranchName --single-branch https://github.com/neri-ann/pms-agila.git pms
+
+# Installation
+cd pms/frontend
+npm install
+cd ../backend
+npm install
+
+# Setup
+https://docs.google.com/document/d/1yBh_WScrlAxG_QIewkag8vazmczrf9KbgSBH_iCmz9Y/edit?tab=t.fh8xp52cm5y8
+
+# Run (Use New terminal > Split terminal)
+On terminal one:
+    cd frontend
+    npm start
+
+On terminal two:
+    cd ../backend
+    npm start
