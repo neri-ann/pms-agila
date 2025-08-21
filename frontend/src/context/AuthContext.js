@@ -25,7 +25,7 @@ export const AuthProvider = ({ children }) => {
     setLoggedInUser(null);
     console.log("User authenticated state:", isAuthenticated);
     console.log("Logged-in user:", loggedInUser);
-    navigate("/");
+    navigate("/loginpage");
   };
 
   return (

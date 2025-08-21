@@ -93,16 +93,25 @@ const App = () => {
 
 
   const renderNavbar = () => {
-    if (location.pathname === "/loginpage") {
-      return null;
+    // Comment out or remove this entire function to hide navbar for all users
+    return null;
+    
+    // OR completely remove this section:
+    /*
+    if (!isAuthenticated) {
+      return (
+        <Navbar
+          isAuthenticated={isAuthenticated}
+          handleSignOut={handleSignOut}
+          handleSignIn={handleSignIn}
+          username={loggedInUser?.name}
+          userId={loggedInUser?.id}
+          loggedInUser={loggedInUser}
+        />
+      );
     }
-
-
-    return isAuthenticated ? (
-      <Navbar isAuthenticated={isAuthenticated} handleSignOut={handleSignOut} userId={loggedInUser?.id} username={loggedInUser?.username} />
-    ) : (
-      <Navbar isAuthenticated={isAuthenticated} handleSignIn={handleSignIn} userId={loggedInUser?.id} username={loggedInUser?.username} />
-    );
+    return null;
+    */
   };
 
 
@@ -136,7 +145,7 @@ const App = () => {
   return (
     <>
       {/* Show sidebar only if not on login page */}
-      {!isLoginPage && <UserTypeNavbar userType={loggedInUser?.role} />}
+      {!isLoginPage && <UserTypeNavbar userType={loggedInUser?.role} onLogout={handleSignOut} />}
       <div className={`${!isLoginPage ? "ml-64" : ""} pt-16 min-h-screen bg-gray-50`}>
         {renderNavbar()}
 
@@ -158,6 +167,7 @@ const App = () => {
 
 
           <Route path="/adminhome/:id" element={<AdminHome />} />
+          <Route path="/adminhome" element={<AdminHome />} />
 
 
           <Route path="/addUsers" element={<AddUsers />} />
