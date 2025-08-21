@@ -8,24 +8,12 @@ import { PencilIcon, UserPlusIcon } from "@heroicons/react/24/solid";
 import axios from "axios";
 import { Link } from "react-router-dom";
 import Breadcrumb from "../../../components/Breadcrumb.jsx";
-import {
-  Card,
-  CardHeader,
-  Input,
-  Typography,
-  Button,
-  CardBody,
-  Chip,
-  CardFooter,
-  Tabs,
-  TabsHeader,
-  Tab,
-  IconButton,
-  Tooltip,
-  Breadcrumbs,
-} from "@material-tailwind/react";
 import UserTypeNavbar from "../../../components/UserTypeNavbar.jsx";
 import DefaultPagination from "../../../components/DefaultPagination.js";
+import AddUserModal from "./AddUserModal.jsx";
+import EditUserModal from "./EditUserDetails.jsx";
+import { ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 const TABLE_HEAD = [
   "No",
@@ -39,97 +27,46 @@ const TABLE_HEAD = [
   "Actions",
 ];
 
-const TABLE_ROWS = [
-  {
-    no: "01",
-    role: "admin",
-    email: "admin@gmail.com",
-    firstName: "Vimalasooriya",
-    lastName: "Wasana",
-    department: "Electrical",
-    employeeNo: "ADMIN0005",
-    userName: "Admin",
-  },
-  {
-    no: "02",
-    role: "user",
-    email: "user01@gmail.com",
-    firstName: "Vimalasooriya",
-    lastName: "Wasana",
-    department: "Civil",
-    employeeNo: "USER0001",
-    userName: "user01",
-  },
-  {
-    no: "03",
-    role: "user",
-    email: "user02@gmail.com",
-    firstName: "Vimalasooriya",
-    lastName: "Wasana",
-    department: "Mechanical",
-    employeeNo: "USER0002",
-    userName: "user02",
-  },
-  {
-    no: "03",
-    role: "user",
-    email: "user03@gmail.com",
-    firstName: "Vimalasooriya",
-    lastName: "Wasana",
-    department: "Computer",
-    employeeNo: "USER0003",
-    userName: "user03",
-  },
-  {
-    no: "04",
-    role: "user",
-    email: "user04@gmail.com",
-    firstName: "Vimalasooriya",
-    lastName: "Wasana",
-    department: "MENA",
-    employeeNo: "USER0004",
-    userName: "user04",
-  },
-];
-
 export default function UserList() {
   const [users, setUsers] = useState([]);
-  const [loading, setLoading] = useState(false);
-
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [selectedUserId, setSelectedUserId] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
+  const [currentPage, setCurrentPage] = useState(1); // State to manage current page
+  const itemsPerPage = 5; // Number of items per page
 
   const filteredUsers = users.filter((user) =>
     user.role.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const [searchQuery, setSearchQuery] = useState("");
-  const [searchOption, setSearchOption] = useState("role");
-  const [currentPage, setCurrentPage] = useState(1); // State to manage current page
-  const itemsPerPage = 5; // Number of items per page
-
   // Fetch users data from your API endpoint
   useEffect(() => {
-    setLoading(true);
+    fetchUsers();
+  }, []);
+
+  const fetchUsers = () => {
     axios
       .get("http://localhost:8000/user/view-users") // Update the API endpoint
       .then((response) => {
         setUsers(response.data);
-        setLoading(false);
       })
       .catch((error) => {
         console.error("Error fetching users:", error);
-        setLoading(false);
       });
-  }, []);
-
-  const handleSearchChange = (e) => {
-    setSearchQuery(e.target.value);
-    setCurrentPage(1); // Reset current page when search query changes
   };
 
-  const handleSearchOptionChange = (e) => {
-    setSearchOption(e.target.value);
-    setCurrentPage(1); // Reset current page when search option changes
+  const handleUserAdded = () => {
+    fetchUsers(); // Refresh the user list
+  };
+
+  const handleEditUser = (userId) => {
+    setSelectedUserId(userId);
+    setIsEditModalOpen(true);
+  };
+
+  const handleUserUpdated = () => {
+    fetchUsers(); // Refresh the user list
   };
 
   // Calculate index of the last item to display on the current page
@@ -144,249 +81,181 @@ export default function UserList() {
     setCurrentPage(pageNumber);
   };
   return (
-    <div className="p-4 ">
+    <div className="min-h-screen bg-gray-50 p-6">
       <UserTypeNavbar userType="admin" />
-      <Breadcrumb
-        crumbs={[
-          { label: "Home", link: "/adminhome/:id" },
-          { label: "User Details", link: "/userList" },
-        ]}
-        selected={(crumb) => console.log(`Selected: ${crumb.label}`)}
-      />
-      <Card className="h-full w-full mt-10 flex justify-center items-center">
-        <CardHeader
-          floated={false}
-          shadow={false}
-          className="rounded-none w-full p-10 pt-4"
-        >
-          <div className="mb-8 flex items-center justify-between gap-8 w-full">
-            <div>
-              <Typography variant="h5" color="blue-gray">
-                <h4>USER DETAILS</h4>
-              </Typography>
+      
+      <div className="mb-6">
+        <Breadcrumb
+          crumbs={[
+            { label: "Home", link: "/adminhome/:id" },
+            { label: "User Details", link: "/userList" },
+          ]}
+          selected={(crumb) => console.log(`Selected: ${crumb.label}`)}
+        />
+      </div>
 
-              <Typography color="gray" className="mt-1 font-normal">
-                <h5>See information about all users.</h5>
-              </Typography>
+      <div className="bg-white rounded-lg shadow-sm border border-gray-200">
+        {/* Simple Header */}
+        <div className="border-b border-gray-200 p-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-2xl font-semibold text-gray-900">User Management</h1>
+              <p className="text-gray-600 mt-1">Manage and monitor all system users</p>
             </div>
-            <div className="flex shrink-0 flex-col gap-2 sm:flex-row">
-              {/* <Button
-                variant="outlined"
-                size="sm"
-                className="text-white bg-[#FEB71F] h-10"
+            <div className="flex items-center space-x-3">
+              <span className="text-sm text-gray-500">Total: {users.length} users</span>
+              <button
+                onClick={() => setIsAddModalOpen(true)}
+                className="flex items-center space-x-2 bg-[#961C1E] hover:bg-[#761C1D] text-white px-4 py-2 rounded-md transition-colors duration-200"
               >
-                <h6 className="mt-0">view all</h6>
-              </Button> */}
-              <Button
-                className="flex items-center gap-3 h-10 bg-[#961C1E]"
-                size="sm"
-                onclick="popuphandler(true)"
-              >
-                <UserPlusIcon strokeWidth={2} className="h-5 w-5" />
-                <Link
-                  to={"/addUsers"}
-                  class="text-white"
-                  style={{ textDecoration: "none" }}
-                >
-                  <h6 className="mt-2">Add User</h6>
-                </Link>
-              </Button>
+                <UserPlusIcon className="h-4 w-4" />
+                <span>Add User</span>
+              </button>
             </div>
           </div>
-          <div className="flex flex-col items-center justify-between gap-4 md:flex-row">
-            <div className="w-full md:w-72">
-              <div className="relative flex items-center">
-                <div className="relative">
-                  <button
-                    type="submit"
-                    className="absolute left-0 top-0 flex items-center justify-center h-full px-3"
-                  >
-                    <svg
-                      className="text-gray-600 h-4 w-4 fill-current mr-2"
-                      xmlns="http://www.w3.org/2000/svg"
-                      xmlnsXlink="http://www.w3.org/1999/xlink"
-                      version="1.1"
-                      id="Capa_1"
-                      x="0px"
-                      y="0px"
-                      viewBox="0 0 56.966 56.966"
-                      style={{ enableBackground: "new 0 0 56.966 56.966" }}
-                      xmlSpace="preserve"
-                      width="512px"
-                      height="512px"
-                    >
-                      <path d="M55.146,51.887L41.588,37.786c3.486-4.144,5.396-9.358,5.396-14.786c0-12.682-10.318-23-23-23s-23,10.318-23,23  s10.318,23,23,23c4.761,0,9.298-1.436,13.177-4.162l13.661,14.208c0.571,0.593,1.339,0.92,2.162,0.92  c0.779,0,1.518-0.297,2.079-0.837C56.255,54.982,56.293,53.08,55.146,51.887z M23.984,6c9.374,0,17,7.626,17,17s-7.626,17-17,17  s-17-7.626-17-17S14.61,6,23.984,6z" />
-                    </svg>
-                  </button>
-                </div>
-                <input
-                  className="border-2 border-gray-300 bg-white h-10 px-10 pr-16 rounded-lg text-sm focus:outline-none flex-grow"
-                  type="search"
-                  name="search"
-                  placeholder="Search by Role"
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                />
-              </div>
+        </div>
+
+        {/* Simple Search Section */}
+        <div className="p-6 border-b border-gray-200">
+          <div className="flex items-center space-x-4">
+            <div className="relative flex-1 max-w-md">
+              <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+              <input
+                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                type="search"
+                placeholder="Search users..."
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
             </div>
           </div>
-        </CardHeader>
-        <CardBody className="w-[95%] overflow-scroll px-0 ">
-          <table className="w-full table-auto text-center ">
-            <thead className="bg-[#D8D8D8]">
+        </div>
+        {/* Simple Table */}
+        <div className="overflow-x-auto">
+          <table className="w-full">
+            <thead className="bg-gray-100 border-b border-gray-200">
               <tr>
                 {TABLE_HEAD.map((head) => (
                   <th
                     key={head}
-                    className="border-y border-[#B3B3B3] flex-row justify-center items-center p-1"
+                    className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider"
                   >
-                    <Typography
-                      variant="small"
-                      color="blue-gray-900"
-                      className="font-normal leading-none "
-                    >
-                      <h6 className="font-bold text-black mt-2">{head}</h6>
-                    </Typography>
+                    {head}
                   </th>
                 ))}
               </tr>
             </thead>
-            <tbody>
-              {currentItems.map((user, index) => {
-                const isLast = index === TABLE_ROWS.length - 1;
-                const classes = isLast
-                  ? "p-4"
-                  : "p-4 border-b border-blue-gray-50";
-
-                return (
-                  <tr key={user._id}>
-                    <td className={classes}>
-                      <div className="flex flex-col ">
-                        <Typography
-                          variant="small"
-                          color="blue-gray"
-                          className="font-normal"
-                        >
-                          <h6>{index + 1}</h6>
-                        </Typography>
-                      </div>
-                    </td>
-
-                    <td className={classes}>
-                      <div className="flex flex-col">
-                        <Typography
-                          variant="small"
-                          color="blue-gray"
-                          className="font-normal"
-                        >
-                          <h6>{user.role}</h6>
-                        </Typography>
-                      </div>
-                    </td>
-
-                    <td className={classes}>
-                      <div className="flex flex-col">
-                        <Typography
-                          variant="small"
-                          color="blue-gray"
-                          className="font-normal"
-                        >
-                          <h6>{user.email}</h6>
-                        </Typography>
-                      </div>
-                    </td>
-
-                    <td className={classes}>
-                      <div className="flex flex-col">
-                        <Typography
-                          variant="small"
-                          color="blue-gray"
-                          className="font-normal"
-                        >
-                          <h6>{user.firstname}</h6>
-                        </Typography>
-                      </div>
-                    </td>
-
-                    <td className={classes}>
-                      <div className="flex flex-col">
-                        <Typography
-                          variant="small"
-                          color="blue-gray"
-                          className="font-normal"
-                        >
-                          <h6>{user.lastname}</h6>
-                        </Typography>
-                      </div>
-                    </td>
-
-                    <td className={classes}>
-                      <div className="flex flex-col">
-                        <Typography
-                          variant="small"
-                          color="blue-gray"
-                          className="font-normal"
-                        >
-                          <h6>{user.department}</h6>
-                        </Typography>
-                      </div>
-                    </td>
-
-                    <td className={classes}>
-                      <div className="flex flex-col">
-                        <Typography
-                          variant="small"
-                          color="blue-gray"
-                          className="font-normal"
-                        >
-                          <h6>{user.employeeNumber}</h6>
-                        </Typography>
-                      </div>
-                    </td>
-
-                    <td className={classes}>
-                      <Typography
-                        variant="small"
-                        color="blue-gray"
-                        className="font-normal"
-                      >
-                        <h6>{user.username}</h6>
-                      </Typography>
-                    </td>
-                    <td className={classes}>
+            
+            <tbody className="divide-y divide-gray-200">
+              {currentItems.map((user, index) => (
+                <tr key={user._id} className="hover:bg-gray-50">
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                    {index + 1}
+                  </td>
+                  
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-md ${
+                      user.role === 'admin' ? 'bg-red-100 text-red-800' :
+                      user.role === 'procurement Officer' ? 'bg-blue-100 text-blue-800' :
+                      'bg-green-100 text-green-800'
+                    }`}>
+                      {user.role}
+                    </span>
+                  </td>
+                  
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div className="text-sm text-gray-900">{user.email}</div>
+                  </td>
+                  
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div className="text-sm font-medium text-gray-900">{user.firstname}</div>
+                  </td>
+                  
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div className="text-sm font-medium text-gray-900">{user.lastname}</div>
+                  </td>
+                  
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <span className="inline-flex px-2 py-1 text-xs font-medium bg-gray-100 text-gray-800 rounded-md">
+                      {user.department}
+                    </span>
+                  </td>
+                  
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div className="text-sm font-mono text-gray-700 bg-gray-50 px-2 py-1 rounded">
+                      {user.employeeNumber}
+                    </div>
+                  </td>
+                  
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div className="text-sm font-medium text-gray-900">{user.username}</div>
+                  </td>
+                    
+                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                    <div className="flex items-center space-x-2">
                       <Link to={`/previewUserDetails/${user._id}`}>
-                        <Tooltip content="View User">
-                          <IconButton variant="text">
-                            <EyeIcon className="h-6 w-6 text-blue-500" />
-                          </IconButton>
-                        </Tooltip>
+                        <button className="p-2 text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded-md transition-colors">
+                          <EyeIcon className="h-4 w-4" />
+                        </button>
                       </Link>
-
-                      <Link to={`/editUsers/${user._id}`}>
-                        <Tooltip content="Edit User">
-                          <IconButton variant="text">
-                            <PencilIcon className="h-6 w-6 text-green-500" />
-                          </IconButton>
-                        </Tooltip>
-                      </Link>
-
+                      
+                      <button 
+                        onClick={() => handleEditUser(user._id)}
+                        className="p-2 text-green-600 hover:text-green-800 hover:bg-green-50 rounded-md transition-colors"
+                      >
+                        <PencilIcon className="h-4 w-4" />
+                      </button>
+                      
                       <Link to={`/deleteUserDetails/${user._id}`}>
-                        <Tooltip content="Delete User">
-                          <IconButton variant="text">
-                            <TrashIcon className="h-6 w-6  text-red-500" />
-                          </IconButton>
-                        </Tooltip>
+                        <button className="p-2 text-red-600 hover:text-red-800 hover:bg-red-50 rounded-md transition-colors">
+                          <TrashIcon className="h-4 w-4" />
+                        </button>
                       </Link>
-                    </td>
-                  </tr>
-                );
-              })}
+                    </div>
+                  </td>
+                </tr>
+              ))}
             </tbody>
           </table>
-        </CardBody>
-        <CardFooter className="w-4/5 flex items-center justify-between border-t border-blue-green-50 p-4">
-          <DefaultPagination onPageChange={handlePageChange} />
-        </CardFooter>
-      </Card>
+        </div>
+
+        {/* Simple Footer */}
+        <div className="bg-gray-50 px-6 py-4 border-t border-gray-200">
+          <div className="flex items-center justify-between">
+            <div className="text-sm text-gray-700">
+              Showing {indexOfFirstItem + 1} to {Math.min(indexOfLastItem, filteredUsers.length)} of {filteredUsers.length} users
+            </div>
+            <DefaultPagination onPageChange={handlePageChange} />
+          </div>
+        </div>
+      </div>
+
+      {/* Add User Modal */}
+      <AddUserModal
+        isOpen={isAddModalOpen}
+        onClose={() => setIsAddModalOpen(false)}
+        onUserAdded={handleUserAdded}
+      />
+
+      {/* Edit User Modal */}
+      <EditUserModal
+        isOpen={isEditModalOpen}
+        onClose={() => setIsEditModalOpen(false)}
+        onUserUpdated={handleUserUpdated}
+        userId={selectedUserId}
+      />
+
+      {/* Toast Container */}
+      <ToastContainer 
+        position="top-right"
+        autoClose={3000}
+        hideProgressBar={false}
+        newestOnTop={false}
+        closeOnClick
+        rtl={false}
+        pauseOnFocusLoss
+        draggable
+        pauseOnHover
+      />
     </div>
   );
 }

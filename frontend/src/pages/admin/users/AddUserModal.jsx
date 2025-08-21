@@ -1,141 +1,131 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { XMarkIcon } from "@heroicons/react/24/outline";
 import axios from "axios";
 import { toast } from "react-toastify";
- 
-export default function EditUserModal({ isOpen, onClose, onUserUpdated, userId }) {
 
+export default function AddUserModal({ isOpen, onClose, onUserAdded }) {
+  const [role, setRole] = useState("");
+  const [email, setEmail] = useState("");
+  const [firstname, setFirstName] = useState("");
+  const [lastname, setLastName] = useState("");
+  const [employeeNumber, setEmpNo] = useState("");
+  const [department, setDepartment] = useState("");
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [validationErrors, setValidationErrors] = useState({});
 
-    const [role, setRole] = useState("");
-    const [email, setEmail] = useState("");
-    const [firstname, setFirstName] = useState("");
-    const [lastname, setLastName] = useState("");
-    const [employeeNumber, setEmpNo] = useState("");
-    const [department, setDepartment] = useState("");
-    const [username, setUsername] = useState("");
-    const [password, setPassword] = useState("");
-    const [loading, setLoading] = useState(false);
-    const [validationErrors, setValidationErrors] = useState({});
-    const roles = [
-      "admin",
-      "procurement Officer",
-      "Finance officers",
-      "department",
-      "approver",
-      "TECofficer",
-    ];
-    const departments = ["DCEE", "DEIE", "MENA", "MME", "IS", "NONE"];
+  const roles = [
+    "admin",
+    "procurement Officer",
+    "Finance officers",
+    "department",
+    "approver",
+    "TECofficer",
+  ];
+  const departments = ["DEIE", "DCEE", "DMME", "DCE", "DMNNE", "DIS", "NONE"];
 
-    useEffect(() => {
-        if (isOpen && userId) {
-            fetchUser();
-        }
-    }, [isOpen, userId]);
+  // Reset form when modal opens/closes
+  React.useEffect(() => {
+    if (isOpen) {
+      resetForm();
+    }
+  }, [isOpen]);
 
-    const fetchUser = async () => {
-        setLoading(true);
-        try {
-            const response = await axios.get(`http://localhost:8000/user/preview-user/${userId}`);
-            const userData = response.data;
-            
-            setRole(userData.role);
-            setEmail(userData.email);
-            setFirstName(userData.firstname);
-            setLastName(userData.lastname);
-            setPassword(userData.password);
-            setUsername(userData.username);
-            setDepartment(userData.department);
-            setEmpNo(userData.employeeNumber);
-            setLoading(false);
-        } catch (error) {
-            setLoading(false);
-            toast.error('An error occurred while fetching user data');
-            console.error(error);
-        }
+  const resetForm = () => {
+    setRole("");
+    setEmail("");
+    setFirstName("");
+    setLastName("");
+    setEmpNo("");
+    setDepartment("");
+    setUsername("");
+    setPassword("");
+    setValidationErrors({});
+  };
+
+  // Validate the form fields
+  const validateFields = () => {
+    let errors = {};
+    let isValid = true;
+
+    if (!role) {
+      errors.role = "Role is required";
+      isValid = false;
+    }
+    if (!department) {
+      errors.department = "Department is required";
+      isValid = false;
+    }
+    if (!firstname) {
+      errors.firstname = "First name is required";
+      isValid = false;
+    }
+    if (!lastname) {
+      errors.lastname = "Last name is required";
+      isValid = false;
+    }
+    if (!email) {
+      errors.email = "Email is required";
+      isValid = false;
+    } else if (!/\S+@\S+\.\S+/.test(email)) {
+      errors.email = "Email address is invalid";
+      isValid = false;
+    }
+    if (!employeeNumber) {
+      errors.employeeNumber = "Employee number is required";
+      isValid = false;
+    }
+    if (!username) {
+      errors.username = "Username is required";
+      isValid = false;
+    }
+    if (!password) {
+      errors.password = "Password is required";
+      isValid = false;
+    }
+
+    setValidationErrors(errors);
+    return isValid;
+  };
+
+  function handleSaveCreateUsers(e) {
+    e.preventDefault();
+
+    // Validate fields before saving
+    if (!validateFields()) {
+      return;
+    }
+
+    const newUser = {
+      role,
+      email,
+      firstname,
+      lastname,
+      employeeNumber,
+      department,
+      username,
+      password,
     };
 
-    // Validate the form fields
-    const validateFields = () => {
-        let errors = {};
-        let isValid = true;
+    setLoading(true);
+    axios
+      .post("http://localhost:8000/user/create", newUser)
+      .then(() => {
+        toast.success("User details successfully added!");
+        setLoading(false);
+        resetForm();
+        onUserAdded(); // Callback to refresh user list
+        onClose(); // Close modal
+      })
+      .catch((error) => {
+        console.error("Error:", error);
+        toast.error("Failed to create user. Please try again.");
+        setLoading(false);
+      });
+  }
 
-        if (!role) {
-            errors.role = "Role is required";
-            isValid = false;
-        }
-        if (!department) {
-            errors.department = "Department is required";
-            isValid = false;
-        }
-        if (!firstname) {
-            errors.firstname = "First name is required";
-            isValid = false;
-        }
-        if (!lastname) {
-            errors.lastname = "Last name is required";
-            isValid = false;
-        }
-        if (!email) {
-            errors.email = "Email is required";
-            isValid = false;
-        } else if (!/\S+@\S+\.\S+/.test(email)) {
-            errors.email = "Email address is invalid";
-            isValid = false;
-        }
-        if (!employeeNumber) {
-            errors.employeeNumber = "Employee number is required";
-            isValid = false;
-        }
-        if (!username) {
-            errors.username = "Username is required";
-            isValid = false;
-        }
-        if (!password) {
-            errors.password = "Password is required";
-            isValid = false;
-        }
-
-        setValidationErrors(errors);
-        return isValid;
-    };
-
-    function handleUpdateUsers(e) {
-        e.preventDefault();
-        
-        // Validate fields before updating
-        if (!validateFields()) {
-            return;
-        }
-
-        const newUser = {
-            role,
-            email,
-            firstname,
-            lastname,
-            password,
-            username,
-            department,
-            employeeNumber,
-        };
-
-        setLoading(true);
-        axios
-            .put(`http://localhost:8000/user/update/${userId}`, newUser)
-            .then(() => {
-                toast.success('User account is updated successfully');
-                setLoading(false);
-                onUserUpdated(); // Callback to refresh user list
-                onClose(); // Close modal
-            })
-            .catch((error) => {
-                setLoading(false);
-                toast.error('Error updating user account');
-                console.error(error);
-            });
-    };
-
-    if (!isOpen) return null;
-
+  if (!isOpen) return null;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
@@ -150,7 +140,7 @@ export default function EditUserModal({ isOpen, onClose, onUserUpdated, userId }
         {/* Header */}
         <div className="bg-white px-6 py-4 border-b border-gray-200 flex-shrink-0">
           <div className="flex items-center justify-between">
-            <h3 className="text-lg font-medium text-gray-900">Edit User Details</h3>
+            <h3 className="text-lg font-medium text-gray-900">Add New User</h3>
             <button
               onClick={onClose}
               className="text-gray-400 hover:text-gray-600 transition-colors"
@@ -161,7 +151,7 @@ export default function EditUserModal({ isOpen, onClose, onUserUpdated, userId }
         </div>
 
         {/* Content */}
-        <form onSubmit={handleUpdateUsers} className="flex flex-col flex-1 min-h-0">
+        <form onSubmit={handleSaveCreateUsers} className="flex flex-col flex-1 min-h-0">
           <div className="flex-1 overflow-y-auto px-6 py-6">
             <div className="grid grid-cols-1 gap-x-6 gap-y-6 sm:grid-cols-2">
               {/* Role */}
@@ -174,11 +164,11 @@ export default function EditUserModal({ isOpen, onClose, onUserUpdated, userId }
                   name="role"
                   value={role}
                   onChange={(e) => setRole(e.target.value)}
-                  className={`w-full px-3 py-2.5 border rounded-lg shadow-sm focus:ring-2 focus:ring-[#961C1E] focus:border-[#961C1E] transition-colors ${
+                  className={`w-full px-3 py-2 border rounded-md shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors ${
                     validationErrors.role ? "border-red-500 bg-red-50" : "border-gray-300"
                   }`}
                 >
-                  <option value="">Update your role</option>
+                  <option value="">Select your role</option>
                   {roles.map((type, index) => (
                     <option key={index} value={type}>
                       {type}
@@ -203,11 +193,11 @@ export default function EditUserModal({ isOpen, onClose, onUserUpdated, userId }
                   name="department"
                   value={department}
                   onChange={(e) => setDepartment(e.target.value)}
-                  className={`w-full px-3 py-2.5 border rounded-lg shadow-sm focus:ring-2 focus:ring-[#961C1E] focus:border-[#961C1E] transition-colors ${
+                  className={`w-full px-3 py-2 border rounded-md shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors ${
                     validationErrors.department ? "border-red-500 bg-red-50" : "border-gray-300"
                   }`}
                 >
-                  <option value="">Update your department</option>
+                  <option value="">Select your department</option>
                   {departments.map((type, index) => (
                     <option key={index} value={type}>
                       {type}
@@ -233,7 +223,7 @@ export default function EditUserModal({ isOpen, onClose, onUserUpdated, userId }
                   value={firstname}
                   onChange={(e) => setFirstName(e.target.value)}
                   placeholder="Enter first name"
-                  className={`w-full px-3 py-2.5 border rounded-lg shadow-sm focus:ring-2 focus:ring-[#961C1E] focus:border-[#961C1E] transition-colors ${
+                  className={`w-full px-3 py-2 border rounded-md shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors ${
                     validationErrors.firstname ? "border-red-500 bg-red-50" : "border-gray-300"
                   }`}
                 />
@@ -256,7 +246,7 @@ export default function EditUserModal({ isOpen, onClose, onUserUpdated, userId }
                   value={lastname}
                   onChange={(e) => setLastName(e.target.value)}
                   placeholder="Enter last name"
-                  className={`w-full px-3 py-2.5 border rounded-lg shadow-sm focus:ring-2 focus:ring-[#961C1E] focus:border-[#961C1E] transition-colors ${
+                  className={`w-full px-3 py-2 border rounded-md shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors ${
                     validationErrors.lastname ? "border-red-500 bg-red-50" : "border-gray-300"
                   }`}
                 />
@@ -279,7 +269,7 @@ export default function EditUserModal({ isOpen, onClose, onUserUpdated, userId }
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="Enter email address"
-                  className={`w-full px-3 py-2.5 border rounded-lg shadow-sm focus:ring-2 focus:ring-[#961C1E] focus:border-[#961C1E] transition-colors ${
+                  className={`w-full px-3 py-2 border rounded-md shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors ${
                     validationErrors.email ? "border-red-500 bg-red-50" : "border-gray-300"
                   }`}
                 />
@@ -382,10 +372,10 @@ export default function EditUserModal({ isOpen, onClose, onUserUpdated, userId }
                     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                     <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                   </svg>
-                  Updating...
+                  Creating...
                 </span>
               ) : (
-                "Update User"
+                "Create User"
               )}
             </button>
           </div>

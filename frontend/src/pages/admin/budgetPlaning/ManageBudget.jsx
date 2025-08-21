@@ -9,18 +9,6 @@ import {
 import { PencilIcon, UserPlusIcon } from "@heroicons/react/24/solid";
 import Breadcrumb from "../../../components/Breadcrumb.jsx";
 import AddBudgetCard from "./AddBudgetCard";
-
-import {
-  Card,
-  CardHeader,
-  Input,
-  Typography,
-  Button,
-  CardBody,
-  CardFooter,
-  IconButton,
-  Tooltip,
-} from "@material-tailwind/react";
 import UserTypeNavbar from "../../../components/UserTypeNavbar.jsx";
 import DefaultPagination from "../../../components/DefaultPagination.js";
 
@@ -89,179 +77,133 @@ export default function ManageBudget() {
   };
 
   return (
-    <div className="p-4 ">
+    <div className="min-h-screen bg-gray-50 p-6">
       <UserTypeNavbar userType="admin" />
-      <Breadcrumb
-        crumbs={[
-          { label: "Home", link: "/adminhome/:id" },
-          { label: "Budget Details", link: "/budgetDetails" },
-        ]}
-        selected={(crumb) => console.log(`Selected: ${crumb.label}`)}
-      />
-      <Card className="h-full w-full mt-10 flex justify-center items-center">
-        <CardHeader
-          floated={false}
-          shadow={false}
-          className="rounded-none w-full p-10 pt-4"
-        >
-          <div className="mb-8 flex items-center justify-between gap-8 w-full">
+      
+      <div className="mb-6">
+        <Breadcrumb
+          crumbs={[
+            { label: "Home", link: "/adminhome/:id" },
+            { label: "Budget Details", link: "/budgetDetails" },
+          ]}
+          selected={(crumb) => console.log(`Selected: ${crumb.label}`)}
+        />
+      </div>
+
+      <div className="bg-white rounded-lg shadow-sm border border-gray-200">
+        {/* Simple Header */}
+        <div className="border-b border-gray-200 p-6">
+          <div className="flex items-center justify-between">
             <div>
-              <Typography variant="h5" color="blue-gray">
-                <h4>BUDGET DETAILS</h4>
-              </Typography>
-              <Typography color="gray" className="mt-1 font-normal">
-                <h5>See information about all budgets.</h5>
-              </Typography>
+              <h1 className="text-2xl font-semibold text-gray-900">Budget Management</h1>
+              <p className="text-gray-600 mt-1">Monitor and manage departmental budgets</p>
             </div>
-            <div className="flex shrink-0 flex-col gap-2 sm:flex-row">
-              {/* <Button
-                variant="outlined"
-                size="sm"
-                className="text-white bg-[#FEB71F] h-10"
-              >
-                <h6 className="mt-0">view all</h6>
-              </Button> */}
-              <Button
-                className="flex items-center gap-3 h-10 bg-[#961C1E]"
-                size="sm"
+            <div className="flex items-center space-x-3">
+              <span className="text-sm text-gray-500">Total: {budgets.length} budgets</span>
+              <button
                 onClick={handleAddBudgetClick}
+                className="flex items-center space-x-2 bg-[#961C1E] hover:bg-[#761C1D] text-white px-4 py-2 rounded-md transition-colors duration-200"
               >
-                <UserPlusIcon strokeWidth={2} className="h-5 w-5" />{" "}
-                <h6 className="mt-1 text-white">Add Budget</h6>
-              </Button>
+                <UserPlusIcon className="h-4 w-4" />
+                <span>Add Budget</span>
+              </button>
             </div>
           </div>
-          <div className="flex flex-col items-center justify-between gap-4 md:flex-row">
-            <div className="w-full md:w-72">
-              <div className="relative flex items-center">
-                <div className="relative">
-                  <button
-                    type="submit"
-                    className="absolute left-0 top-0 flex items-center justify-center h-full px-3"
-                  >
-                    <MagnifyingGlassIcon className="h-6 w-6 text-gray-600" />
-                  </button>
-                  <input
-                    className="border-2 border-gray-300 bg-white h-10 px-10 pr-16 rounded-lg text-sm focus:outline-none flex-grow"
-                    type="search"
-                    name="search"
-                    placeholder="Search by Department"
-                    onChange={handleSearchChange}
-                  />
-                </div>
-              </div>
+        </div>
+
+        {/* Simple Search Section */}
+        <div className="p-6 border-b border-gray-200">
+          <div className="flex items-center space-x-4">
+            <div className="relative flex-1 max-w-md">
+              <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+              <input
+                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                type="search"
+                placeholder="Search by department..."
+                value={searchTerm}
+                onChange={handleSearchChange}
+              />
             </div>
           </div>
-        </CardHeader>
-        <CardBody className="w-[95%] overflow-scroll px-0 ">
-          <table className="w-full table-auto text-center ">
-            <thead className="bg-[#D8D8D8]">
+        </div>
+
+        {/* Simple Table */}
+        <div className="overflow-x-auto">
+          <table className="w-full">
+            <thead className="bg-gray-100">
               <tr>
                 {TABLE_HEAD.map((head) => (
                   <th
                     key={head}
-                    className="border-y border-[#B3B3B3] flex-row justify-center items-center p-1"
+                    className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider border-b border-gray-200"
                   >
-                    <Typography
-                      variant="small"
-                      color="blue-gray-900"
-                      className="font-normal leading-none"
-                    >
-                      <h6 className="font-bold text-black mt-2">{head}</h6>
-                    </Typography>
+                    {head}
                   </th>
                 ))}
               </tr>
             </thead>
-            <tbody>
-              {currentItems.map((budget, index) => {
-                const classes = "p-4 border-b border-blue-gray-50";
-                return (
-                  <tr key={budget._id}>
-                    <td className={classes}>
-                      <div className="flex flex-col">
-                        <Typography
-                          variant="small"
-                          color="blue-gray"
-                          className="font-normal"
-                        >
-                          <h6>{index + 1}</h6>
-                        </Typography>
-                      </div>
+            <tbody className="bg-white divide-y divide-gray-200">
+              {loading ? (
+                <tr>
+                  <td colSpan={TABLE_HEAD.length} className="px-6 py-4 text-center text-gray-500">
+                    Loading...
+                  </td>
+                </tr>
+              ) : currentItems.length === 0 ? (
+                <tr>
+                  <td colSpan={TABLE_HEAD.length} className="px-6 py-4 text-center text-gray-500">
+                    No budgets found
+                  </td>
+                </tr>
+              ) : (
+                currentItems.map((budget, index) => (
+                  <tr key={budget._id} className="hover:bg-gray-50">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      {indexOfFirstItem + index + 1}
                     </td>
-                    <td className={classes}>
-                      <div className="flex flex-col">
-                        <Typography
-                          variant="small"
-                          color="blue-gray"
-                          className="font-normal"
-                        >
-                          <h6>{budget.department}</h6>
-                        </Typography>
-                      </div>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      {budget.department}
                     </td>
-                    <td className={classes}>
-                      <div className="flex flex-col">
-                        <Typography
-                          variant="small"
-                          color="blue-gray"
-                          className="font-normal"
-                        >
-                          <h6>{budget.budgetAllocation}</h6>
-                        </Typography>
-                      </div>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      ${budget.budgetAllocation?.toLocaleString() || 'N/A'}
                     </td>
-                    <td className={classes}>
-                      <div className="flex flex-col">
-                        <Typography
-                          variant="small"
-                          color="blue-gray"
-                          className="font-normal"
-                        >
-                          <h6>{budget.availableBalance}</h6>
-                        </Typography>
-                      </div>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      ${budget.availableBalance?.toLocaleString() || 'N/A'}
                     </td>
-                    <td className={classes}>
-                      <div className="flex flex-col">
-                        <Typography
-                          variant="small"
-                          color="blue-gray"
-                          className="font-normal"
-                        >
-                          <h6>{budget.usedAmount}</h6>
-                        </Typography>
-                      </div>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      ${budget.usedAmount?.toLocaleString() || 'N/A'}
                     </td>
-                    <td className={classes}>
-                      <Link to={`/updateBudget/${budget._id}`}>
-                        <Tooltip content="Edit Budget">
-                          <IconButton variant="text">
-                            <PencilIcon className="h-6 w-6 text-green-500" />
-                          </IconButton>
-                        </Tooltip>
-                      </Link>
-                      <Link to={`/DeleteBudget/${budget._id}`}>
-                        <Tooltip content="Delete Budget">
-                          <IconButton variant="text">
-                            <TrashIcon className="h-6 w-6 text-red-500" />
-                          </IconButton>
-                        </Tooltip>
-                      </Link>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                      <div className="flex items-center space-x-2">
+                        <Link to={`/updateBudget/${budget._id}`}>
+                          <button className="text-blue-600 hover:text-blue-900 p-1">
+                            <PencilIcon className="h-4 w-4" />
+                          </button>
+                        </Link>
+                        <Link to={`/DeleteBudget/${budget._id}`}>
+                          <button className="text-red-600 hover:text-red-900 p-1">
+                            <TrashIcon className="h-4 w-4" />
+                          </button>
+                        </Link>
+                      </div>
                     </td>
                   </tr>
-                );
-              })}
+                ))
+              )}
             </tbody>
           </table>
+        </div>
+
+        {/* Simple Pagination */}
+        <div className="px-6 py-4 border-t border-gray-200">
           <DefaultPagination
             totalItems={filteredBudgets.length}
             itemsPerPage={itemsPerPage}
             currentPage={currentPage}
             onPageChange={handlePageChange}
           />
-        </CardBody>
-      </Card>
+        </div>
+      </div>
       {showAddBudgetCard && (
         <AddBudgetCard
           onSave={handleBudgetAdded}

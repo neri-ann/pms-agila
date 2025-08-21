@@ -3,22 +3,6 @@ import axios from "axios";
 import { EyeIcon, MagnifyingGlassIcon, TrashIcon } from "@heroicons/react/24/outline";
 import { PencilIcon, UserPlusIcon } from "@heroicons/react/24/solid";
 import Breadcrumb from "../../../components/Breadcrumb.jsx";
-import {
-  Card,
-  CardHeader,
-  Input,
-  Typography,
-  Button,
-  CardBody,
-  Chip,
-  CardFooter,
-  Tabs,
-  TabsHeader,
-  Tab,
-  IconButton,
-  Tooltip,
-  Breadcrumbs,
-} from "@material-tailwind/react";
 import { Link } from "react-router-dom";
 import UserTypeNavbar from "../../../components/UserTypeNavbar.jsx";
 import DefaultPagination from "../../../components/DefaultPagination.js";
@@ -67,20 +51,17 @@ const TABLE_ROWS = [
   },
 ];
 export default function ItemDetails() {
-
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(false);
-
   const [searchTerm, setSearchTerm] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 5;
 
   const filteredVendors = items.filter((item) =>
-    item.itemName.toLowerCase().includes(searchTerm.toLowerCase())
+    item.itemName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    item.AssetsClass?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    item.AssetsSubClass?.toLowerCase().includes(searchTerm.toLowerCase())
   );
-
-  const [searchQuery, setSearchQuery] = useState("");
-  const [searchOption, setSearchOption] = useState("role");
-  const [currentPage, setCurrentPage] = useState(1); // State to manage current page
-  const itemsPerPage = 5; // Number of items per page
 
   // Fetch users data from your API endpoint
   useEffect(() => {
@@ -97,16 +78,6 @@ export default function ItemDetails() {
       });
   }, []);
 
-  const handleSearchChange = (e) => {
-    setSearchQuery(e.target.value);
-    setCurrentPage(1); // Reset current page when search query changes
-  };
-
-  const handleSearchOptionChange = (e) => {
-    setSearchOption(e.target.value);
-    setCurrentPage(1); // Reset current page when search option changes
-  };
-
   // Calculate index of the last item to display on the current page
   const indexOfLastItem = currentPage * itemsPerPage;
   // Calculate index of the first item to display on the current page
@@ -121,243 +92,154 @@ export default function ItemDetails() {
 
 
   return (
-    <div className="p-4 ">
+    <div className="min-h-screen bg-gray-50 p-6">
       <UserTypeNavbar userType="admin" />
+      
+      <div className="mb-6">
+        <Breadcrumb
+          crumbs={[
+            { label: "Home", link: "/adminhome/:id" },
+            { label: "Item Details", link: "/itemDetails" },
+          ]}
+          selected={(crumb) => console.log(`Selected: ${crumb.label}`)}
+        />
+      </div>
 
-      <Breadcrumb
-        crumbs={[
-          { label: "Home", link: "/adminhome/:id" },
-          { label: "Item Details", link: "/itemDetails" },
-        ]}
-        selected={(crumb) => console.log(`Selected: ${crumb.label}`)} />
-      <Card className="h-full w-full mt-10 flex justify-center items-center">
-        <CardHeader
-          floated={false}
-          shadow={false}
-          className="rounded-none w-full p-10 pt-4"
-        >
-
-          <div className="mb-8 flex items-center justify-between gap-8 w-full">
-
-
+      <div className="bg-white rounded-lg shadow-sm border border-gray-200">
+        {/* Simple Header */}
+        <div className="border-b border-gray-200 p-6">
+          <div className="flex items-center justify-between">
             <div>
-
-              <Typography variant="h5" color="blue-gray">
-
-                <h4>ITEM DETAILS LIST</h4>
-              </Typography>
-
-              <Typography color="gray" className="mt-1 font-normal">
-                <h5>See information about all items.</h5>
-              </Typography>
+              <h1 className="text-2xl font-semibold text-gray-900">Item Management</h1>
+              <p className="text-gray-600 mt-1">Manage inventory items and classifications</p>
             </div>
-            <div className="flex shrink-0 flex-col gap-2 sm:flex-row">
-              {/* <Button
-                variant="outlined"
-                size="sm"
-                className="text-white bg-[#FEB71F] h-10"
+            <div className="flex items-center space-x-3">
+              <span className="text-sm text-gray-500">Total: {items.length} items</span>
+              <Link
+                to="/AddItems"
+                className="flex items-center space-x-2 bg-[#961C1E] hover:bg-[#761C1D] text-white px-4 py-2 rounded-md transition-colors duration-200"
               >
-                <h6 className="mt-0">view all</h6>
-              </Button> */}
-              <Button
-                className="flex items-center gap-3 h-10 bg-[#961C1E]"
-                size="sm"
-                onclick="popuphandler(true)"
-              >
-                <UserPlusIcon strokeWidth={2} className="h-5 w-5" />
-                <Link
-                  to={"/AddItems"}
-                  class="text-white"
-                  style={{ textDecoration: 'none' }}>
-                  <h6 className="mt-2">Add Items</h6>
-                </Link>
-
-              </Button>
+                <UserPlusIcon className="h-4 w-4" />
+                <span>Add Item</span>
+              </Link>
             </div>
           </div>
-          <div className="flex flex-col items-center justify-between gap-4 md:flex-row">
+        </div>
 
-            <div className="w-full md:w-72">
-              <div className="relative flex items-center">
-                <div className="relative">
-                  <button
-                    type="submit"
-                    className="absolute left-0 top-0 flex items-center justify-center h-full px-3"
-                  >
-                    <svg
-                      className="text-gray-600 h-4 w-4 fill-current mr-2"
-                      xmlns="http://www.w3.org/2000/svg"
-                      xmlnsXlink="http://www.w3.org/1999/xlink"
-                      version="1.1"
-                      id="Capa_1"
-                      x="0px"
-                      y="0px"
-                      viewBox="0 0 56.966 56.966"
-                      style={{ enableBackground: "new 0 0 56.966 56.966" }}
-                      xmlSpace="preserve"
-                      width="512px"
-                      height="512px"
-                    >
-                      <path d="M55.146,51.887L41.588,37.786c3.486-4.144,5.396-9.358,5.396-14.786c0-12.682-10.318-23-23-23s-23,10.318-23,23  s10.318,23,23,23c4.761,0,9.298-1.436,13.177-4.162l13.661,14.208c0.571,0.593,1.339,0.92,2.162,0.92  c0.779,0,1.518-0.297,2.079-0.837C56.255,54.982,56.293,53.08,55.146,51.887z M23.984,6c9.374,0,17,7.626,17,17s-7.626,17-17,17  s-17-7.626-17-17S14.61,6,23.984,6z" />
-                    </svg>
-                  </button>
-                </div>
-                <div className="relative flex items-center">
-                  <div className="relative">
-                    <button
-                      type="submit"
-                      className="absolute left-0 top-0 flex items-center justify-center h-full px-3"
-                    >
-                      <svg
-                        className="text-gray-600 h-4 w-4 fill-current mr-2"
-                        xmlns="http://www.w3.org/2000/svg"
-                        xmlnsXlink="http://www.w3.org/1999/xlink"
-                        version="1.1"
-                        id="Capa_1"
-                        x="0px"
-                        y="0px"
-                        viewBox="0 0 56.966 56.966"
-                        style={{ enableBackground: "new 0 0 56.966 56.966" }}
-                        xmlSpace="preserve"
-                        width="512px"
-                        height="512px"
-                      >
-                        <path d="M55.146,51.887L41.588,37.786c3.486-4.144,5.396-9.358,5.396-14.786c0-12.682-10.318-23-23-23s-23,10.318-23,23  s10.318,23,23,23c4.761,0,9.298-1.436,13.177-4.162l13.661,14.208c0.571,0.593,1.339,0.92,2.162,0.92  c0.779,0,1.518-0.297,2.079-0.837C56.255,54.982,56.293,53.08,55.146,51.887z M23.984,6c9.374,0,17,7.626,17,17s-7.626,17-17,17  s-17-7.626-17-17S14.61,6,23.984,6z" />
-                      </svg>
-                    </button>
-                  </div>
-                  <input
-                    className="border-2 border-gray-300 bg-white h-10 px-10 pr-16 rounded-lg text-sm focus:outline-none flex-grow"
-                    type="search"
-                    name="search"
-                    placeholder="Search by Item Name"
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                  />
-                </div>
-              </div>
+        {/* Simple Search Section */}
+        <div className="p-6 border-b border-gray-200">
+          <div className="flex items-center space-x-4">
+            <div className="relative flex-1 max-w-md">
+              <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+              <input
+                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                type="search"
+                placeholder="Search by item name, class, or subclass..."
+                value={searchTerm}
+                onChange={(e) => {
+                  setSearchTerm(e.target.value);
+                  setCurrentPage(1);
+                }}
+              />
             </div>
           </div>
-        </CardHeader>
-        <CardBody className="w-[95%] overflow-scroll px-0 ">
-          <table className="w-full table-auto text-center ">
-            <thead className="bg-[#D8D8D8]">
+        </div>
+        {/* Simple Table */}
+        <div className="overflow-x-auto">
+          <table className="w-full">
+            <thead className="bg-gray-100 border-b border-gray-200">
               <tr>
                 {TABLE_HEAD.map((head) => (
                   <th
                     key={head}
-                    className="border-y border-[#B3B3B3] flex-row justify-center items-center p-1"
+                    className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider"
                   >
-                    <Typography
-                      variant="small"
-                      color="blue-gray-900"
-                      className="font-normal leading-none "
-                    >
-                      <h6 className="font-bold text-black mt-2">{head}</h6>
-                    </Typography>
+                    {head}
                   </th>
                 ))}
               </tr>
             </thead>
-            <tbody>
-              {currentItems.map((items, index) => {
-                const isLast = index === TABLE_ROWS.length - 1;
-                const classes = isLast
-                  ? "p-4"
-                  : "p-4 border-b border-blue-gray-50";
-
-                return (
-                  <tr key={items._id} >
-                    <td className={classes} >
-                      <div className="flex flex-col ">
-                        <Typography
-                          variant="small"
-                          color="blue-gray"
-                          className="font-normal"
-                        >
-                          <h6>{index + 1}</h6>
-                        </Typography>
-
-                      </div>
+            
+            <tbody className="divide-y divide-gray-200">
+              {loading ? (
+                <tr>
+                  <td colSpan={TABLE_HEAD.length} className="px-6 py-4 text-center text-gray-500">
+                    Loading...
+                  </td>
+                </tr>
+              ) : currentItems.length === 0 ? (
+                <tr>
+                  <td colSpan={TABLE_HEAD.length} className="px-6 py-4 text-center text-gray-500">
+                    No items found
+                  </td>
+                </tr>
+              ) : (
+                currentItems.map((item, index) => (
+                  <tr key={item._id} className="hover:bg-gray-50">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      {indexOfFirstItem + index + 1}
                     </td>
-
-                    <td className={classes}>
-                      <div className="flex flex-col">
-                        <Typography
-                          variant="small"
-                          color="blue-gray"
-                          className="font-normal"
-                        >
-                          <h6>{items.AssetsClass}</h6>
-                        </Typography>
-
-                      </div>
+                    
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <span className="inline-flex px-2 py-1 text-xs font-medium bg-blue-100 text-blue-800 rounded-md">
+                        {item.AssetsClass}
+                      </span>
                     </td>
-
-                    <td className={classes}>
-                      <div className="flex flex-col">
-                        <Typography
-                          variant="small"
-                          color="blue-gray"
-                          className="font-normal"
-                        >
-                          <h6>{items.AssetsSubClass}</h6>
-                        </Typography>
-
-                      </div>
+                    
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <span className="inline-flex px-2 py-1 text-xs font-medium bg-green-100 text-green-800 rounded-md">
+                        {item.AssetsSubClass}
+                      </span>
                     </td>
-
-                    <td className={classes}>
-                      <div className="flex flex-col">
-                        <Typography
-                          variant="small"
-                          color="blue-gray"
-                          className="font-normal"
-                        >
-                          <h6>{items.itemName}</h6>
-                        </Typography>
-
-                      </div>
+                    
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="text-sm font-medium text-gray-900">{item.itemName}</div>
+                      <div className="text-xs text-gray-500">ITM-{String(indexOfFirstItem + index + 1).padStart(3, '0')}</div>
                     </td>
-
-
-                    <td className={classes}>
-
-                      <Link to={`/previewItemDetails/${items._id}`}>
-                        <Tooltip content="View Item">
-                          <IconButton variant="text">
-                            <EyeIcon className="h-6 w-6 text-blue-500" />
-                          </IconButton>
-                        </Tooltip>
-                      </Link>
-
-                      <Link to={`/updateItems/${items._id}`}>
-                        <Tooltip content="Edit Item">
-                          <IconButton variant="text">
-                            <PencilIcon className="h-6 w-6 text-green-500" />
-                          </IconButton>
-                        </Tooltip>
-                      </Link>
-                      <Link to={`/deleteItems/${items._id}`}>
-                        <Tooltip content="Delete Item">
-                          <IconButton variant="text">
-                            <TrashIcon className="h-6 w-6  text-red-500" />
-                          </IconButton>
-                        </Tooltip>
-                      </Link>
-
+                    
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                      <div className="flex items-center space-x-2">
+                        <Link to={`/previewItemDetails/${item._id}`}>
+                          <button className="p-2 text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded-md transition-colors">
+                            <EyeIcon className="h-4 w-4" />
+                          </button>
+                        </Link>
+                        
+                        <Link to={`/updateItems/${item._id}`}>
+                          <button className="p-2 text-green-600 hover:text-green-800 hover:bg-green-50 rounded-md transition-colors">
+                            <PencilIcon className="h-4 w-4" />
+                          </button>
+                        </Link>
+                        
+                        <Link to={`/deleteItems/${item._id}`}>
+                          <button className="p-2 text-red-600 hover:text-red-800 hover:bg-red-50 rounded-md transition-colors">
+                            <TrashIcon className="h-4 w-4" />
+                          </button>
+                        </Link>
+                      </div>
                     </td>
                   </tr>
-                );
-              }
+                ))
               )}
             </tbody>
           </table>
-        </CardBody>
-        <CardFooter className="w-4/5 flex items-center justify-between border-t border-blue-green-50 p-4">
-          <DefaultPagination onPageChange={handlePageChange} />
-        </CardFooter>
-      </Card>
+        </div>
 
+        {/* Simple Footer */}
+        <div className="bg-gray-50 px-6 py-4 border-t border-gray-200">
+          <div className="flex items-center justify-between">
+            <div className="text-sm text-gray-700">
+              Showing {indexOfFirstItem + 1} to {Math.min(indexOfLastItem, filteredVendors.length)} of {filteredVendors.length} items
+            </div>
+            <DefaultPagination
+              totalItems={filteredVendors.length}
+              itemsPerPage={itemsPerPage}
+              currentPage={currentPage}
+              onPageChange={handlePageChange}
+            />
+          </div>
+        </div>
+      </div>
     </div>
   )
 }

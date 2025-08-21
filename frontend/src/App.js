@@ -25,7 +25,6 @@ import ViewNotice from "./pages/admin/notices/viewNoticePdf.jsx";
 import ManageNotices from "./pages/admin/notices/ManageNotices.jsx";
 import AddSupplier from "./pages/admin/vendors/AddSupplier.jsx";
 import AddItems from "./pages/admin/items/Additems.jsx";
-import AddUsers from "./pages/admin/users/AddUsers.jsx";
 import UserList from "./pages/admin/users/UserList.jsx";
 import VendorDetails from "./pages/admin/vendors/VendorDetails.jsx";
 import ItemDetails from "./pages/admin/items/ItemDetails.jsx";
@@ -171,7 +170,6 @@ const App = () => {
           <Route path="/procurementhome" element={<PO_BuHome />} />
 
 
-          <Route path="/addUsers" element={<AddUsers />} />
           <Route path="/editUsers/:id" element={<EditUserDetails />} />
           <Route path="/userList" element={<UserList />} />
           <Route path="/deleteUserDetails/:id" element={<DeleteUserDetails />} />

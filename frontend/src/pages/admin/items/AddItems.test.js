@@ -11,7 +11,7 @@ jest.mock('../../../components/Breadcrumb', () => ({
 
 
 
-describe('AddUsers component', () => {
+describe('AddItems component', () => {
   test('renders without crashing', () => {
     render(
       <MemoryRouter>
