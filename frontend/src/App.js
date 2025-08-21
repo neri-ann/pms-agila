@@ -146,7 +146,7 @@ const App = () => {
     <>
       {/* Show sidebar only if not on login page */}
       {!isLoginPage && <UserTypeNavbar userType={loggedInUser?.role} onLogout={handleSignOut} />}
-      <div className={`${!isLoginPage ? "ml-64" : ""} pt-16 min-h-screen bg-gray-50`}>
+      <div className={`${!isLoginPage ? "ml-[21rem]" : ""} pt-16 min-h-screen bg-gray-50`}>
         {renderNavbar()}
 
 

@@ -96,15 +96,23 @@ const UserTypeNavbar = ({ userType, onLogout }) => {
 
   // Handle logout functionality
   const handleLogout = () => {
+    console.log("Logout button clicked");
+    console.log("onLogout function:", onLogout);
+    
     // Call the logout function from parent (App.js)
     if (onLogout) {
+      console.log("Calling onLogout function");
       onLogout();
+    } else {
+      console.log("onLogout function is not available");
     }
-    // Navigation is handled by the AuthContext
+    
+    // Alternative direct navigation if the context doesn't work
+    navigate("/loginpage");
   };
 
   return (
-    <aside className="fixed top-0 left-0 h-screen w-64 bg-[#961C1E] shadow-lg z-40 flex flex-col items-center pt-6">
+    <aside className="fixed top-4 left-4 h-[calc(100vh-2rem)] w-80 bg-[#961C1E] shadow-2xl z-40 flex flex-col items-center pt-6 rounded-2xl">
       <div className="flex justify-center items-center w-full mb-16">
         <img
           src={logo}
