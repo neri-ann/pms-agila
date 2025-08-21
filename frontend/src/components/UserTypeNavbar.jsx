@@ -10,6 +10,11 @@ import {
   FiDollarSign,
   FiCalendar,
   FiLogOut,
+  FiFolderPlus,
+  FiFolder,
+  FiCheckSquare,
+  FiClipboard,
+  FiMail,
 } from "react-icons/fi";
 import "../styles/Navbar.css";
 import "../pages/Home";
@@ -38,15 +43,17 @@ const UserTypeNavbar = ({ userType, onLogout }) => {
   ];
 
   const procOfficerOptions = [
-    { link: "Created Projects", path: "/projectList" },
-    { link: "Create New Project", path: "/ProjectCreationForm" },
+    { link: "Dashboard", path: "/procurementhome", icon: FiHome },
+    { link: "Created Projects", path: "/projectList", icon: FiFolder },
+    { link: "Create New Project", path: "/ProjectCreationForm", icon: FiFolderPlus },
     {
       link: "Approved Purchase Requisition List ",
       path: "/ApprovedRequestList",
+      icon: FiCheckSquare,
     },
-    { link: "Bidding Documents", path: "/biddingDocuments" },
-    { link: "Vendors List", path: "/VendorsList" },
-    { link: "Invites Bids", path: "/InvitesBids" },
+    { link: "Bidding Documents", path: "/biddingDocuments", icon: FiFileText },
+    { link: "Vendors List", path: "/VendorsList", icon: FiUsers },
+    { link: "Invites Bids", path: "/InvitesBids", icon: FiMail },
   ];
 
   const TECofficerOptions = [

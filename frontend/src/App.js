@@ -168,6 +168,7 @@ const App = () => {
 
           <Route path="/adminhome/:id" element={<AdminHome />} />
           <Route path="/adminhome" element={<AdminHome />} />
+          <Route path="/procurementhome" element={<PO_BuHome />} />
 
 
           <Route path="/addUsers" element={<AddUsers />} />
