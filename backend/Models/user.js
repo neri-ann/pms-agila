@@ -7,6 +7,7 @@ const userSchema = new Schema({
   username: {  // Add a unique username field
     type: String,
     unique: true, // Ensure uniqueness
+    index: true
 
   },
   firstname:{
@@ -19,6 +20,8 @@ const userSchema = new Schema({
   },
   email: {
     type: String,
+    unique: true, // Ensure uniqueness
+    index: true
 
   }, 
   password:{
@@ -27,16 +30,19 @@ const userSchema = new Schema({
   }, 
  employeeNumber:{
     type: String,
+    index: true
 
   }, 
   department:{
     type: String,
-    enum: ['DEIE', 'DCEE','DMME ','DCE','DMNNE','DIS', 'NONE']
+    enum: ['DEIE', 'DCEE','DMME ','DCE','DMNNE','DIS', 'NONE'],
+    index: true
   }, 
   role:{
     type: String,
     default: 'admin',
-    enum: ['admin', 'department','procurement Officer','TECofficer','approver','Finance officers']
+    enum: ['admin', 'department','procurement Officer','TECofficer','approver','Finance officers'],
+    index: true
   }
 });
 

@@ -6,6 +6,7 @@ const PdfDetailsSchema = new Schema(
     filename: {
       type: String,
       required: true,
+      index: true,
       unique: true // Ensure uniqueness of filenames
     },
     pdfData: {

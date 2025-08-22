@@ -111,8 +111,7 @@ export default function AddSupplier() {
     setLoading(true);
 
     axios
-      .post("http://localhost:8000/supplyer/create", newSupplyer)
-
+      .post("http://localhost:8000/supplyer/create", newSupplyer, { withCredentials: true })
       .then(() => {
         // Show success toast notification
         toast.success("Supplier details successfully added!");

@@ -10,11 +10,13 @@ const guidancedocSchema = new Schema({
   // },
   name:{
     type: String,
+    index: true
     // required: [true,"please provide a name"]
   }, 
   file: {
     type: String,
-    required: [true,"please provide a file"]
+    required: [true,"please provide a file"],
+    index: true
   }
   
 });

@@ -42,12 +42,14 @@ passport.use(new LocalStrategy({
 
 // Serialize user into session
 passport.serializeUser((user, done) => {
+  console.log('Serializing user:', user.id);
   done(null, user.id);
 });
 
 
 // Deserialize user from session
 passport.deserializeUser(async (id, done) => {
+  console.log('Deserializing user:', id);
     try {
         // Add validation for id
         if (!id || id === 'undefined') {
@@ -63,13 +65,19 @@ passport.deserializeUser(async (id, done) => {
 
 
 exports.isAuthenticated = (req, res, next) => {
+    console.log('Session:', req.session);
+    console.log('User:', req.user);
     if (req.isAuthenticated()) {
         return next();
     }
     res.status(401).json({ error: 'Unauthorized' });
 };
 
-
-
-
-
+exports.authorizeRoles = (...roles) => {
+  return (req, res, next) => {
+    if (!roles.includes(req.user.role)) {
+      return res.status(403).json({ message: "Access denied" });
+    }
+    next();
+  };
+};

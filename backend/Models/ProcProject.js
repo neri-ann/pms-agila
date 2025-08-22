@@ -8,10 +8,10 @@ const procProjectSchema = new Schema({
   },
 
     procurementRequests: [{
-      requestId: String,
-      faculty: { type: String },
-      department: { type: String },
-      date: { type: Date },
+      requestId: {type: String, index: true},
+      faculty: { type: String, index: true },
+      department: { type: String, index: true },
+      date: { type: Date, index: true },
       contactPerson: { type: String },
       contactNo: { type: Number },
       budgetAllocation: { type: Number },
@@ -20,16 +20,20 @@ const procProjectSchema = new Schema({
       status: {
         type: String,
         enum: ["Pending", "Approved", "Rejected","Bid Opening","Invite Bids","TEC Evaluation"],
-        default: "Pending",},
+        default: "Pending",
+        index: true
+      },
       purpose: {
         type: String,
         default: "normal",
         enum: ["", "normal", "Fast Track", "Urgent", "Normal"],
+        index: true
       },
       sendTo: {
         type: String,
         default: "dean",
         enum: ["", "dean", "registrar", "viceChancellor"],
+        index: true
       },
       items: [], // Array of items within ProcurementRequest schema
       files: [],
@@ -37,13 +41,15 @@ const procProjectSchema = new Schema({
 
   projectTitle: {
     type: String,
+    index: true
   },
   biddingType: {
     type: String,
     default: "Direct Purchasing",
     enum: ["", "Direct Purchasing", "Shopping Method", "National Competitive Method (NCB)", "International Competitive Bidding (ICB)"],
+    index: true
   },
-  closingDate: { type: Date },
+  closingDate: { type: Date, index: true },
   closingTime: { type: Date },
   appointTEC: [{ type: String }], // Array of appointTEC values
   appointBOCommite: [{ type: String }], // Array of appointBOCommite values

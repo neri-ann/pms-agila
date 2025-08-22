@@ -30,13 +30,13 @@ const fileSchema = new Schema({
   });
 const procRequestSchema = new Schema({
   requestId: {
-    type: String,
-    
+    type: String,    
     unique: true,
+    index: true
   },
-  faculty: {type: String,},
-  department: {type: String,},
-  date:{type: Date,},
+  faculty: {type: String, index: true},
+  department: {type: String, index: true},
+  date:{type: Date, index: true},
   contactPerson: {type: String,},
   contactNo: {type: Number,},
    budgetAllocation: {type: Number,},
@@ -45,18 +45,21 @@ const procRequestSchema = new Schema({
   purpose:{
     type: String,
     default: 'normal',
-    enum: [ '','normal', 'Fast Track','Urgent','Normal']
+    enum: [ '','normal', 'Fast Track','Urgent','Normal'],
+    index: true
   },
   sendTo:{
     type: String,
     default: 'dean',
-    enum: ['','dean', 'registrar','viceChancellor']
+    enum: ['','dean', 'registrar','viceChancellor'],
+    index: true
   },
   
   status: {
     type: String,
     enum: ["Pending", "Approved", "Rejected"],
     default: "Pending",
+    index: true
   },
  
   items: [itemSchema],  // Array of items within ProcurementRequest schema

@@ -1,14 +1,14 @@
-const router = require('express').Router();
-const { create,updateSupplyer, viewSupplyers,deleterSupplyer, previewSupplyer } = require('../controllers/supplyer');
+const express = require('express');
+const router = express.Router();
+const supplyerController = require('../controllers/supplyer');
+const { isAuthenticated, authorizeRoles } = require('../middlewares/auth');
 
+// Allow both admin and procurement Officer to create, update, delete
+router.post('/create', isAuthenticated, authorizeRoles('admin', 'procurement Officer'), supplyerController.createSupplyer);
+router.put('/update/:id', isAuthenticated, authorizeRoles('admin', 'procurement Officer'), supplyerController.updateSupplyer);
+router.delete('/delete/:id', isAuthenticated, authorizeRoles('admin', 'procurement Officer'), supplyerController.deleteSupplyer);
 
-// Add user create route
-router.post("/create", create, (req, res) => {
-    console.log("Received a request to create a supplyer:", req.body);
-    create(req, res);
-  });
-  router.get('/view-supplyers', viewSupplyers);
-  router.get("/preview-supplyer/:id",   previewSupplyer)
-  router.put("/update/:id", updateSupplyer);
-  router.delete("/delete/:id", deleterSupplyer);
-  module.exports = router;
+// Viewing can remain as is
+router.get('/view', isAuthenticated, supplyerController.viewSupplyers);
+
+module.exports = router;

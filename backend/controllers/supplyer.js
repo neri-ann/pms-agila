@@ -2,12 +2,10 @@
 const supplyer = require('../Models/supplyer');
 const Supplyer = require('../Models/supplyer');
 
-
-
-
 // request from the frontend
-exports.create = async (req,res) =>{
+exports.createSupplyer = async (req,res) =>{
     const {username,supplierId,supplierName,email, address,contactOfficer,contactNumber,faxNumber1,faxNumber2,typeofBusiness,classOfAssets} = req.body;
+
 // response will send to frontend
 const newSupplyer= new Supplyer({username,supplierId,supplierName,email, address,contactOfficer,contactNumber,faxNumber1,faxNumber2,typeofBusiness,classOfAssets})
 //save the data in the database
@@ -87,7 +85,7 @@ exports.updateSupplyer = async (req,res)=>{
 
 
 //delete user
-exports.deleterSupplyer = async (req,res)=>{
+exports.deleteSupplyer = async (req,res)=>{
     let supplyerId = req.params.id;
     try {
         // Use await here to wait for the deletion to complete

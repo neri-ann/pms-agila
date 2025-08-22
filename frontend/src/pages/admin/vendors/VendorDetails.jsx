@@ -10,6 +10,7 @@ import { PencilIcon, UserPlusIcon } from "@heroicons/react/24/solid";
 import Breadcrumb from "../../../components/Breadcrumb.jsx";
 import UserTypeNavbar from "../../../components/UserTypeNavbar.jsx";
 import DefaultPagination from "../../../components/DefaultPagination.js";
+import { useAuth } from "../../../context/AuthContext"; // <-- Use the hook
 
 const TABLE_HEAD = [
   "No",
@@ -24,100 +25,29 @@ const TABLE_HEAD = [
   "Actions",
 ];
 
-const TABLE_ROWS = [
-  {
-    no: "01",
-    supplierId: "SUPPLIER001",
-    supplierName: "suplier01@gmail.com",
-    street: "TempleRoad",
-    city: "Colombo",
-    province: "Western",
-    faxNo: "+0094672367",
-    contactNo1: "07548234823",
-    contactNo2: "07826727676",
-    contactEmail1: "sup01@gmail.com",
-    contactEmail2: "supp02@gmail.com",
-    typeofBusiness: "Electrical",
-  },
-  {
-    no: "02",
-    supplierId: "SUPPLIER002",
-    supplierName: "suplier02@gmail.com",
-    street: "TempleRoad",
-    city: "Colombo",
-    province: "Western",
-    faxNo: "+0094672367",
-    contactNo1: "07548234823",
-    contactNo2: "07826727676",
-    contactEmail1: "sup01@gmail.com",
-    contactEmail2: "supp02@gmail.com",
-    typeofBusiness: "Electrical",
-  },
-  {
-    no: "03",
-    supplierId: "SUPPLIER003",
-    supplierName: "suplier03@gmail.com",
-    street: "TempleRoad",
-    city: "Colombo",
-    province: "Western",
-    faxNo: "+0094672367",
-    contactNo1: "07548234823",
-    contactNo2: "07826727676",
-    contactEmail1: "sup01@gmail.com",
-    contactEmail2: "supp02@gmail.com",
-    typeofBusiness: "Electrical",
-  },
-  {
-    no: "04",
-    supplierId: "SUPPLIER004",
-    supplierName: "suplier04@gmail.com",
-    street: "TempleRoad",
-    city: "Colombo",
-    province: "Western",
-    faxNo: "+0094672367",
-    contactNo1: "07548234823",
-    contactNo2: "07826727676",
-    contactEmail1: "sup01@gmail.com",
-    contactEmail2: "supp02@gmail.com",
-    typeofBusiness: "Electrical",
-  },
-  {
-    no: "05",
-    supplierId: "SUPPLIER005",
-    supplierName: "suplier05@gmail.com",
-    street: "TempleRoad",
-    city: "Colombo",
-    province: "Western",
-    faxNo: "+0094672367",
-    contactNo1: "07548234823",
-    contactNo2: "07826727676",
-    contactEmail1: "sup01@gmail.com",
-    contactEmail2: "supp02@gmail.com",
-    typeofBusiness: "Electrical",
-  },
-];
-
 export default function VendorDetails() {
   const [vendors, setVendors] = useState([]);
   const [loading, setLoading] = useState(false);
-
   const [searchTerm, setSearchTerm] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 5;
+
+  // Get loggedInUser from AuthContext
+  const { loggedInUser } = useAuth();
 
   const filteredVendors = vendors.filter((vendor) =>
-    vendor.supplierId.toLowerCase().includes(searchTerm.toLowerCase())
+    vendor.supplierId?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const [searchQuery, setSearchQuery] = useState("");
-  const [searchOption, setSearchOption] = useState("");
-  const [currentPage, setCurrentPage] = useState(1); // State to manage current page
-  const itemsPerPage = 5; // Number of items per page
+  // Pagination logic
+  const indexOfLastItem = currentPage * itemsPerPage;
+  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+  const currentItems = filteredVendors.slice(indexOfFirstItem, indexOfLastItem);
 
-  // Fetch users data from your API endpoint
   useEffect(() => {
-    console.log("Suppliers:", vendors);
     setLoading(true);
     axios
-      .get("http://localhost:8000/supplyer/view-supplyers") // Update the API endpoint
+      .get("http://localhost:8000/supplyer/view", { withCredentials: true })
       .then((response) => {
         setVendors(response.data);
         setLoading(false);
@@ -128,32 +58,18 @@ export default function VendorDetails() {
       });
   }, []);
 
-  const handleSearchChange = (e) => {
-    setSearchQuery(e.target.value);
-    setCurrentPage(1); // Reset current page when search query changes
-  };
-
-  const handleSearchOptionChange = (e) => {
-    setSearchOption(e.target.value);
-    setCurrentPage(1); // Reset current page when search option changes
-  };
-
-  // Calculate index of the last item to display on the current page
-  const indexOfLastItem = currentPage * itemsPerPage;
-  // Calculate index of the first item to display on the current page
-  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
-
-  // Slice the array of filtered requests to display only the items for the current page
-  const currentItems = filteredVendors.slice(indexOfFirstItem, indexOfLastItem);
-
   const handlePageChange = (pageNumber) => {
     setCurrentPage(pageNumber);
   };
 
+  // Allow admin and procurement Officer to manage vendors
+  const canManageVendors =
+    loggedInUser && (loggedInUser.role === "admin" || loggedInUser.role === "procurement Officer");
+
   return (
     <div className="min-h-screen bg-gray-50 p-6">
-      <UserTypeNavbar userType="admin" />
-      
+      <UserTypeNavbar userType={loggedInUser?.role || "admin"} />
+
       <div className="mb-6">
         <Breadcrumb
           crumbs={[
@@ -165,7 +81,7 @@ export default function VendorDetails() {
       </div>
 
       <div className="bg-white rounded-lg shadow-sm border border-gray-200">
-        {/* Simple Header */}
+        {/* Header */}
         <div className="border-b border-gray-200 p-6">
           <div className="flex items-center justify-between">
             <div>
@@ -174,18 +90,20 @@ export default function VendorDetails() {
             </div>
             <div className="flex items-center space-x-3">
               <span className="text-sm text-gray-500">Total: {vendors.length} suppliers</span>
-              <Link
-                to="/AddSupplier"
-                className="flex items-center space-x-2 bg-[#961C1E] hover:bg-[#761C1D] text-white px-4 py-2 rounded-md transition-colors duration-200"
-              >
-                <UserPlusIcon className="h-4 w-4" />
-                <span>Add Supplier</span>
-              </Link>
+              {canManageVendors && (
+                <Link
+                  to="/AddSupplier"
+                  className="flex items-center space-x-2 bg-[#961C1E] hover:bg-[#761C1D] text-white px-4 py-2 rounded-md transition-colors duration-200"
+                >
+                  <UserPlusIcon className="h-4 w-4" />
+                  <span>Add Supplier</span>
+                </Link>
+              )}
             </div>
           </div>
         </div>
 
-        {/* Simple Search Section */}
+        {/* Search Section */}
         <div className="p-6 border-b border-gray-200">
           <div className="flex items-center space-x-4">
             <div className="relative flex-1 max-w-md">
@@ -201,7 +119,7 @@ export default function VendorDetails() {
           </div>
         </div>
 
-        {/* Simple Table */}
+        {/* Table */}
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead className="bg-gray-100">
@@ -283,16 +201,20 @@ export default function VendorDetails() {
                             <EyeIcon className="h-4 w-4" />
                           </button>
                         </Link>
-                        <Link to={`/updateSupplier/${supplier._id}`}>
-                          <button className="text-green-600 hover:text-green-900 p-1">
-                            <PencilIcon className="h-4 w-4" />
-                          </button>
-                        </Link>
-                        <Link to={`/deleteSupplier/${supplier._id}`}>
-                          <button className="text-red-600 hover:text-red-900 p-1">
-                            <TrashIcon className="h-4 w-4" />
-                          </button>
-                        </Link>
+                        {canManageVendors && (
+                          <>
+                            <Link to={`/updateSupplier/${supplier._id}`}>
+                              <button className="text-green-600 hover:text-green-900 p-1">
+                                <PencilIcon className="h-4 w-4" />
+                              </button>
+                            </Link>
+                            <Link to={`/deleteSupplier/${supplier._id}`}>
+                              <button className="text-red-600 hover:text-red-900 p-1">
+                                <TrashIcon className="h-4 w-4" />
+                              </button>
+                            </Link>
+                          </>
+                        )}
                       </div>
                     </td>
                   </tr>
@@ -302,7 +224,7 @@ export default function VendorDetails() {
           </table>
         </div>
 
-        {/* Simple Pagination */}
+        {/* Pagination */}
         <div className="px-6 py-4 border-t border-gray-200">
           <div className="flex items-center justify-between">
             <span className="text-sm text-gray-600">

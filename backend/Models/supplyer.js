@@ -8,18 +8,21 @@ const supplyerSchema = new Schema({
     type: String,
     unique: true, // Ensure uniqueness
     // required: true,
+    index: true
   },
  
   supplierId:{
     type: String,
-    
+    index: true
   }, 
   supplierName:{
     type: String,
     // required: true,
+    index: true
   }, 
   email: {
-    type: [String,]
+    type: [String],
+    index: true
 
   }, 
   address:{
@@ -45,11 +48,13 @@ const supplyerSchema = new Schema({
   }, 
   typeofBusiness:{
     type: String,
+    index: true
     // default: 'SoleImporter',
     // enum: ['SoleImporter', 'SoleDistributor ','LocalAgent','contractors']
   },
   classOfAssets :{
     type: String,
+    index: true
 
   },
 });

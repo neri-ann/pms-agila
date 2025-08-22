@@ -5,10 +5,12 @@ const passwordResetTokenSchema = mongoose.Schema({
     owner:{
         type: mongoose.Schema.Types.ObjectId,
         ref: "user",
+        index: true
 
     },
     token:{
         type: String,
+        index: true
     },
     createAt:{
         type:Date,

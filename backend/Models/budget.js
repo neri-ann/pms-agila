@@ -6,7 +6,8 @@ const bcrypt =require("bcrypt");
 const budgetSchema = new Schema({
     department:{
         type: String,
-        enum: ['DEIE', 'DCEE','DMME','DCE','DMNNE','DIS', 'NONE']
+        enum: ['DEIE', 'DCEE','DMME','DCE','DMNNE','DIS', 'NONE'],
+        index: true
       }, 
  
   budgetAllocation:{

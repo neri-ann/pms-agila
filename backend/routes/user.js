@@ -28,7 +28,16 @@ router.get("/preview-user/:id", validateUserId, previewUser);
 router.put("/update/:id", validateUserId, updateUser);
 router.delete("/delete/:id", validateUserId, deleterUser);
 // add signIn route
-router.post("/signIn",signInValidator, validate, signIn);
+router.post('/signIn', (req, res, next) => {
+  passport.authenticate('local', (err, user, info) => {
+    if (err) return next(err);
+    if (!user) return res.status(401).json({ error: info.message || 'Login failed' });
+    req.logIn(user, (err) => {
+      if (err) return next(err);
+      return res.json({ user });
+    });
+  })(req, res, next);
+});
 //Add forget Password route
 router.post('/change-password', changePassword);
 router.post('/verify-pass-reset-token',isValidPassResetToken,sendResetPasswordTokenStatus);

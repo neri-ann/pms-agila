@@ -48,7 +48,7 @@ const LoginPage = () => {
         email: credentials.email,
         password: credentials.password,
         role: credentials.role,
-      });
+      }, { withCredentials: true });
 
       if (response.data.user) {
         handleSignIn(response.data.user);
@@ -131,7 +131,7 @@ const LoginPage = () => {
                 >
                   <option value="role">Select your role</option>
                   <option value="admin">Admin</option>
-                  <option value="procurmentofficer">Procurement Officer</option>
+                  <option value="procurement Officer">Procurement Officer</option>
                   {/* <option value="financeofficers">Finance Officers</option>
                   <option value="department">User Department</option>
                   <option value="approver">Approver</option> */}

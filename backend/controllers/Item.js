@@ -15,13 +15,20 @@ exports.create = async (req, res) => {
 
 // Get all items
 exports.viewItem = async (req, res) => {
-  Item.find()
-    .then((Supplyers) => {
-      res.json(Supplyers);
-    })
-    .catch((err) => {
-      console.log(err);
-    });
+  const { itemName, AssetsClass, AssetsSubClass, username } = req.query;
+  const filter = {};
+  if (itemName) filter.itemName = { $regex: itemName, $options: "i" };
+  if (AssetsClass) filter.AssetsClass = AssetsClass;
+  if (AssetsSubClass) filter.AssetsSubClass = AssetsSubClass;
+  if (username) filter.username = username;
+
+  try {
+    const items = await Item.find(filter);
+    res.json(items);
+  } catch (err) {
+    console.log(err);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
 };
 
 // View details of a particular item
