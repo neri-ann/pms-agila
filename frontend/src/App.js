@@ -181,7 +181,8 @@ const App = () => {
           />
 
 
-          <Route path="/allvendors" element={<VendorDetails />} />
+          <Route path="/allvendors" element={<VendorDetails />} /> {/* for admin */}
+          <Route path="/VendorsList" element={<VendorDetails />} /> {/* for procurement officer */}
           <Route
             path="/previewVendorDetails/:id"
             element={<PreviewVendorDetails />}

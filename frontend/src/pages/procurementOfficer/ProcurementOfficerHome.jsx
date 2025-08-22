@@ -1,16 +1,18 @@
-
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useContext } from "react";
 import axios from "axios";
 import { Link } from "react-router-dom";
 import { AiOutlineEdit, AiOutlineSend, AiOutlineDelete } from "react-icons/ai"; // Import icons for edit, send, and delete
 import UserTypeNavbar from "../../components/UserTypeNavbar";
 import Breadcrumb from "../../components/Breadcrumb";
+import { AuthContext } from "../../context/AuthContext"; // Example context
 
 const ProcurementOfficerHome = () => {
   const [loading, setLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [searchOption, setSearchOption] = useState("requestId");
   const [requests, setRequests] = useState([]);
+  const { user } = useContext(AuthContext); // Get user info
+  const userRole = user?.role;
 
   useEffect(() => {
     setLoading(true);
@@ -55,14 +57,21 @@ const ProcurementOfficerHome = () => {
 
   return (
     <div className="p-4">
-      <UserTypeNavbar userType="approver" />
+      <UserTypeNavbar userType="procurement Officer" />
       <Breadcrumb
         crumbs={[
-          { label: "Home", link: "/ApproverHome/:id" },
-          { label: "Pending Approval list", link: "/ViewForApproval" },
+          { label: "Home", link: "/ProcurementOfficerHome/:id" },
+          { label: "Supplier List", link: "/allvendors" },
         ]}
         selected={(crumb) => console.log(`Selected: ${crumb.label}`)}
       />
+
+      {/* Add Supplier Button */}
+      {(userRole === "admin" || userRole === "procurement Officer") && (
+        <Link to="/addvendors">
+          <button className="btn btn-primary mb-4">Add Supplier</button>
+        </Link>
+      )}
 
       <div className="reservation-list-container">
         <div className="-my-2 py-2 overflow-x-auto sm:-mx-6 sm:px-6 lg:-mx-8 pr-10 lg:px-8">

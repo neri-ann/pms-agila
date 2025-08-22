@@ -6,6 +6,7 @@ import axios from "axios";
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "../../../context/AuthContext";
 
 export default function AddSupplier() {
   const [username, setUsername] = useState("");
@@ -151,14 +152,16 @@ export default function AddSupplier() {
 
   const navigate = useNavigate();
 
+  const { loggedInUser } = useAuth();
+  const userRole = loggedInUser?.role;
+
   return (
     <form onSubmit={handleSaveAddVendors}>
       <div className="space-y-12 ml-40 mr-40 mt-40">
         <Breadcrumb
           crumbs={[
-            { label: "Home", link: "/adminhome/:id" },
-            { label: "Vendor Details", link: "/allvendors" },
-
+            { label: "Home", link: userRole === "admin" ? "/adminhome/:id" : "/PO_BuHome/:id" },
+            { label: "Vendor Details", link: userRole === "admin" ? "/allvendors" : "/VendorsList" },
             { label: "Add Vendor Details", link: "/addvendors" },
           ]}
           selected={(crumb) => console.log(`Selected: ${crumb.label}`)}

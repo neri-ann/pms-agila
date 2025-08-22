@@ -10,7 +10,7 @@ import { PencilIcon, UserPlusIcon } from "@heroicons/react/24/solid";
 import Breadcrumb from "../../../components/Breadcrumb.jsx";
 import UserTypeNavbar from "../../../components/UserTypeNavbar.jsx";
 import DefaultPagination from "../../../components/DefaultPagination.js";
-import { useAuth } from "../../../context/AuthContext"; // <-- Use the hook
+import { useAuth } from "../../../context/AuthContext"; // already present
 
 const TABLE_HEAD = [
   "No",
@@ -34,6 +34,7 @@ export default function VendorDetails() {
 
   // Get loggedInUser from AuthContext
   const { loggedInUser } = useAuth();
+  const userRole = loggedInUser?.role;
 
   const filteredVendors = vendors.filter((vendor) =>
     vendor.supplierId?.toLowerCase().includes(searchTerm.toLowerCase())
@@ -68,13 +69,12 @@ export default function VendorDetails() {
 
   return (
     <div className="min-h-screen bg-gray-50 p-6">
-      <UserTypeNavbar userType={loggedInUser?.role || "admin"} />
-
+      <UserTypeNavbar userType={userRole || "admin"} />
       <div className="mb-6">
         <Breadcrumb
           crumbs={[
-            { label: "Home", link: "/adminhome/:id" },
-            { label: "Vendor Details", link: "/vendorsDetails" },
+            { label: "Home", link: userRole === "admin" ? "/adminhome/:id" : "/PO_BuHome/:id" },
+            { label: "Vendor Details", link: userRole === "admin" ? "/allvendors" : "/VendorsList" },
           ]}
           selected={(crumb) => console.log(`Selected: ${crumb.label}`)}
         />

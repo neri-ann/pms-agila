@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useContext } from "react";
 import axios from "axios";
 import { Link } from "react-router-dom";
 import {
@@ -26,6 +26,8 @@ import {
 } from "@material-tailwind/react";
 import UserTypeNavbar from "../../components/UserTypeNavbar.jsx";
 import DefaultPagination from "../../components/DefaultPagination.js";
+import { AuthContext } from "../../context/AuthContext"; // Adjust path if needed
+import { useAuth } from "../../context/AuthContext";
 
 const TABLE_HEAD = [
   "No",
@@ -128,6 +130,9 @@ export default function VendorsList() {
   const [currentPage, setCurrentPage] = useState(1); // State to manage current page
   const itemsPerPage = 5; // Number of items per page
 
+  const { loggedInUser } = useAuth();
+  const userRole = loggedInUser?.role;
+
   // Fetch users data from your API endpoint
   useEffect(() => {
     console.log("Suppliers:", vendors);
@@ -168,7 +173,7 @@ export default function VendorsList() {
 
   return (
     <div className="p-4 ">
-      <UserTypeNavbar userType="procurement Officer" />
+      <UserTypeNavbar userType={userRole || "procurement Officer"} />
       <Breadcrumb
         crumbs={[
           { label: "Home", link: "/PO_BuHome/:id" },
@@ -191,15 +196,18 @@ export default function VendorsList() {
                 <h5>See information about all suppliers.</h5>
               </Typography>
             </div>
-            <div className="flex shrink-0 flex-col gap-2 sm:flex-row">
-              <Button
-                variant="outlined"
-                size="sm"
-                className="text-white bg-brandPrimary  h-10"
-              >
-                <h6 className="mt-0">view all</h6>
-              </Button>
-            </div>
+            {/* Add Supplier Button for procurement officer */}
+            {(userRole === "admin" || userRole === "procurement Officer") && (
+              <Link to="/AddSupplier">
+                <Button
+                  variant="outlined"
+                  size="sm"
+                  className="text-white bg-brandPrimary h-10"
+                >
+                  <h6 className="mt-0">Add Supplier</h6>
+                </Button>
+              </Link>
+            )}
           </div>
           <div className="flex flex-col items-center justify-between gap-4 md:flex-row">
             <div className="w-full md:w-72 ">
@@ -395,13 +403,34 @@ export default function VendorsList() {
                     </td>
 
                     <td className={classes}>
-                      <Link to={`/PreviewVendor/${supplyer._id}`}>
-                        <Tooltip content="View Vendor">
-                          <IconButton variant="text">
-                            <EyeIcon className="h-6 w-6 text-blue-500" />
-                          </IconButton>
-                        </Tooltip>
-                      </Link>
+                      {/* Operations column */}
+                      <div className="flex gap-2 justify-center">
+                        <Link to={`/PreviewVendor/${supplyer._id}`}>
+                          <Tooltip content="View Vendor">
+                            <IconButton variant="text">
+                              <EyeIcon className="h-6 w-6 text-blue-500" />
+                            </IconButton>
+                          </Tooltip>
+                        </Link>
+                        {(userRole === "admin" || userRole === "procurement Officer") && (
+                          <>
+                            <Link to={`/updateSupplier/${supplyer._id}`}>
+                              <Tooltip content="Edit Vendor">
+                                <IconButton variant="text">
+                                  <PencilIcon className="h-6 w-6 text-green-500" />
+                                </IconButton>
+                              </Tooltip>
+                            </Link>
+                            <Link to={`/deleteSupplier/${supplyer._id}`}>
+                              <Tooltip content="Delete Vendor">
+                                <IconButton variant="text">
+                                  <TrashIcon className="h-6 w-6 text-red-500" />
+                                </IconButton>
+                              </Tooltip>
+                            </Link>
+                          </>
+                        )}
+                      </div>
                     </td>
                   </tr>
                 );

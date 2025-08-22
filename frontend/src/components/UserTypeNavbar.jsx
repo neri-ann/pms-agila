@@ -19,10 +19,12 @@ import {
 import "../styles/Navbar.css";
 import "../pages/Home";
 import logo from "../assets/agilalogo2.png";
+import { useAuth } from "../context/AuthContext"; // <-- Import context
 
-const UserTypeNavbar = ({ userType, onLogout }) => {
+const UserTypeNavbar = ({ userType }) => {
   const location = useLocation();
   const navigate = useNavigate();
+  const { handleSignOut } = useAuth(); // <-- Use context logout
 
   // NAVITEMS ARRAY
   const AdminOptions = [
@@ -96,19 +98,8 @@ const UserTypeNavbar = ({ userType, onLogout }) => {
 
   // Handle logout functionality
   const handleLogout = () => {
-    console.log("Logout button clicked");
-    console.log("onLogout function:", onLogout);
-    
-    // Call the logout function from parent (App.js)
-    if (onLogout) {
-      console.log("Calling onLogout function");
-      onLogout();
-    } else {
-      console.log("onLogout function is not available");
-    }
-    
-    // Alternative direct navigation if the context doesn't work
-    navigate("/loginpage");
+    handleSignOut(); // <-- Clear auth state
+    navigate("/loginpage"); // <-- Redirect to login page
   };
 
   return (

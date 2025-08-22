@@ -86,15 +86,16 @@ export default function UpdateSupplier() {
     };
   }, [id]);
 
-  const handleUpdateVendors = () => {
+  const handleUpdateVendors = (event) => {
+    event.preventDefault(); // <-- Add this line!
     const UpdateSupplyer = {
       username,
       supplierId,
       supplierName,
-      address: addressStreet, // Only one address field
+      address: addressStreet,
       contactOfficer,
-      contactNumber: [contactNumbers1, contactNumbers2], // Array
-      email: [emails1, emails2], // Array
+      contactNumber: [contactNumbers1, contactNumbers2],
+      email: [emails1, emails2],
       faxNumber1,
       faxNumber2,
       typeofBusiness,

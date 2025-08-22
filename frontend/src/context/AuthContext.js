@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { useNavigate } from "react-router-dom";
+
 const AuthContext = createContext();
 
 export const useAuth = () => useContext(AuthContext);
@@ -21,7 +22,7 @@ export const AuthProvider = ({ children }) => {
   const handleSignOut = () => {
     setIsAuthenticated(false);
     setLoggedInUser(null);
-    navigate("/loginpage");
+    // navigate("/loginpage");  // optional redirect
   };
 
   return (

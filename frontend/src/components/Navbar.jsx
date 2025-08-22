@@ -1,28 +1,25 @@
 import React, { useState, useEffect } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { Link as ScrollLink } from "react-scroll";
-// import logo from "../assets/agilalogo.png";
 import axios from "axios";
 import { useSnackbar } from "notistack";
 import { FaXmark, FaBars } from "react-icons/fa6";
 import { PowerIcon, UserCircleIcon } from "@heroicons/react/24/solid";
 import { Button, Typography } from "@material-tailwind/react";
 
-const Navbar = ({
-  isAuthenticated,
-  handleSignOut,
-  handleSignIn,
-  username,
-  userId,
-  loggedInUser,
-}) => {
+// ✅ Import the auth context hook
+import { useAuth } from "../context/AuthContext";
+
+const Navbar = ({ username, userId }) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isSticky, setIsSticky] = useState(false);
-  const navigate = useNavigate(); // Initialize navigate
-
+  const navigate = useNavigate();
   const { id } = useParams();
   const { enqueueSnackbar } = useSnackbar();
   const [user, setUser] = useState({});
+
+  // ✅ Get auth state and logout from context
+  const { isAuthenticated, handleSignOut, loggedInUser } = useAuth();
 
   useEffect(() => {
     const getUser = async () => {
@@ -39,26 +36,16 @@ const Navbar = ({
 
     getUser();
   }, [userId]);
-  const toggleMenu = () => {
-    setIsMenuOpen(!isMenuOpen);
-  };
 
-  const closeMenu = () => {
-    setIsMenuOpen(false);
-  };
+  const toggleMenu = () => setIsMenuOpen(!isMenuOpen);
+  const closeMenu = () => setIsMenuOpen(false);
 
   useEffect(() => {
     const handleScroll = () => {
-      if (window.scrollY > 100) {
-        setIsSticky(true);
-      } else {
-        setIsSticky(false);
-      }
+      setIsSticky(window.scrollY > 100);
     };
     window.addEventListener("scroll", handleScroll);
-    return () => {
-      window.removeEventListener("scroll", handleScroll);
-    };
+    return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
   const navItems = [
@@ -71,9 +58,7 @@ const Navbar = ({
   ];
 
   return (
-    <header
-      className="fixed top-0 left-64 w-[calc(100%-16rem)] bg-white shadow-md z-30"
-    >
+    <header className="fixed top-0 left-64 w-[calc(100%-16rem)] bg-white shadow-md z-30">
       <nav
         className={`py-[12px] lg:px-14 px-4 ${
           isSticky
@@ -83,14 +68,7 @@ const Navbar = ({
         style={{ zIndex: 2000 }}
       >
         <div className="flex justify-between items-center text-base gap-8">
-          {/* <p className="text-2xl font-semibold flex items-center">
-            <img
-              src={logo}
-              alt=" "
-              className="w-[90px] h-[50px] inline-block item-center "
-            />
-          </p> */}
-
+          {/* Navigation links */}
           <div className="md:flex space-x-12 hidden justify-center w-full">
             {navItems.map(({ link, path }) => (
               <ScrollLink
@@ -105,6 +83,7 @@ const Navbar = ({
               </ScrollLink>
             ))}
           </div>
+
           <div className="lg:flex items-center hidden space-x-4">
             {isAuthenticated ? (
               <div className="flex items-center">
@@ -125,14 +104,14 @@ const Navbar = ({
                       variant="small"
                       className="font-normal"
                     >
-                      {username}
+                      {username || loggedInUser?.username}
                     </Typography>
                   </Link>
                 </Button>
                 <button
                   onClick={() => {
                     handleSignOut();
-                    navigate("/");
+                    navigate("/loginpage");
                   }}
                   className="flex items-center gap-2"
                   style={{ textDecoration: "none" }}
@@ -164,39 +143,6 @@ const Navbar = ({
               </Link>
             )}
           </div>
-
-          <div className="md:hidden">
-            <button
-              onClick={toggleMenu}
-              className="text-[#961C1E] focus:outline-none focus:text-[#961C1E]"
-            >
-              {isMenuOpen ? (
-                <FaXmark className="h-6 w-6 items-center " />
-              ) : (
-                <FaBars className="h-6 w-6 items-center" />
-              )}
-            </button>
-          </div>
-        </div>
-
-        <div
-          className={`space-y-4 px-4 mt-16 py-7 bg-[#961C1E] md:hidden ${
-            isMenuOpen ? "block fixed top-6 right-0 left-80" : "hidden"
-          }`}
-        >
-          {navItems.map(({ link, path }) => (
-            <ScrollLink
-              to={path}
-              spy={true}
-              smooth={true}
-              offset={-100}
-              key={path}
-              onClick={closeMenu}
-              className="block no-underline cursor-pointer text-base text-white hover:text-bold hover:font-medium"
-            >
-              {link}
-            </ScrollLink>
-          ))}
         </div>
       </nav>
     </header>
