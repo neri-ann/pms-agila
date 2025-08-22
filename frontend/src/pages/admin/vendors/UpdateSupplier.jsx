@@ -44,26 +44,28 @@ export default function UpdateSupplier() {
   useEffect(() => {
     setLoading(true);
     axios
-      .get(`http://localhost:8000/supplyer/preview-supplyer/${id}`)
+      .get(`http://localhost:8000/supplyer/preview-supplyer/${id}`, { withCredentials: true })
       .then((response) => {
         const userData = response.data;
-        console.log('Fetched user data:', userData);
-        setUsername(response.data.username);
-        setSupplierId(response.data.supplierId);
-        setSupplierName(response.data.supplierName);
-        setAddressStreet(response.data.addressStreet);
-        setAddressCity(response.data.addressCity);
-        setAddressProvince(response.data.addressProvince);
+        setUsername(userData.username);
+        setSupplierId(userData.supplierId);
+        setSupplierName(userData.supplierName);
 
-        setContactOfficer(response.data.contactOfficer);
-        setContactNumbers1(response.data.contactNumbers1);
-        setContactNumbers2(response.data.contactNumbers2);
-        setEmails1(response.data.emails1);
-        setEmails2(response.data.emails2);
-        setFaxNumber1(response.data.faxNumber1);
-        setFaxNumber2(response.data.faxNumber2);
-        setTypesOFBusiness(response.data.typeofBusiness);
-        setClassOfAssets(response.data.classOfAssets);
+        // Split address into parts
+        const addressParts = (userData.address || "").split(",");
+        setAddressStreet(addressParts[0]?.trim() || "");
+        setAddressCity(addressParts[1]?.trim() || "");
+        setAddressProvince(addressParts[2]?.trim() || "");
+
+        setContactOfficer(userData.contactOfficer || "");
+        setContactNumbers1(userData.contactNumber?.[0] || "");
+        setContactNumbers2(userData.contactNumber?.[1] || "");
+        setEmails1(userData.email?.[0] || "");
+        setEmails2(userData.email?.[1] || "");
+        setFaxNumber1(userData.faxNumber1 || "");
+        setFaxNumber2(userData.faxNumber2 || "");
+        setTypesOFBusiness(userData.typeofBusiness || "");
+        setClassOfAssets(userData.classOfAssets || "");
         setLoading(false);
       })
       .catch((error) => {
@@ -89,14 +91,10 @@ export default function UpdateSupplier() {
       username,
       supplierId,
       supplierName,
-      addressStreet,
-      addressCity,
-      addressProvince,
+      address: addressStreet, // Only one address field
       contactOfficer,
-      contactNumbers1,
-      contactNumbers2,
-      emails1,
-      emails2,
+      contactNumber: [contactNumbers1, contactNumbers2], // Array
+      email: [emails1, emails2], // Array
       faxNumber1,
       faxNumber2,
       typeofBusiness,
@@ -106,7 +104,7 @@ export default function UpdateSupplier() {
     setLoading(true);
 
     axios
-      .put(`http://localhost:8000/supplyer/update/${id}`, UpdateSupplyer)
+      .put(`http://localhost:8000/supplyer/update/${id}`, UpdateSupplyer, { withCredentials: true })
       .then(() => {
         alert("Supplyer Updated");
         // Reset form fields

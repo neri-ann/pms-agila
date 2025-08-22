@@ -5,6 +5,7 @@ import Breadcrumb from "../../../components/Breadcrumb";
 import axios from "axios";
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import { useNavigate } from "react-router-dom";
 
 export default function AddSupplier() {
   const [username, setUsername] = useState("");
@@ -147,6 +148,8 @@ export default function AddSupplier() {
   const selected = (crumb) => {
     console.log(crumb);
   };
+
+  const navigate = useNavigate();
 
   return (
     <form onSubmit={handleSaveAddVendors}>
@@ -509,6 +512,7 @@ export default function AddSupplier() {
         <button
           type="button"
           className="rounded-md h-12 w-24 bg-[#404040] px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-black"
+          onClick={() => navigate("/allvendors")}
         >
           Cancel
         </button>
