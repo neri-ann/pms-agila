@@ -1,16 +1,9 @@
 import React, { useState, useEffect } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import Breadcrumb from "../../components/Breadcrumb";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import axios from "axios";
 import UserTypeNavbar from "../../components/UserTypeNavbar";
-import { Button, IconButton, Tooltip } from "@material-tailwind/react";
-import {
-  EyeDropperIcon,
-  EyeIcon,
-  UserPlusIcon,
-} from "@heroicons/react/24/solid";
-import { AiFillPlusCircle } from "react-icons/ai";
+import { Button } from "@material-tailwind/react";
 import { AddReqCard } from "./AddItemCard";
 
 export default function ProjectCreationForm({ forms }) {
@@ -224,194 +217,150 @@ export default function ProjectCreationForm({ forms }) {
   );
 
   return (
-    <form onSubmit={(e) => handleFormSubmit(e, requests)}>
-      <div className="space-y-12 ml-40 mr-40 mt-40">
-        <UserTypeNavbar userType="procurement Officer" />
+    <div className="min-h-screen bg-gray-50 p-6">
+      <UserTypeNavbar userType="procurement Officer" />
 
+      <div className="mb-6">
         <Breadcrumb
           crumbs={[
             { label: "Home", link: `/PO_BuHome/${id}` },
             { label: "Procurement Project List", link: `/projectList/${id}` },
-
             { label: "Project Form Creation", link: "#" },
           ]}
           selected={(crumb) => console.log(`Selected: ${crumb.label}`)}
         />
+      </div>
 
-        <div className="border-b border-gray-900/10 pb-12">
-          <h2 className="text-gray-900">CREATE PROCUREMENT PROJECT</h2>
+      <form onSubmit={(e) => handleFormSubmit(e, requests)}>
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-8">
+          <h2 className="text-2xl font-semibold text-gray-900 mb-8">
+            Create Procurement Project
+          </h2>
 
-          <div className="mt-10 grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-6">
-            <div className="sm:col-span-3">
+          {/* Project ID and Title */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
+            <div>
               <Button
-                className="flex items-center gap-3 h-10 bg-NeutralBlack"
+                className="flex items-center gap-3 h-10 bg-[#404040] hover:bg-black"
                 size="sm"
                 onClick={handleGenerateProjectId}
               >
-                <p className="mt-3">Generate Project ID</p>
+                <span>Generate Project ID</span>
               </Button>
-              <div className="mt-0">
-                <input
-                  type="text"
-                  value={projectId}
-                  name="first-name"
-                  onChange={(e) => setProjectId(e.target.value)}
-                  id="first-name"
-                  disabled={true}
-                  className="block w-full h-12 rounded-md border-1 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6 mt-2"
-                />
-              </div>
+              <input
+                type="text"
+                value={projectId}
+                name="projectId"
+                onChange={(e) => setProjectId(e.target.value)}
+                disabled={true}
+                className="block w-full h-12 rounded-md border py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 mt-2"
+              />
             </div>
-
-            <div className="sm:col-span-3">
-              <label
-                htmlFor="last-name"
-                className="block text-sm font-medium leading-6 text-gray-900"
-              >
-                <h5> Project Title</h5>
+            <div>
+              <label className="block text-sm font-medium text-gray-900 mt-3 mb-2.5">
+                Project Title
               </label>
-              <div className="mt-4">
-                <input
-                  type="text"
-                  name="last-name"
-                  id="last-name"
-                  autoComplete="family-name"
-                  placeholder="Enter the Project Title"
-                  value={projectTitle}
-                  onChange={(e) => setProjectTitle(e.target.value)}
-                  className="block w-full h-12 rounded-md border-1 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6 mt-2"
-                />
-              </div>
-            </div>
-
-            <div className="sm:col-span-3">
-              <div className="sm:col-span-4 mt-2">
-                <label
-                  htmlFor="closingDate"
-                  className="block text-sm font-medium leading-6 text-gray-900"
-                >
-                  <h5>Closing Date & Time</h5>
-                </label>
-                <input
-                  type="date"
-                  className="mr-6 
-                rounded"
-                  value={closingDate}
-                  onChange={(e) => setClosingDate(e.target.value)}
-                ></input>
-                <input type="time" className="rounded"></input>
-              </div>
-            </div>
-
-            <div className="sm:col-span-3">
-              <label
-                htmlFor="country"
-                className="block text-sm font-medium leading-6 text-gray-900"
-              >
-                <h5> Select the Bidding Type</h5>
-              </label>
-              <div className="mt-2">
-                <select
-                  id="country"
-                  name="country"
-                  autoComplete="country-name"
-                  value={biddingType}
-                  onChange={(e) => setBiddingType(e.target.value)}
-                  className="block w-full h-12 rounded-md border-1 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600  sm:text-sm sm:leading-6"
-                >
-                  {biddingTypes.map((type, index) => (
-                    <option key={index} value={type}>
-                      {type}
-                    </option>
-                  ))}{" "}
-                  <option value="">Select method</option>
-                </select>
-              </div>
+              <input
+                type="text"
+                name="projectTitle"
+                placeholder="Enter the Project Title"
+                value={projectTitle}
+                onChange={(e) => setProjectTitle(e.target.value)}
+                className="block w-full h-12 rounded-md border py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600"
+              />
             </div>
           </div>
-          <div className="border-b border-gray-900/10 pb-12">
-            <legend className="text-sm font-semibold leading-6 text-gray-900 mt-10">
-              <h5>Add the Requests into Projects</h5>
-            </legend>
 
-            <div className="flex shrink-0 flex-col gap-2 sm:flex-row">
-              <button onClick={handleAddRequestClick} class="button">
-                <span className="c-main">
-                  <span className="c-ico">
-                    <span className="c-blur"></span>{" "}
-                    <span className="ico-text">+</span>
-                  </span>
-                  Add Requests
-                </span>
-              </button>
+          {/* Closing Date & Bidding Type */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
+            <div>
+              <label className="block text-sm font-medium text-gray-900 mb-2">
+                Closing Date & Time
+              </label>
+              <div className="flex gap-4">
+                <input
+                  type="date"
+                  className="rounded border-gray-300"
+                  value={closingDate}
+                  onChange={(e) => setClosingDate(e.target.value)}
+                />
+                <input
+                  type="time"
+                  className="rounded border-gray-300"
+                  value={closingTime}
+                  onChange={(e) => setClosingTime(e.target.value)}
+                />
+              </div>
             </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-900 mb-2">
+                Select the Bidding Type
+              </label>
+              <select
+                value={biddingType}
+                onChange={(e) => setBiddingType(e.target.value)}
+                className="block w-full h-12 rounded-md border py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600"
+              >
+                <option value="">Select method</option>
+                {biddingTypes.map((type, index) => (
+                  <option key={index} value={type}>
+                    {type}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
 
-            <div className="mt-6 space-y-6 sm:col-span-3">
-              <div className="align-middle inline-block min-w-full overflow-hidden bg-white shadow-dashboard pt-3 rounded-bl-lg rounded-br-lg">
-                <table
-                  className="min-w-full"
-                  key={Object.keys(requests).length}
-                >
-                  <thead className="text-xs text-white uppercase bg-NeutralBlack">
+          {/* Add Requests */}
+          <div className="mb-8">
+            <h5 className="text-lg font-semibold text-gray-900 mb-4">
+              Add the Requests into Projects
+            </h5>
+            <button
+              type="button"
+              onClick={handleAddRequestClick}
+              className="inline-flex items-center px-4 py-2 bg-[#961C1E] text-white rounded hover:bg-[#761C1D] transition"
+            >
+              <span className="text-xl mr-2">+</span> Add Requests
+            </button>
+            <div className="mt-6">
+              <div className="overflow-x-auto rounded-lg shadow border border-gray-200">
+                <table className="min-w-full">
+                  <thead className="bg-gray-100">
                     <tr>
-                      <th className="px-6 py-3 border-b-2 border-gray-300 text-left text-sm leading-4 tracking-wider">
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">
                         No
                       </th>
-                      <th className="px-6 py-3 border-b-2 border-gray-300 text-left text-sm leading-4 tracking-wider">
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">
                         Request ID
                       </th>
-                      <th className="px-6 py-3 border-b-2 border-gray-300 text-left text-sm leading-4 tracking-wider">
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">
                         Department
                       </th>
-                      <th className="px-6 py-3 border-b-2 border-gray-300 text-left text-sm leading-4 tracking-wider">
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">
                         Purpose
                       </th>
                     </tr>
                   </thead>
-                  <tbody className="bg-white">
+                  <tbody className="divide-y divide-gray-200">
                     {filteredRequests.map((request, index) => (
-                      <tr key={request.requestId} className="reservation-row">
-                        <td className="px-6 py-2 whitespace-no-wrap border-b border-gray-500">
-                          <div className="flex items-center">
-                            <div>
-                              <div className="text-sm leading-5 text-gray-900">
-                                {index + 1}
-                              </div>
-                            </div>
-                          </div>
+                      <tr key={request.requestId}>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                          {index + 1}
                         </td>
-                        <td className="px-6 py-2 whitespace-no-wrap border-b border-gray-500">
-                          <div className="flex items-center">
-                            <div>
-                              <div className="text-sm leading-5 text-gray-900">
-                                {request.requestId}
-                              </div>
-                            </div>
-                          </div>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                          {request.requestId}
                         </td>
-                        <td className="px-6 py-2 whitespace-no-wrap border-b border-gray-500">
-                          <div className="flex items-center">
-                            <div>
-                              <div className="text-sm leading-5 text-gray-900">
-                                {request.department}
-                              </div>
-                            </div>
-                          </div>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                          {request.department}
                         </td>
-                        <td className="px-6 py-2 whitespace-no-wrap border-b border-gray-500">
-                          <div className="flex items-center">
-                            <div>
-                              <div className="text-sm leading-5 text-gray-900">
-                                {request.purpose}
-                              </div>
-                            </div>
-                          </div>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                          {request.purpose}
                         </td>
                       </tr>
                     ))}
                   </tbody>
                 </table>
-
                 {showAddRequestCard && (
                   <AddReqCard
                     handleAddRequestClick={handleAddRequestClick}
@@ -421,171 +370,144 @@ export default function ProjectCreationForm({ forms }) {
               </div>
             </div>
           </div>
-          <div className="mt-10 grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-6">
-            <div className="sm:col-span-3">
-              <fieldset>
-                <legend className="text-sm mt-10 font-semibold leading-6 text-gray-900">
-                  <h5>Appoint Members to TEC</h5>
-                </legend>
-                <div className="mt-6 space-y-6">
-                  <div className="relative flex gap-x-3">
-                    <div className="flex h-6 items-center">
-                      <input
-                        id="comments"
-                        name="comments"
-                        type="checkbox"
-                        className="h-5 w-5 rounded border-gray-500 text-indigo-600 focus:ring-indigo-600"
-                      />
-                    </div>
-                    <div className="text-sm leading-6">
-                      <label
-                        htmlFor="comments"
-                        className="font-medium text-gray-900"
-                      >
-                        <h6>Chairman</h6>
-                      </label>
-                    </div>
-                  </div>
-                  <div className="relative flex gap-x-3">
-                    <div className="flex h-6 items-center">
-                      <input
-                        id="candidates"
-                        name="candidates"
-                        type="checkbox"
-                        className="h-5 w-5 rounded border-gray-500 text-indigo-600 focus:ring-indigo-600"
-                      />
-                    </div>
-                    <div className="text-sm leading-6">
-                      <label
-                        htmlFor="candidates"
-                        className="font-medium text-gray-900"
-                      >
-                        <h6>member2</h6>
-                      </label>
-                    </div>
-                  </div>
-                  <div className="relative flex gap-x-3">
-                    <div className="flex h-6 items-center">
-                      <input
-                        id="offers"
-                        name="offers"
-                        type="checkbox"
-                        className="h-5 w-5 rounded border-gray-500 text-indigo-600 focus:ring-indigo-600"
-                      />
-                    </div>
-                    <div className="text-sm leading-6">
-                      <label
-                        htmlFor="offers"
-                        className="font-medium text-gray-900"
-                      >
-                        <h6>member3</h6>
-                      </label>
-                    </div>
-                  </div>
-                </div>
-              </fieldset>
-            </div>
 
-            <div className="sm:col-span-3">
-              <fieldset>
-                <legend className="text-sm mt-10 font-semibold leading-6 text-gray-900">
-                  <h5>Appoint Members to Bid Opening Committee</h5>
-                </legend>
-                <div className="mt-6 space-y-6">
-                  <div className="relative flex gap-x-3">
-                    <div className="flex h-6 items-center">
-                      <input
-                        id="comments"
-                        name="comments"
-                        type="checkbox"
-                        className="h-5 w-5 rounded border-gray-500 text-indigo-600 focus:ring-indigo-600"
-                      />
-                    </div>
-                    <div className="text-sm leading-6">
-                      <label
-                        htmlFor="comments"
-                        className="font-medium text-gray-900"
-                      >
-                        <h6>Chairman</h6>
-                      </label>
-                    </div>
-                  </div>
-                  <div className="relative flex gap-x-3">
-                    <div className="flex h-6 items-center">
-                      <input
-                        id="candidates"
-                        name="candidates"
-                        type="checkbox"
-                        className="h-5 w-5 rounded border-gray-500 text-indigo-600 focus:ring-indigo-600"
-                      />
-                    </div>
-                    <div className="text-sm leading-6">
-                      <label
-                        htmlFor="candidates"
-                        className="font-medium text-gray-900"
-                      >
-                        <h6>member2</h6>
-                      </label>
-                    </div>
-                  </div>
-                  <div className="relative flex gap-x-3">
-                    <div className="flex h-6 items-center">
-                      <input
-                        id="offers"
-                        name="offers"
-                        type="checkbox"
-                        className="h-5 w-5 rounded border-gray-500 text-indigo-600 focus:ring-indigo-600"
-                      />
-                    </div>
-                    <div className="text-sm leading-6">
-                      <label
-                        htmlFor="offers"
-                        className="font-medium text-gray-900"
-                      >
-                        <h6>member3</h6>
-                      </label>
-                    </div>
-                  </div>
+          {/* Appoint Members */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
+            <fieldset>
+              <legend className="text-sm font-semibold text-gray-900 mb-4">
+                Appoint Members to TEC
+              </legend>
+              <div className="space-y-4">
+                <div className="flex items-center gap-3">
+                  <input
+                    id="tec-chairman"
+                    name="tec-chairman"
+                    type="checkbox"
+                    className="h-5 w-5 rounded border-gray-500 text-indigo-600 focus:ring-indigo-600"
+                  />
+                  <label
+                    htmlFor="tec-chairman"
+                    className="font-medium text-gray-900"
+                  >
+                    Chairman
+                  </label>
                 </div>
-              </fieldset>
-            </div>
+                <div className="flex items-center gap-3">
+                  <input
+                    id="tec-member2"
+                    name="tec-member2"
+                    type="checkbox"
+                    className="h-5 w-5 rounded border-gray-500 text-indigo-600 focus:ring-indigo-600"
+                  />
+                  <label
+                    htmlFor="tec-member2"
+                    className="font-medium text-gray-900"
+                  >
+                    Member 2
+                  </label>
+                </div>
+                <div className="flex items-center gap-3">
+                  <input
+                    id="tec-member3"
+                    name="tec-member3"
+                    type="checkbox"
+                    className="h-5 w-5 rounded border-gray-500 text-indigo-600 focus:ring-indigo-600"
+                  />
+                  <label
+                    htmlFor="tec-member3"
+                    className="font-medium text-gray-900"
+                  >
+                    Member 3
+                  </label>
+                </div>
+              </div>
+            </fieldset>
+            <fieldset>
+              <legend className="text-sm font-semibold text-gray-900 mb-4">
+                Appoint Members to Bid Opening Committee
+              </legend>
+              <div className="space-y-4">
+                <div className="flex items-center gap-3">
+                  <input
+                    id="bo-chairman"
+                    name="bo-chairman"
+                    type="checkbox"
+                    className="h-5 w-5 rounded border-gray-500 text-indigo-600 focus:ring-indigo-600"
+                  />
+                  <label
+                    htmlFor="bo-chairman"
+                    className="font-medium text-gray-900"
+                  >
+                    Chairman
+                  </label>
+                </div>
+                <div className="flex items-center gap-3">
+                  <input
+                    id="bo-member2"
+                    name="bo-member2"
+                    type="checkbox"
+                    className="h-5 w-5 rounded border-gray-500 text-indigo-600 focus:ring-indigo-600"
+                  />
+                  <label
+                    htmlFor="bo-member2"
+                    className="font-medium text-gray-900"
+                  >
+                    Member 2
+                  </label>
+                </div>
+                <div className="flex items-center gap-3">
+                  <input
+                    id="bo-member3"
+                    name="bo-member3"
+                    type="checkbox"
+                    className="h-5 w-5 rounded border-gray-500 text-indigo-600 focus:ring-indigo-600"
+                  />
+                  <label
+                    htmlFor="bo-member3"
+                    className="font-medium text-gray-900"
+                  >
+                    Member 3
+                  </label>
+                </div>
+              </div>
+            </fieldset>
+          </div>
+
+          {/* Action Buttons */}
+          <div className="flex items-center justify-end gap-x-6 mt-8">
+            <button
+              type="button"
+              className="rounded-md h-14 w-30 bg-[#404040] px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-black focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
+              onClick={clearFormInputs}
+            >
+              CLEAR FORM
+            </button>
+            {biddingType === "Shopping Method" ? (
+              <button
+                type="submit"
+                className="rounded-md bg-[#961C1E] h-14 w-30 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-[#7A1517] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
+                onClick={(e) => {
+                  handleFormSubmit(e);
+                  handleGenerateShoppingMethodPdf();
+                }}
+              >
+                CREATE PROJECT
+              </button>
+            ) : (
+              <button
+                type="submit"
+                className="rounded-md bg-[#961C1E] h-14 w-30 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-[#7A1517] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
+                onClick={(e) => {
+                  handleFormSubmit(e);
+                  handleGenerateDirectPurchasingPdf();
+                }}
+              >
+                CREATE PROJECT
+              </button>
+            )}
           </div>
         </div>
-      </div>
-
-      <div className="mt-6 flex items-center justify-end gap-x-6 mr-40 mb-10">
-        <Link to="">
-          <button
-            type="button"
-            className="rounded-md h-14 w-30 bg-pink-500 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-red-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
-          >
-            CLEAR FORM
-          </button>
-        </Link>
-        {biddingType === "Shopping Method" ? (
-          <button
-            type="submit"
-            className="rounded-md bg-blue-600 h-14 w-30 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-green-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
-            onClick={(e) => {
-              handleFormSubmit(e);
-              handleGenerateShoppingMethodPdf();
-            }}
-          >
-            CREATE PROJECT
-          </button>
-        ) : (
-          <button
-            type="submit"
-            className="rounded-md bg-blue-600 h-14 w-30 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-green-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
-            onClick={(e) => {
-              handleFormSubmit(e);
-              handleGenerateDirectPurchasingPdf();
-            }}
-          >
-            CREATE PROJECT
-          </button>
-        )}
-      </div>
-    </form>
+      </form>
+    </div>
   );
 }

@@ -113,11 +113,11 @@ const UserTypeNavbar = ({ userType, onLogout }) => {
 
   return (
     <aside className="fixed top-4 left-4 h-[calc(100vh-2rem)] w-80 bg-[#961C1E] shadow-2xl z-40 flex flex-col items-center pt-6 rounded-2xl">
-      <div className="flex justify-center items-center w-full mb-16">
+      <div className="flex justify-center items-center w-full mt-6 mb-12">
         <img
           src={logo}
           alt="Logo"
-          className="w-[140px] h-[80px] object-contain"
+          className="w-[170px] h-[80px] object-contain"
         />
       </div>
 

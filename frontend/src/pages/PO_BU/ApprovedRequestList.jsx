@@ -6,20 +6,18 @@ import UserTypeNavbar from "../../components/UserTypeNavbar";
 import Breadcrumb from "../../components/Breadcrumb";
 import DefaultPagination from "../../components/DefaultPagination";
 
-const ApprovedRequestList = () => {
+export default function ApprovedRequestList() {
   const [loading, setLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
-  const [searchOption, setSearchOption] = useState("requestId");
   const [requests, setRequests] = useState([]);
-  const [currentPage, setCurrentPage] = useState(1); // State to manage current page
-  const itemsPerPage = 5; // Number of items per page
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 5;
 
   useEffect(() => {
     setLoading(true);
     axios
       .get("http://localhost:8000/procReqest/viewRequests")
       .then((response) => {
-        // Filter requests to display only approved or bid opening ones
         const relevantRequests = response.data.filter(
           (request) =>
             request.status === "Approved" ||
@@ -35,183 +33,160 @@ const ApprovedRequestList = () => {
       });
   }, []);
 
-  const handleSearchChange = (e) => {
-    setSearchQuery(e.target.value);
-  };
-
-  const handleSearchOptionChange = (e) => {
-    setSearchOption(e.target.value);
-  };
-
   const filteredRequests = requests.filter((request) => {
-    const searchValue = request[searchOption];
     return (
-      searchValue &&
-      searchValue.toLowerCase().includes(searchQuery.toLowerCase())
+      request.requestId &&
+      request.requestId.toLowerCase().includes(searchQuery.toLowerCase())
     );
   });
 
-  // Calculate index of the last item to display on the current page
   const indexOfLastItem = currentPage * itemsPerPage;
-  // Calculate index of the first item to display on the current page
   const indexOfFirstItem = indexOfLastItem - itemsPerPage;
-
-  // Slice the array of filtered requests to display only the items for the current page
-  const currentItems = filteredRequests.slice(
-    indexOfFirstItem,
-    indexOfLastItem
-  );
+  const currentItems = filteredRequests.slice(indexOfFirstItem, indexOfLastItem);
 
   const handlePageChange = (pageNumber) => {
     setCurrentPage(pageNumber);
   };
 
   return (
-    <div className="p-4">
+    <div className="min-h-screen bg-gray-50 p-6">
       <UserTypeNavbar userType="procurement Officer" />
-      <Breadcrumb
-        crumbs={[
-          { label: "Home", link: "/PO_BuHome/:id" },
-          { label: "Approved Requests", link: "/ApprovedRequestList" },
-        ]}
-        selected={(crumb) => console.log(`Selected: ${crumb.label}`)}
-      />
-      <div className="rounded-t mb-0 px-4 py-3 border-0">
-        <div className="flex flex-wrap items-center"></div>
-        <div className="relative w-full px-4 max-w-full flex-grow flex-1">
-          <h3 className="font-semibold  text-blueGray-700">
-            <i className="fa-solid fa-file-lines"></i> Approved Requests List
-          </h3>
+
+      <div className="mb-6">
+        <Breadcrumb
+          crumbs={[
+            { label: "Home", link: "/PO_BuHome/:id" },
+            { label: "Approved Requests", link: "/ApprovedRequestList" },
+          ]}
+          selected={(crumb) => console.log(`Selected: ${crumb.label}`)}
+        />
+      </div>
+
+      <div className="bg-white rounded-lg shadow-sm border border-gray-200">
+        {/* Header */}
+        <div className="border-b border-gray-200 p-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-2xl font-semibold text-gray-900">
+                Approved Requests
+              </h1>
+              <p className="text-gray-600 mt-1">
+                List of all approved and bid opening requests
+              </p>
+            </div>
+            <div className="flex items-center space-x-3">
+              <span className="text-sm text-gray-500">
+                Total: {filteredRequests.length} requests
+              </span>
+            </div>
+          </div>
         </div>
-        <div className="relative w-full px-4 max-w-full flex-grow flex-1">
-          <div className="flex justify-end gap-4">
-            <div className="relative flex items-center">
-              <div className="relative">
-                <button
-                  type="submit"
-                  className="absolute left-0 top-0 flex items-center justify-center h-full px-3"
-                >
-                  <svg
-                    className="text-gray-600 h-4 w-4 fill-current mr-2"
-                    xmlns="http://www.w3.org/2000/svg"
-                    xmlnsXlink="http://www.w3.org/1999/xlink"
-                    version="1.1"
-                    id="Capa_1"
-                    x="0px"
-                    y="0px"
-                    viewBox="0 0 56.966 56.966"
-                    style={{ enableBackground: "new 0 0 56.966 56.966" }}
-                    xmlSpace="preserve"
-                    width="512px"
-                    height="512px"
-                  >
-                    <path d="M55.146,51.887L41.588,37.786c3.486-4.144,5.396-9.358,5.396-14.786c0-12.682-10.318-23-23-23s-23,10.318-23,23  s10.318,23,23,23c4.761,0,9.298-1.436,13.177-4.162l13.661,14.208c0.571,0.593,1.339,0.92,2.162,0.92  c0.779,0,1.518-0.297,2.079-0.837C56.255,54.982,56.293,53.08,55.146,51.887z M23.984,6c9.374,0,17,7.626,17,17s-7.626,17-17,17  s-17-7.626-17-17S14.61,6,23.984,6z" />
-                  </svg>
-                </button>
-              </div>
+
+        {/* Search */}
+        <div className="p-6 border-b border-gray-200">
+          <div className="flex items-center space-x-4">
+            <div className="relative flex-1 max-w-md">
+              <svg
+                className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth={2}
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M21 21l-4.35-4.35m0 0A7.5 7.5 0 104.5 4.5a7.5 7.5 0 0012.15 12.15z"
+                />
+              </svg>
               <input
-                className="border-2 border-gray-300 bg-white h-10 px-10 pr-16 rounded-lg text-sm focus:outline-none flex-grow"
+                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 type="search"
-                name="search"
-                placeholder="Search by File Name"
-                onChange={handleSearchChange}
+                placeholder="Search by Request ID..."
+                onChange={(e) => setSearchQuery(e.target.value)}
               />
             </div>
           </div>
         </div>
-      </div>
 
-      <div className="reservation-list-container">
-        <div className="-my-2 py-2 overflow-x-auto sm:-mx-6 sm:px-6 lg:-mx-8 pr-10 lg:px-8">
-          <div className="align-middle inline-block min-w-full overflow-hidden bg-white shadow-dashboard px-8 pt-3 rounded-bl-lg rounded-br-lg">
-            <table className="min-w-full">
-              <thead className="text-xs text-white uppercase bg-NeutralBlack dark:text-gray-400">
-                <tr>
-                  <th className="px-6 py-3 border-b-2 border-gray-300 text-left text-sm leading-4 text-white tracking-wider">
-                    Request ID
-                  </th>
-                  <th
-                    className="px-6 py-3 border-b-2 border-gray-300 text-left text-sm leading-4 text-white tracking-wider"
-                    style={{ width: "500px" }}
-                  >
-                    Department
-                  </th>
-                  <th className="px-6 py-3 border-b-2 border-gray-300 text-left text-sm leading-4 text-white tracking-wider">
-                    Purpose
-                  </th>
-                  <th className="px-6 py-3 border-b-2 border-gray-300 text-left text-sm leading-4 text-white tracking-wider">
-                    Status
-                  </th>
-                  <th className="px-6 py-3 border-b-2 border-gray-300 text-left text-sm leading-4 text-white tracking-wider">
-                    Actions
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="bg-white">
-                {currentItems.map((request) => (
-                  <tr key={request._id} className="reservation-row">
-                    <td className="px-6 py-2 whitespace-no-wrap border-b border-gray-500">
-                      <div className="flex items-center">
-                        <div>
-                          <div className="text-sm leading-5 text-gray-900">
-                            {request.requestId}
-                          </div>
-                        </div>
-                      </div>
-                    </td>
-                    <td className="px-6 py-2 whitespace-no-wrap border-b border-gray-500">
-                      <div className="flex items-center">
-                        <div>
-                          <div className="text-sm leading-5 text-gray-900">
-                            {request.department}
-                          </div>
-                        </div>
-                      </div>
-                    </td>
-                    <td className="px-6 py-2 whitespace-no-wrap border-b border-gray-500">
-                      <div className="flex items-center">
-                        <div>
-                          <div className="text-sm leading-5 text-gray-900">
-                            {request.purpose}
-                          </div>
-                        </div>
-                      </div>
-                    </td>
-                    <td className="px-6 py-2 whitespace-no-wrap border-b border-gray-500">
-                      <button
-                        className={`py-1 px-2 rounded text-sm ${
-                          request.status === "Approved"
-                            ? "bg-green-300 text-green-500"
-                            : request.status === "Bid Opening"
-                            ? "text-yellow-500 bg-yellow-100"
-                            : "bg-pink-200 text-pink-500"
-                        }`}
-                      >
-                        {request.status}
+        {/* Table */}
+        <div className="overflow-x-auto">
+          <table className="w-full">
+            <thead className="bg-gray-100 border-b border-gray-200">
+              <tr>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">
+                  Request ID
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">
+                  Department
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">
+                  Purpose
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">
+                  Status
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">
+                  Actions
+                </th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-200">
+              {currentItems.map((request, idx) => (
+                <tr key={request._id} className="hover:bg-gray-50">
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                    {request.requestId}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                    {request.department}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                    {request.purpose}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <span
+                      className={`inline-flex px-2 py-1 text-xs font-medium rounded-md ${
+                        request.status === "Approved"
+                          ? "bg-green-100 text-green-800"
+                          : request.status === "Bid Opening"
+                          ? "bg-yellow-100 text-yellow-800"
+                          : "bg-pink-100 text-pink-800"
+                      }`}
+                    >
+                      {request.status}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                    <Link to={`/ViewApprovedForm/${request.requestId}`}>
+                      <button className="p-2 text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded-md transition-colors">
+                        <MdPreview className="text-2xl" />
                       </button>
-                    </td>
-                    <td className="px-6 py-2 whitespace-no-wrap border-b border-gray-500">
-                      <Link to={`/ViewApprovedForm/${request.requestId}`}>
-                        <MdPreview className="text-2xl text-blue-800" />
-                      </Link>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-            <div className="sm:flex-1 sm:flex sm:items-center sm:justify-between mt-4 work-sans">
-              <DefaultPagination
-                itemsPerPage={itemsPerPage}
-                totalItems={filteredRequests.length}
-                onPageChange={handlePageChange}
-                currentPage={currentPage}
-              />
+                    </Link>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+
+        {/* Footer */}
+        <div className="bg-gray-50 px-6 py-4 border-t border-gray-200">
+          <div className="flex items-center justify-between">
+            <div className="text-sm text-gray-700">
+              Showing{" "}
+              {indexOfFirstItem + 1} to{" "}
+              {Math.min(indexOfLastItem, filteredRequests.length)} of{" "}
+              {filteredRequests.length} requests
             </div>
+            <DefaultPagination
+              itemsPerPage={itemsPerPage}
+              totalItems={filteredRequests.length}
+              onPageChange={handlePageChange}
+              currentPage={currentPage}
+            />
           </div>
         </div>
       </div>
     </div>
   );
-};
-
-export default ApprovedRequestList;
+}
