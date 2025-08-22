@@ -28,7 +28,7 @@ const DeleteSupplier = () => {
   const handleDeleteVendor = () => {
     setLoading(true);
     axios
-      .delete(`http://localhost:8000/supplyer/delete/${id}`)
+      .delete(`http://localhost:8000/supplyer/delete/${id}`, { withCredentials: true })
       .then(() => {
         setLoading(false);
         enqueueSnackbar("Supplier deleted", { variant: "success" });

@@ -18,18 +18,15 @@ export default function PreviewVendorDetails() {
   const { id } = useParams();
   const { enqueueSnackbar } = useSnackbar();
 
-  const handleOutsideClick = () => {
-    setOpen(false);
-    navigate("/allvendors");
-  };
-
   const [supplyer, setSupplyer] = useState({});
 
+  // Reset modal open state whenever id changes
   useEffect(() => {
+    setOpen(true); // <-- This line ensures modal opens every time id changes
     const getSupplyer = async () => {
       try {
         const response = await axios.get(
-          `http://localhost:8000/supplyer/preview-supplyer/${id}`
+          `http://localhost:8000/supplyer/preview-supplyer/${id}`, { withCredentials: true }
         );
         console.log("Supllyer Data:", response.data);
         setSupplyer(response.data);
@@ -42,7 +39,7 @@ export default function PreviewVendorDetails() {
   }, [id]);
 
   const handleClose = () => {
-    // Navigate to the "alluser" page
+    setOpen(false);
     navigate("/allvendors");
   };
 
@@ -54,8 +51,8 @@ export default function PreviewVendorDetails() {
           as="div"
           className="fixed inset-0 z-10 overflow-y-auto"
           initialFocus={cancelButtonRef}
-          onClose={() => handleOutsideClick()} // Use onClose to handle both closing and navigating
-          static // Add the static prop here
+          onClose={handleClose}
+          static
         >
           <Transition.Child
             as={Fragment}
@@ -81,88 +78,87 @@ export default function PreviewVendorDetails() {
                 leaveTo="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
               >
                 <Dialog.Panel>
-                  <div class="min-h-screen flex items-center justify-center px-4 mt-28">
-                    <div class="max-w-4xl  bg-white w-full rounded-lg shadow-xl     mt-11 p-12">
-                      <div class="p-2 border-b">
-                        <h1 class="text-2xl ">VENDOR DETAILS</h1>
-                        <h3 class="text-lg text-[#404040]">
+                  <div className="min-h-screen flex items-center justify-center px-4 mt-28">
+                    <div className="max-w-4xl bg-white w-full rounded-lg shadow-xl mt-11 p-12">
+                      <div className="p-2 border-b">
+                        <h1 className="text-2xl">VENDOR DETAILS</h1>
+                        <h3 className="text-lg text-[#404040]">
                           Registered Vendor Details.
                         </h3>
                       </div>
                       <div className="mt-4">
-                        <div class="md:grid md:grid-cols-2 hover:bg-gray-50 md:space-y-0 space-y-1 p-2 border-b">
-                          <h6 class="text-gray-600">User Name</h6>
-                          <p> {supplyer.username}</p>
+                        <div className="md:grid md:grid-cols-2 hover:bg-gray-50 md:space-y-0 space-y-1 p-2 border-b">
+                          <h6 className="text-gray-600">User Name</h6>
+                          <div>{supplyer.username}</div>
                         </div>
-                        <div class="md:grid md:grid-cols-2 hover:bg-gray-50 md:space-y-0 space-y-1 p-2 border-b">
-                          <h6 class="text-gray-600">Supplier ID</h6>
-                          <p>{supplyer.supplierId}</p>
+                        <div className="md:grid md:grid-cols-2 hover:bg-gray-50 md:space-y-0 space-y-1 p-2 border-b">
+                          <h6 className="text-gray-600">Supplier ID</h6>
+                          <div>{supplyer.supplierId}</div>
                         </div>
-                        <div class="md:grid md:grid-cols-2 hover:bg-gray-50 md:space-y-0 space-y-1 p-2 border-b">
-                          <h6 class="text-gray-600">Supplier Name</h6>
-                          <p>{supplyer.supplierName}</p>
+                        <div className="md:grid md:grid-cols-2 hover:bg-gray-50 md:space-y-0 space-y-1 p-2 border-b">
+                          <h6 className="text-gray-600">Supplier Name</h6>
+                          <div>{supplyer.supplierName}</div>
                         </div>
-                        <div class="md:grid md:grid-cols-2 hover:bg-gray-50 md:space-y-0 space-y-1 p-2 border-b">
-                          <h6 class="text-gray-600">Address</h6>
-                          <p>{supplyer.address}</p>
+                        <div className="md:grid md:grid-cols-2 hover:bg-gray-50 md:space-y-0 space-y-1 p-2 border-b">
+                          <h6 className="text-gray-600">Address</h6>
+                          <div>{supplyer.address}</div>
                         </div>
-                        <div class="md:grid md:grid-cols-2 hover:bg-gray-50 md:space-y-0 space-y-1 p-2 border-b">
-                          <h6 class="text-gray-600">Contact Officer</h6>
-                          <p>{supplyer.contactOfficer}</p>
+                        <div className="md:grid md:grid-cols-2 hover:bg-gray-50 md:space-y-0 space-y-1 p-2 border-b">
+                          <h6 className="text-gray-600">Contact Officer</h6>
+                          <div>{supplyer.contactOfficer}</div>
                         </div>
-                        <div class="md:grid md:grid-cols-2 hover:bg-gray-50 md:space-y-0 space-y-1 p-2 border-b">
-                          <h6 class="text-gray-600">Contact Number</h6>
-                          <p>
+                        <div className="md:grid md:grid-cols-2 hover:bg-gray-50 md:space-y-0 space-y-1 p-2 border-b">
+                          <h6 className="text-gray-600">Contact Number</h6>
+                          <div>
                             {supplyer.contactNumber &&
                               Array.isArray(supplyer.contactNumber) &&
                               supplyer.contactNumber.map((number, index) => (
                                 <div
                                   key={index}
-                                  class="text-sm leading-5 text-gray-800"
+                                  className="text-sm leading-5 text-gray-800"
                                 >
-                                  <h6>{number}</h6>
+                                  {number}
                                 </div>
                               ))}
-                          </p>
+                          </div>
                         </div>
-                        <div class="md:grid md:grid-cols-2 hover:bg-gray-50 md:space-y-0 space-y-1 p-2 border-b">
-                          <h6 class="text-gray-600">Contact Emails</h6>
-                          <p>
+                        <div className="md:grid md:grid-cols-2 hover:bg-gray-50 md:space-y-0 space-y-1 p-2 border-b">
+                          <h6 className="text-gray-600">Contact Emails</h6>
+                          <div>
                             {supplyer.email &&
                               Array.isArray(supplyer.email) &&
                               supplyer.email.map((email, index) => (
                                 <div
                                   key={index}
-                                  class="text-sm leading-5 text-gray-800"
+                                  className="text-sm leading-5 text-gray-800"
                                 >
-                                  <h6>{email}</h6>
+                                  {email}
                                 </div>
                               ))}
-                          </p>
+                          </div>
                         </div>
-                        <div class="md:grid md:grid-cols-2 hover:bg-gray-50 md:space-y-0 space-y-1 p-2 border-b">
-                          <h6 class="text-gray-600">Fax Numbers</h6>
-                          <p>
-                            {" "}
-                            {supplyer.faxNumber1}, {supplyer.faxNumber2}{" "}
-                          </p>
+                        <div className="md:grid md:grid-cols-2 hover:bg-gray-50 md:space-y-0 space-y-1 p-2 border-b">
+                          <h6 className="text-gray-600">Fax Numbers</h6>
+                          <div>
+                            {supplyer.faxNumber1}, {supplyer.faxNumber2}
+                          </div>
                         </div>
-                        <div class="md:grid md:grid-cols-2 hover:bg-gray-50 md:space-y-0 space-y-1 p-2 border-b">
-                          <h6 class="text-gray-600">Business Type</h6>
-                          <p> {supplyer.typeofBusiness}</p>
+                        <div className="md:grid md:grid-cols-2 hover:bg-gray-50 md:space-y-0 space-y-1 p-2 border-b">
+                          <h6 className="text-gray-600">Business Type</h6>
+                          <div>{supplyer.typeofBusiness}</div>
                         </div>
-                        <div class="md:grid md:grid-cols-2 hover:bg-gray-50 md:space-y-0 space-y-1 p-2 border-b">
-                          <h6 class="text-gray-600">
+                        <div className="md:grid md:grid-cols-2 hover:bg-gray-50 md:space-y-0 space-y-1 p-2 border-b">
+                          <h6 className="text-gray-600">
                             Class of Assets Supplies
                           </h6>
-                          <p> {supplyer.classOfAssets}</p>
+                          <div>{supplyer.classOfAssets}</div>
                         </div>
 
                         <div className="flex gap-2 mt-4 justify-end">
                           <Button
                             variant="outlined"
-                            class="rounded-md bg-[#961C1E] h-12 w-30 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-[#761C1D] focus-visible:outline "
-                            onClick={() => setOpen(false)}
+                            className="rounded-md bg-[#961C1E] h-12 w-30 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-[#761C1D] focus-visible:outline"
+                            onClick={handleClose}
                             ref={cancelButtonRef}
                           >
                             CLOSE
@@ -172,7 +168,6 @@ export default function PreviewVendorDetails() {
                     </div>
                   </div>
                 </Dialog.Panel>
-                {/* Render the PreviewUserCom component here */}
               </Transition.Child>
             </div>
           </div>
