@@ -6,7 +6,7 @@ import { Button } from "flowbite-react";
 import { useNavigate, useParams } from "react-router-dom";
 import axios from "axios";
 import { useSnackbar } from "notistack";
-import ApprovalList from "./ApprovalList";
+import ApprovalList from "./ApprovalList_new";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 

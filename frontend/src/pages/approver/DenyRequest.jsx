@@ -9,7 +9,7 @@ import {
 } from "@material-tailwind/react";
 import { Button, Textarea } from "flowbite-react";
 import { useNavigate, useParams } from "react-router-dom";
-import ApprovalList from "./ApprovalList";
+import ApprovalList from "./ApprovalList_new";
 import axios from "axios";
 import { useSnackbar } from "notistack";
 import { toast } from "react-toastify";

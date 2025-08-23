@@ -1,7 +1,6 @@
 // Procument-Managemant-System\frontend\src\App.js
 import React, { useState, useContext } from "react";
 import { Routes, Route, useLocation, Navigate } from "react-router-dom";
-import Home from "./pages/Home";
 import LoginPage from "./pages/LoginPage";
 import reportWebVitals from "./reportWebVitals";
 import AdminHome from "./pages/admin/AdminHome.jsx";
@@ -24,7 +23,7 @@ import UploadNotice from "./pages/admin/notices/UploadNotice.jsx";
 import ViewNotice from "./pages/admin/notices/viewNoticePdf.jsx";
 import ManageNotices from "./pages/admin/notices/ManageNotices.jsx";
 import AddSupplier from "./pages/admin/vendors/AddSupplier.jsx";
-import AddItems from "./pages/admin/items/AddItems.jsx";
+import AddItems from "./pages/admin/items/Additems.jsx";
 import UserList from "./pages/admin/users/UserList.jsx";
 import VendorDetails from "./pages/admin/vendors/VendorDetails.jsx";
 import ItemDetails from "./pages/admin/items/ItemDetails.jsx";
@@ -39,7 +38,7 @@ import PreviewUserDetails from "./pages/admin/users/PreviewUserDetails.jsx";
 import PreviewVendorDetails from "./pages/admin/vendors/PreviewVendorDetails.jsx";
 import PreviewItemDetails from "./pages/admin/items/PreviewItemDetails.jsx";
 import ProgressTracker from "./pages/department/ProgressTracker.jsx";
-import ApprovalList from "./pages/approver/ApprovalList.jsx";
+import ApprovalList from "./pages/approver/ApprovalList_new.jsx";
 import DenyRequest from "./pages/approver/DenyRequest.jsx";
 import EditApproval from "./pages/approver/UpdateApproval.jsx";
 import ApproverHome from "./pages/approver/ApproverHome.jsx";
@@ -86,9 +85,18 @@ import UserTypeNavbar from "./components/UserTypeNavbar";
 const App = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { isAuthenticated, loggedInUser, handleSignOut, handleSignIn } = useAuth();
+  const { isAuthenticated, loggedInUser, handleSignOut, handleSignIn, loading } = useAuth();
 
   const isLoginPage = location.pathname === "/loginpage";
+
+  // Show loading while checking authentication state
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-lg">Loading...</div>
+      </div>
+    );
+  }
 
 
   const renderNavbar = () => {
@@ -155,14 +163,30 @@ const App = () => {
           <Route path="/loginpage" element={isAuthenticated ? <Navigate to="/" /> : <LoginPage />} /> */}
 
         <Routes>
+          {/* Default route - Always redirect to login page */}
           <Route
             path="/"
-            element={
-              isAuthenticated ? <Home /> : <Navigate to="/loginpage" replace />
-            }
+            element={<Navigate to="/loginpage" replace />}
           />
+          
+          {/* Login page route */}
+          <Route 
+            path="/loginpage" 
+            element={
+              isAuthenticated ? (
+                // Redirect authenticated users based on their role
+                loggedInUser?.role === "admin" ? <Navigate to={`/adminhome/${loggedInUser.id}`} replace /> :
+                loggedInUser?.role === "department" ? <Navigate to={`/department/${loggedInUser.department}/${loggedInUser.id}`} replace /> :
+                loggedInUser?.role === "procurement Officer" ? <Navigate to={`/PO_BuHome/${loggedInUser.id}`} replace /> :
+                loggedInUser?.role === "approver" ? <Navigate to={`/approver/${loggedInUser.id}`} replace /> :
+                <Navigate to="/adminhome" replace />
+              ) : (
+                <LoginPage />
+              )
+            } 
+          />
+          
           <Route path="/viewVendors" element={<ViewVendorDetails />} />
-          <Route path="/loginpage" element={isAuthenticated ? <Navigate to="/" /> : <LoginPage />} />
 
 
           <Route path="/adminhome/:id" element={<AdminHome />} />
@@ -245,7 +269,7 @@ const App = () => {
 
 
           <Route path="/approver/:id" element={<ApproverHome />} />
-          <Route path="/ViewForApproval" element={<ApprovalList />} />
+          <Route path="/ViewForApproval" element={<ApprovalList userType={loggedInUser?.role} />} />
           <Route path="/DenyApproval/:id" element={<DenyRequest />} />
           <Route path="/ApprovalForm/:id" element={<EditApproval />} />
           <Route

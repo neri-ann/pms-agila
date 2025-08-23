@@ -3,6 +3,7 @@ import axios from "axios";
 import { Link, useNavigate } from "react-router-dom";
 import { AddItemCard } from "./AddItemCard ";
 import { TrashIcon, PlusIcon } from "@heroicons/react/24/outline";
+import UserTypeNavbar from "../../components/UserTypeNavbar";
 import Breadcrumb from "../../components/Breadcrumb";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
@@ -222,11 +223,13 @@ const ReqForm = ({ forms }) => {
 
   return (
     <div className="min-h-screen bg-gray-50 p-6">
+      <UserTypeNavbar userType="department" />
+
       <div className="mb-6">
         <Breadcrumb
           crumbs={[
             { label: "Home", link: "/Home/:id" },
-            { label: "Purchase Requisition Form", link: "/reqform" },
+            { label: "Purchase Requisition Form", link: "/reqForm" },
           ]}
           selected={(crumb) => console.log(`Selected: ${crumb.label}`)}
         />

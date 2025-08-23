@@ -10,15 +10,28 @@ const { PDFDocument, rgb } = require("pdf-lib");
 // Generate Request ID
 exports.generateRequestId = async (req, res) => {
   try {
-    const latestRequest = await procReqest.findOne(
-      {},
-      {},
-      { sort: { requestId: -1 } }
-    );
-    const newRequestId = latestRequest
-      ? "REQ" +
-        String(Number(latestRequest.requestId.slice(3)) + 1).padStart(3, "0")
-      : "REQ001";
+    // Get all existing requestIds and find the highest number
+    const allRequests = await procReqest.find({}, { requestId: 1 }).sort({ requestId: -1 });
+    
+    let maxNumber = 0;
+    
+    // Parse all existing requestIds to find the highest number
+    allRequests.forEach(request => {
+      if (request.requestId && request.requestId.startsWith('REQ')) {
+        const numericPart = request.requestId.slice(3);
+        const number = parseInt(numericPart, 10);
+        if (!isNaN(number) && number > maxNumber) {
+          maxNumber = number;
+        }
+      }
+    });
+
+    // Generate the next unique requestId
+    const nextNumber = maxNumber + 1;
+    const newRequestId = "REQ" + String(nextNumber).padStart(3, "0");
+    
+    console.log("Generated unique requestId:", newRequestId);
+    console.log("Based on max existing number:", maxNumber);
 
     // Creating an instance of the model
     const newRequestInstance = new procReqest({
@@ -31,6 +44,7 @@ exports.generateRequestId = async (req, res) => {
     // Respond with the generated ID and the saved document
     res.json({ requestId: savedRequest.requestId, savedRequest });
   } catch (error) {
+    console.error("Error in generateRequestId:", error);
     res.status(500).json({ error: error.message });
   }
 };

@@ -15,9 +15,11 @@ import {
   FiCheckSquare,
   FiClipboard,
   FiMail,
+  FiEdit3,
+  FiActivity,
+  FiList,
 } from "react-icons/fi";
 import "../styles/Navbar.css";
-import "../pages/Home";
 import logo from "../assets/agilalogo2.png";
 
 const UserTypeNavbar = ({ userType, onLogout }) => {
@@ -30,6 +32,7 @@ const UserTypeNavbar = ({ userType, onLogout }) => {
     { link: "Manage Users", path: "/userList", icon: FiUsers },
     { link: "Manage Vendors", path: "/allvendors", icon: FiShoppingBag },
     { link: "Items", path: "/AllItem", icon: FiPackage },
+    { link: "Approver", path: "/ViewForApproval", icon: FiCheckSquare },
     { link: "Manage Guidance", path: "/ManageGuidance", icon: FiFileText },
     { link: "Manage Notices", path: "/ManageNotice", icon: FiBell },
     { link: "Budget & Plan", path: "/ManageBudget", icon: FiDollarSign },
@@ -37,23 +40,30 @@ const UserTypeNavbar = ({ userType, onLogout }) => {
   ];
 
   const DepartmentOptions = [
-    { link: "Purchase Requisition", path: `/reqform` },
-    { link: "Requisition Tracker", path: "/ProgressTrack" },
-    { link: "Request List", path: "/ViewForRequest" },
+    { link: "Purchase Requisition", path: `/reqform`, icon: FiEdit3 },
+    { link: "Requisition Tracker", path: "/ProgressTrack", icon: FiActivity },
+    { link: "Request List", path: "/ViewForRequest", icon: FiList },
   ];
 
   const procOfficerOptions = [
     { link: "Dashboard", path: "/procurementhome", icon: FiHome },
     { link: "Created Projects", path: "/projectList", icon: FiFolder },
-    { link: "Create New Project", path: "/ProjectCreationForm", icon: FiFolderPlus },
+    {
+      link: "Create New Project",
+      path: "/ProjectCreationForm",
+      icon: FiFolderPlus,
+    },
+    { link: "Purchase Requisition", path: `/reqform`, icon: FiEdit3 },
+    { link: "Requisition Tracker", path: "/ProgressTrack", icon: FiActivity },
+    { link: "Request List", path: "/ViewForRequest", icon: FiList },
     {
       link: "Approved Purchase Requisition List ",
       path: "/ApprovedRequestList",
       icon: FiCheckSquare,
     },
-    { link: "Bidding Documents", path: "/biddingDocuments", icon: FiFileText },
+    // { link: "Bidding Documents", path: "/biddingDocuments", icon: FiFileText },
     { link: "Vendors List", path: "/VendorsList", icon: FiUsers },
-    { link: "Invites Bids", path: "/InvitesBids", icon: FiMail },
+    // { link: "Invites Bids", path: "/InvitesBids", icon: FiMail },
   ];
 
   const TECofficerOptions = [
@@ -95,20 +105,37 @@ const UserTypeNavbar = ({ userType, onLogout }) => {
       : [];
 
   // Handle logout functionality
-  const handleLogout = () => {
+  const handleLogout = async () => {
     console.log("Logout button clicked");
     console.log("onLogout function:", onLogout);
-    
-    // Call the logout function from parent (App.js)
-    if (onLogout) {
-      console.log("Calling onLogout function");
-      onLogout();
-    } else {
-      console.log("onLogout function is not available");
+
+    try {
+      // Clear any stored authentication data
+      localStorage.removeItem('loggedInUser');
+      localStorage.removeItem('isAuthenticated');
+      
+      // Call the logout function from parent (App.js) if available
+      if (onLogout) {
+        console.log("Calling onLogout function");
+        await onLogout();
+      } else {
+        console.log("onLogout function is not available, proceeding with manual logout");
+      }
+      
+      // Force navigation to login page
+      navigate("/loginpage");
+      
+      // Additional fallback - force page reload to ensure clean state
+      setTimeout(() => {
+        window.location.href = "/loginpage";
+      }, 100);
+      
+    } catch (error) {
+      console.error("Error during logout:", error);
+      // Fallback logout
+      localStorage.clear();
+      window.location.href = "/loginpage";
     }
-    
-    // Alternative direct navigation if the context doesn't work
-    navigate("/loginpage");
   };
 
   return (

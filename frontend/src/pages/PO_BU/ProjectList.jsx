@@ -21,6 +21,8 @@ export default function ProjectList() {
     axios
       .get("http://localhost:8000/procProject/viewProjects")
       .then((response) => {
+        console.log("API Response:", response.data);
+        console.log("Number of projects:", response.data.length);
         setProjects(response.data);
         setLoading(false);
       })
@@ -31,7 +33,7 @@ export default function ProjectList() {
   }, []);
 
   const filteredProjects = projects.filter((project) =>
-    project.name?.toLowerCase().includes(searchTerm.toLowerCase())
+    project.projectId?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   const indexOfLastItem = currentPage * itemsPerPage;

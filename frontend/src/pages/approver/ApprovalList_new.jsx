@@ -1,36 +1,62 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import { 
   MagnifyingGlassIcon,
   EyeIcon,
-  ArrowDownTrayIcon,
+  CheckIcon,
+  XMarkIcon,
   PaperAirplaneIcon
 } from "@heroicons/react/24/outline";
-import { CheckCircleIcon, PlusIcon } from "@heroicons/react/24/solid";
-import { useAuth } from "../../context/AuthContext";
+import { CheckCircleIcon } from "@heroicons/react/24/solid";
+import UserTypeNavbar from "../../components/UserTypeNavbar";
 import Breadcrumb from "../../components/Breadcrumb";
 import DefaultPagination from "../../components/DefaultPagination";
+import { useAuth } from "../../context/AuthContext";
 import { ToastContainer } from "react-toastify";
 
 const TABLE_HEAD = [
   "No",
   "Request ID",
-  "Request Form Name",
-  "Sender",
   "Department",
+  "Requested Date",
   "Status",
+  "Priority",
   "Actions",
 ];
 
-const RequestList = ({
-  isAuthenticated,
-  handleSignOut,
-  username,
-  userId,
-  department,
-}) => {
+const ApprovalList = ({ userType: propUserType }) => {
+  const location = useLocation();
   const { loggedInUser } = useAuth();
+  
+  // Function to determine userType with fallback logic
+  const getUserType = () => {
+    // First try to get from AuthContext
+    if (loggedInUser?.role) {
+      return loggedInUser.role;
+    }
+    
+    // If userType is passed as prop, use it
+    if (propUserType) {
+      return propUserType;
+    }
+    
+    // Try to get user data from localStorage for page refresh
+    try {
+      const storedUser = localStorage.getItem('loggedInUser');
+      if (storedUser) {
+        const userData = JSON.parse(storedUser);
+        return userData.role || 'admin';
+      }
+    } catch (error) {
+      console.error('Error parsing stored user data:', error);
+    }
+    
+    // Default to admin for admin routes, procOfficer otherwise
+    return location.pathname === '/ViewForApproval' ? 'admin' : 'procOfficer';
+  };
+
+  const userType = getUserType();
   const [loading, setLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [requests, setRequests] = useState([]);
@@ -41,42 +67,30 @@ const RequestList = ({
     return (
       request.requestId.toLowerCase().includes(searchTerm.toLowerCase()) ||
       request.department.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      request.sendTo.toLowerCase().includes(searchTerm.toLowerCase())
+      request.status.toLowerCase().includes(searchTerm.toLowerCase())
     );
   });
 
   useEffect(() => {
-    if (loggedInUser) {
-      setLoading(true);
-      axios
-        .get(
-          `http://localhost:8000/procReqest/viewRequestsByDepartment/${loggedInUser.id}`
-        )
-        .then((response) => {
-          const requestsWithStatus = response.data.map((request) => ({
-            ...request,
-            sent: false,
-            status: request.status || 'Pending'
-          }));
-          setRequests(requestsWithStatus);
-          setLoading(false);
-        })
-        .catch((error) => {
-          console.error("Error fetching requests:", error);
-          setLoading(false);
-        });
-    }
-  }, [loggedInUser]);
+    fetchRequests();
+  }, []);
 
-  const generateFileName = (requestId) => {
-    return `Purchase_Requisition_${requestId}.pdf`;
-  };
-
-  const handleSendRequest = (requestId) => {
-    const updatedRequests = requests.map((req) =>
-      req.requestId === requestId ? { ...req, sent: true } : req
-    );
-    setRequests(updatedRequests);
+  const fetchRequests = () => {
+    setLoading(true);
+    axios
+      .get("http://localhost:8000/procReqest/viewRequests")
+      .then((response) => {
+        const requestsWithIsSent = response.data.map((request) => ({
+          ...request,
+          isSent: false,
+        }));
+        setRequests(requestsWithIsSent);
+        setLoading(false);
+      })
+      .catch((error) => {
+        console.error("Error fetching requests:", error);
+        setLoading(false);
+      });
   };
 
   const getStatusColor = (status) => {
@@ -87,11 +101,39 @@ const RequestList = ({
         return "bg-green-100 text-green-800";
       case "Rejected":
         return "bg-red-100 text-red-800";
-      case "Sent":
+      default:
         return "bg-blue-100 text-blue-800";
+    }
+  };
+
+  const getPriorityColor = (priority) => {
+    switch (priority) {
+      case "High":
+        return "bg-red-100 text-red-800";
+      case "Medium":
+        return "bg-yellow-100 text-yellow-800";
+      case "Low":
+        return "bg-green-100 text-green-800";
       default:
         return "bg-gray-100 text-gray-800";
     }
+  };
+
+  const handleSendRequest = (requestId) => {
+    axios
+      .post(`http://localhost:8000/sendApproval/${requestId}`)
+      .then((response) => {
+        setRequests((prevRequests) =>
+          prevRequests.map((request) =>
+            request.requestId === requestId
+              ? { ...request, isSent: true }
+              : request
+          )
+        );
+      })
+      .catch((error) => {
+        console.error("Error sending request:", error);
+      });
   };
 
   // Calculate pagination
@@ -105,12 +147,13 @@ const RequestList = ({
 
   return (
     <div className="min-h-screen bg-gray-50 p-6">
+      <UserTypeNavbar userType={userType} />
+      
       <div className="mb-6">
         <Breadcrumb
           crumbs={[
-            { label: "Home", link: "/Home/:id" },
-            { label: "Purchase Requisition", link: "/reqForm" },
-            { label: "Purchase Requisition List", link: "/ViewForRequest" },
+            { label: "Home", link: "/ApproverHome/:id" },
+            { label: "Pending Approval list", link: "/ViewForApproval" },
           ]}
           selected={(crumb) => console.log(`Selected: ${crumb.label}`)}
         />
@@ -121,17 +164,15 @@ const RequestList = ({
         <div className="border-b border-gray-200 p-6">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-2xl font-semibold text-gray-900">Request Management</h1>
-              <p className="text-gray-600 mt-1">Manage and track your procurement requests</p>
+              <h1 className="text-2xl font-semibold text-gray-900">Approval Management</h1>
+              <p className="text-gray-600 mt-1">Review and approve pending procurement requests</p>
             </div>
             <div className="flex items-center space-x-3">
               <span className="text-sm text-gray-500">Total: {requests.length} requests</span>
-              <Link to="/reqForm">
-                <button className="flex items-center space-x-2 bg-[#961C1E] hover:bg-[#761C1D] text-white px-4 py-2 rounded-md transition-colors duration-200">
-                  <PlusIcon className="h-4 w-4" />
-                  <span>New Request</span>
-                </button>
-              </Link>
+              <div className="flex items-center space-x-2">
+                <div className="w-3 h-3 bg-yellow-400 rounded-full"></div>
+                <span className="text-sm text-gray-600">Pending: {requests.filter(r => r.status === 'Pending').length}</span>
+              </div>
             </div>
           </div>
         </div>
@@ -185,55 +226,64 @@ const RequestList = ({
                     </td>
                     
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-900">{generateFileName(request.requestId)}</div>
-                    </td>
-                    
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-900">{request.sendTo}</div>
-                    </td>
-                    
-                    <td className="px-6 py-4 whitespace-nowrap">
                       <span className="inline-flex px-2 py-1 text-xs font-medium bg-gray-100 text-gray-800 rounded-md">
                         {request.department}
                       </span>
                     </td>
                     
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-md ${
-                        request.sent ? getStatusColor('Sent') : getStatusColor(request.status)
-                      }`}>
-                        {request.sent ? 'Sent' : request.status}
+                      <div className="text-sm text-gray-900">
+                        {new Date(request.date).toLocaleDateString()}
+                      </div>
+                    </td>
+                    
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-md ${getStatusColor(request.status)}`}>
+                        {request.status}
+                      </span>
+                    </td>
+                    
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-md ${getPriorityColor(request.priority || 'Medium')}`}>
+                        {request.priority || 'Medium'}
                       </span>
                     </td>
                       
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                       <div className="flex items-center space-x-2">
-                        <Link to={`/ViewFormRequest/${request.requestId}`}>
+                        <Link to={`/ViewForApproval/${request.requestId}`}>
                           <button className="p-2 text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded-md transition-colors">
                             <EyeIcon className="h-4 w-4" />
                           </button>
                         </Link>
                         
-                        <Link to={`/DownloadRequest/${request.requestId}`}>
+                        <Link to={`/ApprovalForm/${request.requestId}`}>
                           <button className="p-2 text-green-600 hover:text-green-800 hover:bg-green-50 rounded-md transition-colors">
-                            <ArrowDownTrayIcon className="h-4 w-4" />
+                            <CheckIcon className="h-4 w-4" />
                           </button>
                         </Link>
                         
-                        {request.sent ? (
-                          <button className="p-2 text-gray-400 cursor-not-allowed rounded-md">
-                            <CheckCircleIcon className="h-4 w-4" />
+                        <Link to={`/DenyApproval/${request.requestId}`}>
+                          <button className="p-2 text-red-600 hover:text-red-800 hover:bg-red-50 rounded-md transition-colors">
+                            <XMarkIcon className="h-4 w-4" />
                           </button>
-                        ) : (
-                          <Link to={`/SendRequest/${request.requestId}/${request.sendTo}`}>
-                            <button 
-                              onClick={() => handleSendRequest(request.requestId)}
-                              className="p-2 text-purple-600 hover:text-purple-800 hover:bg-purple-50 rounded-md transition-colors"
-                            >
-                              <PaperAirplaneIcon className="h-4 w-4" />
-                            </button>
-                          </Link>
-                        )}
+                        </Link>
+
+                        <button
+                          onClick={() => handleSendRequest(request.requestId)}
+                          disabled={request.isSent}
+                          className={`p-2 rounded-md transition-colors ${
+                            request.isSent
+                              ? 'text-gray-400 cursor-not-allowed'
+                              : 'text-purple-600 hover:text-purple-800 hover:bg-purple-50'
+                          }`}
+                        >
+                          {request.isSent ? (
+                            <CheckCircleIcon className="h-4 w-4" />
+                          ) : (
+                            <PaperAirplaneIcon className="h-4 w-4" />
+                          )}
+                        </button>
                       </div>
                     </td>
                   </tr>
@@ -259,4 +309,4 @@ const RequestList = ({
   );
 };
 
-export default RequestList;
+export default ApprovalList;
