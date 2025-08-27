@@ -10,14 +10,15 @@ import { PencilIcon, UserPlusIcon } from "@heroicons/react/24/solid";
 import Breadcrumb from "../../../components/Breadcrumb.jsx";
 import UserTypeNavbar from "../../../components/UserTypeNavbar.jsx";
 import DefaultPagination from "../../../components/DefaultPagination.js";
+import AddSupplierModal from "./AddSupplier.jsx";
 
 const TABLE_HEAD = [
   "No",
-  "Supplier ID",
+  // "Supplier ID",
   "Supplier Name",
   "Address",
   "Contact Officer",
-  "Fax Number",
+  // "Fax Number",
   "Contact Number",
   "Contact Email",
   "Type of Business",
@@ -102,10 +103,24 @@ export default function VendorDetails() {
   const [loading, setLoading] = useState(false);
 
   const [searchTerm, setSearchTerm] = useState("");
+  const [isAddSupplierOpen, setIsAddSupplierOpen] = useState(false);
 
-  const filteredVendors = vendors.filter((vendor) =>
-    vendor.supplierId.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredVendors = vendors.filter((vendor) => {
+    const term = searchTerm.toLowerCase();
+
+    return (
+      // vendor.supplierId?.toLowerCase().includes(term) ||
+      vendor.supplierName?.toLowerCase().includes(term) ||
+      vendor.address?.toLowerCase().includes(term) ||
+      vendor.contactOfficer?.toLowerCase().includes(term) ||
+      vendor.faxNumber1?.toLowerCase().includes(term) ||
+      vendor.faxNumber2?.toLowerCase().includes(term) ||
+      vendor.contactNumber?.some((num) => num.toLowerCase().includes(term)) ||
+      vendor.email?.some((email) => email.toLowerCase().includes(term)) ||
+      vendor.typeofBusiness?.toLowerCase().includes(term)
+    );
+  });
+
 
   const [searchQuery, setSearchQuery] = useState("");
   const [searchOption, setSearchOption] = useState("");
@@ -123,10 +138,20 @@ export default function VendorDetails() {
         setLoading(false);
       })
       .catch((error) => {
-        console.error("Error fetching supplyer:", error);
+        console.error("Error fetching suppliers:", error);
         setLoading(false);
       });
   }, []);
+
+  // refresh vendors after adding
+  const handleSupplierAdded = () => {
+    axios
+      .get("http://localhost:8000/supplyer/view-supplyers")
+      .then((response) => setVendors(response.data))
+      .catch((error) =>
+        console.error("Error refreshing suppliers:", error)
+      );
+  };
 
   const handleSearchChange = (e) => {
     setSearchQuery(e.target.value);
@@ -153,7 +178,7 @@ export default function VendorDetails() {
   return (
     <div className="min-h-screen bg-gray-50 p-6">
       <UserTypeNavbar userType="admin" />
-      
+
       <div className="mb-6">
         <Breadcrumb
           crumbs={[
@@ -174,13 +199,13 @@ export default function VendorDetails() {
             </div>
             <div className="flex items-center space-x-3">
               <span className="text-sm text-gray-500">Total: {vendors.length} suppliers</span>
-              <Link
-                to="/AddSupplier"
+              <button
+                onClick={() => setIsAddSupplierOpen(true)}
                 className="flex items-center space-x-2 bg-[#961C1E] hover:bg-[#761C1D] text-white px-4 py-2 rounded-md transition-colors duration-200"
               >
                 <UserPlusIcon className="h-4 w-4" />
                 <span>Add Supplier</span>
-              </Link>
+              </button>
             </div>
           </div>
         </div>
@@ -236,9 +261,6 @@ export default function VendorDetails() {
                       {indexOfFirstItem + index + 1}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      {supplier.supplierId}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                       {supplier.supplierName}
                     </td>
                     <td className="px-6 py-4 text-sm text-gray-900 max-w-xs truncate">
@@ -246,16 +268,6 @@ export default function VendorDetails() {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                       {supplier.contactOfficer}
-                    </td>
-                    <td className="px-6 py-4 text-sm text-gray-900">
-                      <div className="space-y-1">
-                        {supplier.faxNumber1 && (
-                          <div className="text-xs">{supplier.faxNumber1}</div>
-                        )}
-                        {supplier.faxNumber2 && (
-                          <div className="text-xs">{supplier.faxNumber2}</div>
-                        )}
-                      </div>
                     </td>
                     <td className="px-6 py-4 text-sm text-gray-900">
                       <div className="space-y-1">
@@ -271,9 +283,17 @@ export default function VendorDetails() {
                         ))}
                       </div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                    <td className="px-6 py-4 whitespace-nowrap">
                       <span className="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-gray-100 text-gray-800">
-                        {supplier.typeofBusiness}
+                        {supplier.typeofBusiness === "SoleImporter"
+                          ? "Sole Importer"
+                          : supplier.typeofBusiness === "SoleDistributor"
+                            ? "Sole Distributor"
+                            : supplier.typeofBusiness === "LocalAgent"
+                              ? "Local Agent"
+                              : supplier.typeofBusiness === "Contractors"
+                                ? "Contractors"
+                                : supplier.typeofBusiness}
                       </span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
@@ -317,6 +337,14 @@ export default function VendorDetails() {
           </div>
         </div>
       </div>
+
+      {/* Add Supplier Modal */}
+      <AddSupplierModal
+        isOpen={isAddSupplierOpen}
+        onClose={() => setIsAddSupplierOpen(false)}
+        onSupplierAdded={handleSupplierAdded}
+      />
+
     </div>
   );
 }

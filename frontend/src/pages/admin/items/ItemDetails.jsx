@@ -6,7 +6,8 @@ import Breadcrumb from "../../../components/Breadcrumb.jsx";
 import { Link } from "react-router-dom";
 import UserTypeNavbar from "../../../components/UserTypeNavbar.jsx";
 import DefaultPagination from "../../../components/DefaultPagination.js";
-
+import AddItemsModal from "./Additems";
+import UpdateItemsModal from "./updateItems"; // 1. Import at the top
 
 
 const TABLE_HEAD = [
@@ -56,6 +57,9 @@ export default function ItemDetails() {
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 5;
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [showUpdateModal, setShowUpdateModal] = useState(false); // 2. Modal state
+  const [selectedItemId, setSelectedItemId] = useState(null);
 
   const filteredVendors = items.filter((item) =>
     item.itemName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -63,11 +67,11 @@ export default function ItemDetails() {
     item.AssetsSubClass?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  // Fetch users data from your API endpoint
-  useEffect(() => {
+  // Fetch items function
+  const fetchItems = () => {
     setLoading(true);
     axios
-      .get("http://localhost:8000/item/view-item") // Update the API endpoint
+      .get("http://localhost:8000/item/view-item")
       .then((response) => {
         setItems(response.data);
         setLoading(false);
@@ -76,6 +80,10 @@ export default function ItemDetails() {
         console.error("Error fetching items:", error);
         setLoading(false);
       });
+  };
+
+  useEffect(() => {
+    fetchItems();
   }, []);
 
   // Calculate index of the last item to display on the current page
@@ -94,7 +102,7 @@ export default function ItemDetails() {
   return (
     <div className="min-h-screen bg-gray-50 p-6">
       <UserTypeNavbar userType="admin" />
-      
+
       <div className="mb-6">
         <Breadcrumb
           crumbs={[
@@ -115,13 +123,13 @@ export default function ItemDetails() {
             </div>
             <div className="flex items-center space-x-3">
               <span className="text-sm text-gray-500">Total: {items.length} items</span>
-              <Link
-                to="/AddItems"
-                className="flex items-center space-x-2 bg-[#961C1E] hover:bg-[#761C1D] text-white px-4 py-2 rounded-md transition-colors duration-200"
+              <button
+                onClick={() => setShowAddModal(true)}
+                className="flex items-center space-x-2 bg-[#961C1E] hover:bg-[#761C1D] text-white px-4 py-2 no-underline rounded-md transition-colors duration-200"
               >
                 <UserPlusIcon className="h-4 w-4" />
                 <span>Add Item</span>
-              </Link>
+              </button>
             </div>
           </div>
         </div>
@@ -159,7 +167,7 @@ export default function ItemDetails() {
                 ))}
               </tr>
             </thead>
-            
+
             <tbody className="divide-y divide-gray-200">
               {loading ? (
                 <tr>
@@ -179,24 +187,24 @@ export default function ItemDetails() {
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                       {indexOfFirstItem + index + 1}
                     </td>
-                    
+
                     <td className="px-6 py-4 whitespace-nowrap">
                       <span className="inline-flex px-2 py-1 text-xs font-medium bg-blue-100 text-blue-800 rounded-md">
                         {item.AssetsClass}
                       </span>
                     </td>
-                    
+
                     <td className="px-6 py-4 whitespace-nowrap">
                       <span className="inline-flex px-2 py-1 text-xs font-medium bg-green-100 text-green-800 rounded-md">
                         {item.AssetsSubClass}
                       </span>
                     </td>
-                    
+
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="text-sm font-medium text-gray-900">{item.itemName}</div>
                       <div className="text-xs text-gray-500">ITM-{String(indexOfFirstItem + index + 1).padStart(3, '0')}</div>
                     </td>
-                    
+
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                       <div className="flex items-center space-x-2">
                         <Link to={`/previewItemDetails/${item._id}`}>
@@ -204,13 +212,15 @@ export default function ItemDetails() {
                             <EyeIcon className="h-4 w-4" />
                           </button>
                         </Link>
-                        
-                        <Link to={`/updateItems/${item._id}`}>
-                          <button className="p-2 text-green-600 hover:text-green-800 hover:bg-green-50 rounded-md transition-colors">
-                            <PencilIcon className="h-4 w-4" />
-                          </button>
-                        </Link>
-                        
+                        <button
+                          className="p-2 text-green-600 hover:text-green-800 hover:bg-green-50 rounded-md transition-colors"
+                          onClick={() => {
+                            setSelectedItemId(item._id); // 3. Set selected item
+                            setShowUpdateModal(true);     // 3. Show modal
+                          }}
+                        >
+                          <PencilIcon className="h-4 w-4" />
+                        </button>
                         <Link to={`/deleteItems/${item._id}`}>
                           <button className="p-2 text-red-600 hover:text-red-800 hover:bg-red-50 rounded-md transition-colors">
                             <TrashIcon className="h-4 w-4" />
@@ -240,6 +250,19 @@ export default function ItemDetails() {
           </div>
         </div>
       </div>
+
+      <AddItemsModal
+        isOpen={showAddModal}
+        onClose={() => setShowAddModal(false)}
+        onItemAdded={fetchItems}
+      />
+
+      <UpdateItemsModal
+        isOpen={showUpdateModal}
+        onClose={() => setShowUpdateModal(false)}
+        onItemUpdated={fetchItems}
+        id={selectedItemId} // Pass the selected item ID as a prop
+      />
     </div>
   )
 }

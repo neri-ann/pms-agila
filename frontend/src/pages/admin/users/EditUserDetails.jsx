@@ -2,145 +2,165 @@ import React, { useState, useEffect } from "react";
 import { XMarkIcon } from "@heroicons/react/24/outline";
 import axios from "axios";
 import { toast } from "react-toastify";
- 
+
 export default function EditUserModal({ isOpen, onClose, onUserUpdated, userId }) {
 
+  const [role, setRole] = useState("");
+  const [email, setEmail] = useState("");
+  const [firstname, setFirstName] = useState("");
+  const [lastname, setLastName] = useState("");
+  const [employeeNumber, setEmpNo] = useState("");
+  const [department, setDepartment] = useState("");
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [validationErrors, setValidationErrors] = useState({});
+  // const roles = [
+  //   "admin",
+  //   "procurement Officer",
+  //   "Finance officers",
+  //   "department",
+  //   "approver",
+  //   "TECofficer",
+  // ];
+  const roles = [
+    { value: "admin", label: "Admin" },
+    { value: "procurement_officer", label: "Procurement Officer" },
+  ];
+  const departments = ["DCEE", "DEIE", "MENA", "MME", "IS", "NONE"];
 
-    const [role, setRole] = useState("");
-    const [email, setEmail] = useState("");
-    const [firstname, setFirstName] = useState("");
-    const [lastname, setLastName] = useState("");
-    const [employeeNumber, setEmpNo] = useState("");
-    const [department, setDepartment] = useState("");
-    const [username, setUsername] = useState("");
-    const [password, setPassword] = useState("");
-    const [loading, setLoading] = useState(false);
-    const [validationErrors, setValidationErrors] = useState({});
-    const roles = [
-      "admin",
-      "procurement Officer",
-      "Finance officers",
-      "department",
-      "approver",
-      "TECofficer",
-    ];
-    const departments = ["DCEE", "DEIE", "MENA", "MME", "IS", "NONE"];
+  useEffect(() => {
+    if (isOpen && userId) {
+      fetchUser();
+    }
+  }, [isOpen, userId]);
 
-    useEffect(() => {
-        if (isOpen && userId) {
-            fetchUser();
-        }
-    }, [isOpen, userId]);
+  const fetchUser = async () => {
+    setLoading(true);
+    try {
+      const response = await axios.get(`http://localhost:8000/user/preview-user/${userId}`);
+      const userData = response.data;
 
-    const fetchUser = async () => {
-        setLoading(true);
-        try {
-            const response = await axios.get(`http://localhost:8000/user/preview-user/${userId}`);
-            const userData = response.data;
-            
-            setRole(userData.role);
-            setEmail(userData.email);
-            setFirstName(userData.firstname);
-            setLastName(userData.lastname);
-            setPassword(userData.password);
-            setUsername(userData.username);
-            setDepartment(userData.department);
-            setEmpNo(userData.employeeNumber);
-            setLoading(false);
-        } catch (error) {
-            setLoading(false);
-            toast.error('An error occurred while fetching user data');
-            console.error(error);
-        }
+      setRole(userData.role);
+      setEmail(userData.email);
+      setFirstName(userData.firstname);
+      setLastName(userData.lastname);
+      setPassword(userData.password);
+      setUsername(userData.username);
+      setDepartment(userData.department);
+      setEmpNo(userData.employeeNumber);
+      setLoading(false);
+    } catch (error) {
+      setLoading(false);
+      toast.error('An error occurred while fetching user data');
+      console.error(error);
+    }
+  };
+
+  // Validate the form fields
+  const validateFields = () => {
+    let errors = {};
+    let isValid = true;
+
+    if (!role) {
+      errors.role = "Role is required";
+      isValid = false;
+    }
+    if (!department) {
+      errors.department = "Department is required";
+      isValid = false;
+    }
+    if (!firstname) {
+      errors.firstname = "First name is required";
+      isValid = false;
+    }
+    if (!lastname) {
+      errors.lastname = "Last name is required";
+      isValid = false;
+    }
+    if (!email) {
+      errors.email = "Email is required";
+      isValid = false;
+    } else if (!/\S+@\S+\.\S+/.test(email)) {
+      errors.email = "Email address is invalid";
+      isValid = false;
+    }
+    if (!employeeNumber) {
+      errors.employeeNumber = "Employee number is required";
+      isValid = false;
+    }
+    if (!username) {
+      errors.username = "Username is required";
+      isValid = false;
+    }
+    if (!password) {
+      errors.password = "Password is required";
+      isValid = false;
+    } else {
+      if (password.length < 8) {
+        errors.password = "Password must be at least 8 characters long";
+        isValid = false;
+      } else if (!/[A-Z]/.test(password)) {
+        errors.password = "Password must contain at least one uppercase letter";
+        isValid = false;
+      } else if (!/[a-z]/.test(password)) {
+        errors.password = "Password must contain at least one lowercase letter";
+        isValid = false;
+      } else if (!/[0-9]/.test(password)) {
+        errors.password = "Password must contain at least one number";
+        isValid = false;
+      } else if (!/[!@#$%^&*(),.?":{}|<>]/.test(password)) {
+        errors.password = "Password must contain at least one special character";
+        isValid = false;
+      }
+    }
+
+    setValidationErrors(errors);
+    return isValid;
+  };
+
+  function handleUpdateUsers(e) {
+    e.preventDefault();
+
+    // Validate fields before updating
+    if (!validateFields()) {
+      return;
+    }
+
+    const newUser = {
+      role,
+      email,
+      firstname,
+      lastname,
+      password,
+      username,
+      department,
+      employeeNumber,
     };
 
-    // Validate the form fields
-    const validateFields = () => {
-        let errors = {};
-        let isValid = true;
+    setLoading(true);
+    axios
+      .put(`http://localhost:8000/user/update/${userId}`, newUser)
+      .then(() => {
+        // toast.success('User account is updated successfully');
+        setLoading(false);
+        onUserUpdated(); // Callback to refresh user list
+        onClose(); // Close modal
+      })
+      .catch((error) => {
+        setLoading(false);
+        toast.error('Error updating user account');
+        console.error(error);
+      });
+  };
 
-        if (!role) {
-            errors.role = "Role is required";
-            isValid = false;
-        }
-        if (!department) {
-            errors.department = "Department is required";
-            isValid = false;
-        }
-        if (!firstname) {
-            errors.firstname = "First name is required";
-            isValid = false;
-        }
-        if (!lastname) {
-            errors.lastname = "Last name is required";
-            isValid = false;
-        }
-        if (!email) {
-            errors.email = "Email is required";
-            isValid = false;
-        } else if (!/\S+@\S+\.\S+/.test(email)) {
-            errors.email = "Email address is invalid";
-            isValid = false;
-        }
-        if (!employeeNumber) {
-            errors.employeeNumber = "Employee number is required";
-            isValid = false;
-        }
-        if (!username) {
-            errors.username = "Username is required";
-            isValid = false;
-        }
-        if (!password) {
-            errors.password = "Password is required";
-            isValid = false;
-        }
-
-        setValidationErrors(errors);
-        return isValid;
-    };
-
-    function handleUpdateUsers(e) {
-        e.preventDefault();
-        
-        // Validate fields before updating
-        if (!validateFields()) {
-            return;
-        }
-
-        const newUser = {
-            role,
-            email,
-            firstname,
-            lastname,
-            password,
-            username,
-            department,
-            employeeNumber,
-        };
-
-        setLoading(true);
-        axios
-            .put(`http://localhost:8000/user/update/${userId}`, newUser)
-            .then(() => {
-                toast.success('User account is updated successfully');
-                setLoading(false);
-                onUserUpdated(); // Callback to refresh user list
-                onClose(); // Close modal
-            })
-            .catch((error) => {
-                setLoading(false);
-                toast.error('Error updating user account');
-                console.error(error);
-            });
-    };
-
-    if (!isOpen) return null;
+  if (!isOpen) return null;
 
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       {/* Background overlay */}
-      <div 
+      <div
         className="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity"
         onClick={onClose}
       ></div>
@@ -179,9 +199,9 @@ export default function EditUserModal({ isOpen, onClose, onUserUpdated, userId }
                   }`}
                 >
                   <option value="">Update your role</option>
-                  {roles.map((type, index) => (
-                    <option key={index} value={type}>
-                      {type}
+                  {roles.map((roleOption, index) => (
+                    <option key={index} value={roleOption.value}>
+                      {roleOption.label}
                     </option>
                   ))}
                 </select>

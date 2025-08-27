@@ -9,8 +9,10 @@ import {
 import { PencilIcon, UserPlusIcon } from "@heroicons/react/24/solid";
 import Breadcrumb from "../../../components/Breadcrumb.jsx";
 import AddBudgetCard from "./AddBudgetCard";
+import UpdateBudget from "./UpdateBudget";
 import UserTypeNavbar from "../../../components/UserTypeNavbar.jsx";
 import DefaultPagination from "../../../components/DefaultPagination.js";
+import { toast } from "react-toastify";
 
 const TABLE_HEAD = [
   "No",
@@ -27,6 +29,8 @@ export default function ManageBudget() {
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [showAddBudgetCard, setShowAddBudgetCard] = useState(false);
+  const [showUpdateBudget, setShowUpdateBudget] = useState(false);
+  const [selectedBudgetId, setSelectedBudgetId] = useState(null);
   const itemsPerPage = 5;
 
   const filteredBudgets = budgets.filter(
@@ -36,7 +40,7 @@ export default function ManageBudget() {
       budget.department.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  useEffect(() => {
+  const fetchBudgets = () => {
     setLoading(true);
     axios
       .get("http://localhost:8000/budget/viewBudget")
@@ -48,6 +52,10 @@ export default function ManageBudget() {
         console.error("Error fetching budgets:", error);
         setLoading(false);
       });
+  };
+
+  useEffect(() => {
+    fetchBudgets();
   }, []);
 
   const handleSearchChange = (e) => {
@@ -60,8 +68,10 @@ export default function ManageBudget() {
   };
 
   const handleBudgetAdded = (newBudget) => {
-    setBudgets([...budgets, newBudget]);
+    // Refresh the entire budget list from the server
+    fetchBudgets();
     setShowAddBudgetCard(false);
+    toast.success("Budget added successfully!");
   };
 
   const handleCancelClick = () => {
@@ -74,6 +84,24 @@ export default function ManageBudget() {
 
   const handlePageChange = (pageNumber) => {
     setCurrentPage(pageNumber);
+  };
+
+  const handleUpdateClick = (budgetId) => {
+    setSelectedBudgetId(budgetId);
+    setShowUpdateBudget(true);
+  };
+
+  const handleBudgetUpdated = (updatedBudget) => {
+    // Refresh the entire budget list from the server
+    fetchBudgets();
+    setShowUpdateBudget(false);
+    setSelectedBudgetId(null);
+    toast.success("Budget updated successfully!");
+  };
+
+  const handleCloseUpdateModal = () => {
+    setShowUpdateBudget(false);
+    setSelectedBudgetId(null);
   };
 
   return (
@@ -165,23 +193,25 @@ export default function ManageBudget() {
                       {budget.department}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      ${budget.budgetAllocation?.toLocaleString() || 'N/A'}
+                      ₱{budget.budgetAllocation?.toLocaleString() || 'N/A'}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      ${budget.availableBalance?.toLocaleString() || 'N/A'}
+                      ₱{budget.availableBalance?.toLocaleString() || 'N/A'}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      ${budget.usedAmount?.toLocaleString() || 'N/A'}
+                      ₱{budget.usedAmount?.toLocaleString() || 'N/A'}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                       <div className="flex items-center space-x-2">
-                        <Link to={`/updateBudget/${budget._id}`}>
-                          <button className="text-blue-600 hover:text-blue-900 p-1">
-                            <PencilIcon className="h-4 w-4" />
-                          </button>
-                        </Link>
+                        <button 
+                          onClick={() => handleUpdateClick(budget._id)}
+                          className="text-blue-600 hover:text-blue-900 p-1"
+                          title="Edit Budget"
+                        >
+                          <PencilIcon className="h-4 w-4" />
+                        </button>
                         <Link to={`/DeleteBudget/${budget._id}`}>
-                          <button className="text-red-600 hover:text-red-900 p-1">
+                          <button className="text-red-600 hover:text-red-900 p-1" title="Delete Budget">
                             <TrashIcon className="h-4 w-4" />
                           </button>
                         </Link>
@@ -204,10 +234,19 @@ export default function ManageBudget() {
           />
         </div>
       </div>
+      
       {showAddBudgetCard && (
         <AddBudgetCard
           onSave={handleBudgetAdded}
           onCancel={handleCancelClick}
+        />
+      )}
+      
+      {showUpdateBudget && selectedBudgetId && (
+        <UpdateBudget
+          id={selectedBudgetId}
+          onClose={handleCloseUpdateModal}
+          onBudgetUpdated={handleBudgetUpdated}
         />
       )}
     </div>

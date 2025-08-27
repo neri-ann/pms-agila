@@ -1,69 +1,71 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
-import { Link, useNavigate, useParams } from "react-router-dom";
+import { XMarkIcon } from "@heroicons/react/24/outline";
+import { useNavigate, useParams } from "react-router-dom";
 import { useSnackbar } from "notistack";
-import Breadcrumb from "../../../components/Breadcrumb.jsx";
-
-import "../../../styles/button2.css";
-import UserTypeNavbar from "../../../components/UserTypeNavbar.jsx";
 
 export default function UpdateSupplier() {
   const [username, setUsername] = useState("");
   const [supplierName, setSupplierName] = useState("");
-  const [supplierId, setSupplierId] = useState("");
-
   const [addressStreet, setAddressStreet] = useState("");
   const [addressCity, setAddressCity] = useState("");
   const [addressProvince, setAddressProvince] = useState("");
   const [contactOfficer, setContactOfficer] = useState("");
   const [contactNumbers1, setContactNumbers1] = useState("");
-  const [contactNumbers2, setContactNumbers2] = useState("");
   const [emails1, setEmails1] = useState("");
-  const [emails2, setEmails2] = useState("");
-
-  const [faxNumber1, setFaxNumber1] = useState("");
-  const [faxNumber2, setFaxNumber2] = useState("");
   const [typeofBusiness, setTypesOFBusiness] = useState("");
   const [classOfAssets, setClassOfAssets] = useState("");
   const [loading, setLoading] = useState(false);
+  const [validationErrors, setValidationErrors] = useState({});
   const types = [
-    "SoleImporter",
-    "SoleDistributor",
-    "LocalAgent",
-    "contractors",
+    { value: "SoleImporter", label: "Sole Importer" },
+    { value: "SoleDistributor", label: "Sole Distributor" },
+    { value: "LocalAgent", label: "Local Agent" },
+    { value: "Contractors", label: "Contractors" },
   ];
-  const [screenHeight, setScreenHeight] = useState(window.innerHeight);
 
-  // React Router Hook to get the parameter from the URL
   const { id } = useParams();
-
-  // Snackbar Hook for displaying notifications
   const { enqueueSnackbar } = useSnackbar();
+  const navigate = useNavigate();
 
-  // Fetch user data from the API based on the ID
   useEffect(() => {
     setLoading(true);
     axios
       .get(`http://localhost:8000/supplyer/preview-supplyer/${id}`)
       .then((response) => {
-        const userData = response.data;
-        console.log('Fetched user data:', userData);
-        setUsername(response.data.username);
-        setSupplierId(response.data.supplierId);
-        setSupplierName(response.data.supplierName);
-        setAddressStreet(response.data.addressStreet);
-        setAddressCity(response.data.addressCity);
-        setAddressProvince(response.data.addressProvince);
+        const data = response.data;
+        setUsername(data.username || "");
+        setSupplierName(data.supplierName || "");
 
-        setContactOfficer(response.data.contactOfficer);
-        setContactNumbers1(response.data.contactNumbers1);
-        setContactNumbers2(response.data.contactNumbers2);
-        setEmails1(response.data.emails1);
-        setEmails2(response.data.emails2);
-        setFaxNumber1(response.data.faxNumber1);
-        setFaxNumber2(response.data.faxNumber2);
-        setTypesOFBusiness(response.data.typeofBusiness);
-        setClassOfAssets(response.data.classOfAssets);
+        // Address: split if needed
+        if (data.address) {
+          const [street = "", city = "", province = ""] = data.address.split(",").map(s => s.trim());
+          setAddressStreet(street);
+          setAddressCity(city);
+          setAddressProvince(province);
+        } else {
+          setAddressStreet("");
+          setAddressCity("");
+          setAddressProvince("");
+        }
+
+        // Contact Number: use first if array
+        if (Array.isArray(data.contactNumber)) {
+          setContactNumbers1(data.contactNumber[0] || "");
+        } else {
+          setContactNumbers1(data.contactNumber || "");
+        }
+
+        // Email: use first if array
+        if (Array.isArray(data.email)) {
+          setEmails1(data.email[0] || "");
+        } else {
+          setEmails1(data.email || "");
+        }
+
+        setContactOfficer(data.contactOfficer || "");
+        setTypesOFBusiness(data.typeofBusiness || "");
+        setClassOfAssets(data.classOfAssets || "");
         setLoading(false);
       })
       .catch((error) => {
@@ -73,32 +75,65 @@ export default function UpdateSupplier() {
         });
         console.error(error);
       });
-    const handleResize = () => {
-      setScreenHeight(window.innerHeight);
-    };
-    handleResize();
-    window.addEventListener("resize", handleResize);
+  }, [id, enqueueSnackbar]);
 
-    return () => {
-      window.removeEventListener("resize", handleResize);
-    };
-  }, [id]);
+  const validateFields = () => {
+    let errors = {};
+    let isValid = true;
 
-  const handleUpdateVendors = () => {
+    if (!username) {
+      errors.username = "Username is required";
+      isValid = false;
+    }
+    if (!supplierName) {
+      errors.supplierName = "Supplier name is required";
+      isValid = false;
+    }
+    if (!addressStreet || !addressCity || !addressProvince) {
+      errors.address = "Full address is required";
+      isValid = false;
+    }
+    if (!contactOfficer) {
+      errors.contactOfficer = "Contact officer is required";
+      isValid = false;
+    }
+    if (!contactNumbers1) {
+      errors.contactNumbers = "Contact number is required";
+      isValid = false;
+    } else if (!/^[0-9]+$/.test(contactNumbers1)) {
+      errors.contactNumbers = "Contact number must contain only digits";
+      isValid = false;
+    }
+    if (!emails1) {
+      errors.emails = "Email address is required";
+      isValid = false;
+    }
+    if (!typeofBusiness) {
+      errors.typeofBusiness = "Business type is required";
+      isValid = false;
+    }
+    if (!classOfAssets) {
+      errors.classOfAssets = "Class of assets is required";
+      isValid = false;
+    }
+
+    setValidationErrors(errors);
+    return isValid;
+  };
+
+  const handleUpdateVendors = (e) => {
+    e.preventDefault();
+    if (!validateFields()) return;
+
     const UpdateSupplyer = {
       username,
-      supplierId,
       supplierName,
       addressStreet,
       addressCity,
       addressProvince,
       contactOfficer,
       contactNumbers1,
-      contactNumbers2,
       emails1,
-      emails2,
-      faxNumber1,
-      faxNumber2,
       typeofBusiness,
       classOfAssets,
     };
@@ -108,389 +143,273 @@ export default function UpdateSupplier() {
     axios
       .put(`http://localhost:8000/supplyer/update/${id}`, UpdateSupplyer)
       .then(() => {
-        alert("Supplyer Updated");
-        // Reset form fields
-        setUsername("");
-        setSupplierName("");
-        setSupplierId("");
-        setAddressStreet("");
-        setAddressCity("");
-        setAddressProvince("");
-
-        setContactOfficer("");
-        setContactNumbers1("");
-        setContactNumbers2("");
-        setEmails1("");
-        setEmails2("");
-        setFaxNumber1("");
-        setFaxNumber2("");
-        setTypesOFBusiness("");
-        setClassOfAssets("");
-        setLoading(false);
-        enqueueSnackbar("Vendor is updated successfully", {
+        enqueueSnackbar("Supplier is updated successfully", {
           variant: "success",
         });
+        setLoading(false);
         navigate("/allvendors");
       })
       .catch((error) => {
         setLoading(false);
-        enqueueSnackbar(`Error updating vendor account: ${error.message}`, {
+        enqueueSnackbar(`Error updating supplier account: ${error.message}`, {
           variant: "error",
         });
         console.error(error);
       });
   };
-  // React Router Hook for navigation
-
-  const selected = (crumb) => {
-    console.log(crumb);
-  };
-
-  const navigate = useNavigate();
 
   return (
-    <form onSubmit={handleUpdateVendors}>
-      <div className="space-y-12 ml-40 mr-40 mt-40">
-        <Breadcrumb
-          crumbs={[
-            { label: "Home", link: "/adminhome/:id" },
-            { label: "Vendor Details", link: "/allvendors" },
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-gray-500 bg-opacity-75">
+      <div className="relative bg-white rounded-lg shadow-xl w-full max-w-5xl max-h-[90vh] flex flex-col overflow-hidden">
+        <div className="bg-white px-6 py-4 border-b border-gray-200 flex items-center justify-between">
+          <h3 className="text-lg font-medium text-gray-900">Edit Supplier Details</h3>
+          <button
+            onClick={() => navigate("/allvendors")}
+            className="text-gray-400 hover:text-gray-600 transition-colors"
+          >
+            <XMarkIcon className="h-6 w-6" />
+          </button>
+        </div>
+        <form
+          onSubmit={handleUpdateVendors}
+          className="flex flex-col flex-1 min-h-0"
+        >
+          <div className="flex-1 overflow-y-auto px-6 py-6">
+            <div className="grid grid-cols-1 gap-x-6 gap-y-6 sm:grid-cols-2">
 
-            { label: "Add Vendor Details", link: "/addvendors" },
-          ]}
-          selected={(crumb) => console.log(`Selected: ${crumb.label}`)}
-        />
-
-        <div className="border-b border-gray-900/10 pb-12">
-          <h2 className=" text-gray-900">SUPPLIER REGISTRATION.</h2>
-
-          <div className="mt-10 grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-6">
-            <div className="sm:col-span-3">
-              <label
-                htmlFor="first-name"
-                className="block text-sm font-medium leading-6 text-gray-900 "
-              >
-                <h6>User Name</h6>
-              </label>
-              <div className="mt-2">
+              {/* Supplier Name */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Supplier Name <span className="text-red-500">*</span>
+                </label>
                 <input
                   type="text"
-                  name="first-name"
-                  id="first-name"
-                  value={username}
-                  onChange={(e) => setUsername(e.target.value)}
-                  autoComplete="given-name"
-                  placeholder="Enter the User Name"
-                  className="block w-full h-12 rounded-md border-1 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
-                />
-              </div>
-            </div>
-
-            <div className="sm:col-span-3">
-              <label
-                htmlFor="last-name"
-                className="block text-sm font-medium leading-6 text-gray-900"
-              >
-                <h6>Supplier ID </h6>
-              </label>
-              <div className="mt-2">
-                <input
-                  type="text"
-                  name="last-name"
-                  id="last-name"
-                  value={supplierId}
-                  onChange={(e) => setSupplierId(e.target.value)}
-                  autoComplete="family-name"
-                  placeholder="Enter the Supplier ID"
-                  className="block w-full h-12 rounded-md border-1 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
-                />
-              </div>
-            </div>
-
-            <div className="sm:col-span-3">
-              <label
-                htmlFor="first-name"
-                className="block text-sm font-medium leading-6 text-gray-900 "
-              >
-                <h6>Supplier Name </h6>
-              </label>
-              <div className="mt-2">
-                <input
-                  type="text"
-                  name="first-name"
-                  id="first-name"
                   value={supplierName}
                   onChange={(e) => setSupplierName(e.target.value)}
-                  autoComplete="given-name"
-                  placeholder="Enter the Supplier Name"
-                  className="block w-full h-12 rounded-md border-1 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                  className={`w-full px-3 py-2 border rounded-md shadow-sm ${validationErrors.supplierName
+                    ? "border-red-500 bg-red-50"
+                    : "border-gray-300"
+                    }`}
                 />
+                {validationErrors.supplierName && (
+                  <p className="text-red-500 text-xs mt-1">
+                    ⚠ {validationErrors.supplierName}
+                  </p>
+                )}
               </div>
-            </div>
 
-            <div className="sm:col-span-3">
-              <label
-                htmlFor="last-name"
-                className="block text-sm font-medium leading-6 text-gray-900"
-              >
-                <h6>Contact Officer </h6>
-              </label>
-              <div className="mt-2">
+              {/* Username */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Username <span className="text-red-500">*</span>
+                </label>
                 <input
                   type="text"
-                  name="last-name"
-                  id="last-name"
-                  value={contactOfficer}
-                  onChange={(e) => setContactOfficer(e.target.value)}
-                  autoComplete="family-name"
-                  placeholder="Enter the Contact Officer Name"
-                  className="block w-full h-12 rounded-md border-1 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
+                  className={`w-full px-3 py-2 border rounded-md shadow-sm focus:ring-2 focus:ring-[#961C1E] focus:border-[#961C1E] ${validationErrors.username
+                    ? "border-red-500 bg-red-50"
+                    : "border-gray-300"
+                    }`}
                 />
+                {validationErrors.username && (
+                  <p className="text-red-500 text-xs mt-1">
+                    ⚠ {validationErrors.username}
+                  </p>
+                )}
               </div>
-            </div>
 
-            <div className="col-span-full">
-              <label
-                htmlFor="street-address"
-                className="block text-sm font-medium leading-6 text-gray-900"
-              >
-                <h6>Address </h6>
-              </label>
-            </div>
+              {/* Address Row: Street, City, Province */}
+              <div className="space-y-2 sm:col-span-2">
+                <label className="block text-sm font-medium text-gray-700">
+                  Address <span className="text-red-500">*</span>
+                </label>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                  {/* Street */}
+                  <input
+                    type="text"
+                    value={addressStreet}
+                    onChange={(e) => setAddressStreet(e.target.value)}
+                    placeholder="Street"
+                    className={`w-full px-3 py-2 border rounded-md shadow-sm ${validationErrors.address
+                      ? "border-red-500 bg-red-50"
+                      : "border-gray-300"
+                      }`}
+                  />
 
-            <div className="sm:col-span-2 sm:col-start-1">
-              <div className="mt-2">
-                <input
-                  type="text"
-                  name="city"
-                  id="city"
-                  value={addressStreet}
-                  onChange={(e) => setAddressStreet(e.target.value)}
-                  autoComplete="address-level2"
-                  placeholder="Street"
-                  className="block w-full h-12 rounded-md border-1 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
-                />
+                  {/* City */}
+                  <input
+                    type="text"
+                    value={addressCity}
+                    onChange={(e) => setAddressCity(e.target.value)}
+                    placeholder="City"
+                    className={`w-full px-3 py-2 border rounded-md shadow-sm ${validationErrors.address
+                      ? "border-red-500 bg-red-50"
+                      : "border-gray-300"
+                      }`}
+                  />
+
+                  {/* Province */}
+                  <input
+                    type="text"
+                    value={addressProvince}
+                    onChange={(e) => setAddressProvince(e.target.value)}
+                    placeholder="Province"
+                    className={`w-full px-3 py-2 border rounded-md shadow-sm ${validationErrors.address
+                      ? "border-red-500 bg-red-50"
+                      : "border-gray-300"
+                      }`}
+                  />
+                </div>
+                {validationErrors.address && (
+                  <p className="text-red-500 text-xs mt-1">
+                    ⚠ {validationErrors.address}
+                  </p>
+                )}
               </div>
-            </div>
 
-            <div className="sm:col-span-2">
-              <div className="mt-2">
-                <input
-                  type="text"
-                  name="region"
-                  id="region"
-                  value={addressCity}
-                  onChange={(e) => setAddressCity(e.target.value)}
-                  autoComplete="address-level1"
-                  placeholder="City"
-                  className="block w-full h-12 rounded-md border-1 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
-                />
+              <div className="space-y-2 sm:col-span-2 mt-2">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                  {/* Contact Officer */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Contact Officer <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      value={contactOfficer}
+                      onChange={(e) => setContactOfficer(e.target.value)}
+                      className={`w-full px-3 py-2 border rounded-md shadow-sm ${validationErrors.contactOfficer
+                        ? "border-red-500 bg-red-50"
+                        : "border-gray-300"
+                        }`}
+                    />
+                    {validationErrors.contactOfficer && (
+                      <p className="text-red-500 text-xs mt-1">
+                        ⚠ {validationErrors.contactOfficer}
+                      </p>
+                    )}
+                  </div>
+
+                  {/* Contact Number */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Contact Number <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      value={contactNumbers1}
+                      onChange={(e) => setContactNumbers1(e.target.value)}
+                      className={`w-full px-3 py-2 border rounded-md shadow-sm ${validationErrors.contactNumbers
+                        ? "border-red-500 bg-red-50"
+                        : "border-gray-300"
+                        }`}
+                    />
+                    {validationErrors.contactNumbers && (
+                      <p className="text-red-500 text-xs mt-1">
+                        ⚠ {validationErrors.contactNumbers}
+                      </p>
+                    )}
+                  </div>
+
+                  {/* Email */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Email <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="email"
+                      value={emails1}
+                      onChange={(e) => setEmails1(e.target.value)}
+                      className={`w-full px-3 py-2 border rounded-md shadow-sm ${validationErrors.emails
+                        ? "border-red-500 bg-red-50"
+                        : "border-gray-300"
+                        }`}
+                    />
+                    {validationErrors.emails && (
+                      <p className="text-red-500 text-xs mt-1">
+                        ⚠ {validationErrors.emails}
+                      </p>
+                    )}
+                  </div>
+                </div>
               </div>
-            </div>
 
-            <div className="sm:col-span-2">
-              <div className="mt-2">
-                <input
-                  type="text"
-                  name="postal-code"
-                  id="postal-code"
-                  value={addressProvince}
-                  onChange={(e) => setAddressProvince(e.target.value)}
-                  autoComplete="postal-code"
-                  placeholder="Province"
-                  className="block w-full h-12 rounded-md border-1 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
-                />
-              </div>
-            </div>
-
-            <div className="col-span-full">
-              <label
-                htmlFor="street-address"
-                className="block text-sm font-medium leading-6 text-gray-900"
-              >
-                <h6>Fax Numbers </h6>
-              </label>
-            </div>
-
-            <div className="sm:col-span-2 sm:col-start-1">
-              <div className="mt-2">
-                <input
-                  type="text"
-                  name="city"
-                  id="city"
-                  value={faxNumber1}
-                  onChange={(e) => setFaxNumber1(e.target.value)}
-                  autoComplete="address-level2"
-                  placeholder="Fax Number 1"
-                  className="block w-full h-12 rounded-md border-1 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
-                />
-              </div>
-            </div>
-
-            <div className="sm:col-span-2">
-              <div className="mt-2">
-                <input
-                  type="text"
-                  name="region"
-                  id="region"
-                  value={faxNumber2}
-                  onChange={(e) => setFaxNumber2(e.target.value)}
-                  autoComplete="address-level1"
-                  placeholder="Fax Number 2"
-                  className="block w-full h-12 rounded-md border-1 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
-                />
-              </div>
-            </div>
-
-            <div className="col-span-full">
-              <label
-                htmlFor="street-address"
-                className="block text-sm font-medium leading-6 text-gray-900"
-              >
-                <h6>Contact Numbers </h6>
-              </label>
-            </div>
-
-            <div className="sm:col-span-2 sm:col-start-1">
-              <div className="mt-2">
-                <input
-                  type="text"
-                  name="city"
-                  id="city"
-                  value={contactNumbers1}
-                  onChange={(e) => setContactNumbers1(e.target.value)}
-                  autoComplete="address-level2"
-                  placeholder="Contact Number 1"
-                  className="block w-full h-12 rounded-md border-1 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
-                />
-              </div>
-            </div>
-
-            <div className="sm:col-span-2">
-              <div className="mt-2">
-                <input
-                  type="text"
-                  name="region"
-                  id="region"
-                  value={contactNumbers2}
-                  onChange={(e) => setContactNumbers2(e.target.value)}
-                  autoComplete="address-level1"
-                  placeholder="Contact Number 2"
-                  className="block w-full h-12 rounded-md border-1 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
-                />
-              </div>
-            </div>
-
-            <div className="col-span-full">
-              <label
-                htmlFor="street-address"
-                className="block text-sm font-medium leading-6 text-gray-900"
-              >
-                <h6>Contact Email Addresses </h6>
-              </label>
-            </div>
-
-            <div className="sm:col-span-2 sm:col-start-1">
-              <div className="mt-2">
-                <input
-                  type="email"
-                  name="city"
-                  id="city"
-                  value={emails1}
-                  onChange={(e) => setEmails1(e.target.value)}
-                  autoComplete="address-level2"
-                  placeholder="Email address 1"
-                  className="block w-full h-12 rounded-md border-1 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
-                />
-              </div>
-            </div>
-
-            <div className="sm:col-span-2">
-              <div className="mt-2">
-                <input
-                  type="email"
-                  name="region"
-                  id="region"
-                  value={emails2}
-                  onChange={(e) => setEmails2(e.target.value)}
-                  autoComplete="address-level1"
-                  placeholder="Email address 2"
-                  className="block w-full h-12 rounded-md border-1 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
-                />
-              </div>
-            </div>
-
-            <div className="sm:col-span-3">
-              <label
-                htmlFor="country"
-                className="block text-sm font-medium leading-6 text-gray-900"
-              >
-                <h6>Business Type</h6>
-              </label>
-              <div className="mt-2">
+              {/* Business Type */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mt-2 mb-2">
+                  Business Type <span className="text-red-500">*</span>
+                </label>
                 <select
-                  id="country"
                   value={typeofBusiness}
                   onChange={(e) => setTypesOFBusiness(e.target.value)}
-                  name="country"
-                  autoComplete="country-name"
-                  className="block w-full h-12 rounded-md border-1 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600  sm:text-sm sm:leading-6"
+                  className={`w-full px-3 py-2 border rounded-md shadow-sm ${validationErrors.typeofBusiness
+                    ? "border-red-500 bg-red-50"
+                    : "border-gray-300"
+                    }`}
                 >
-                  <option value="">business Type</option>
-                  {types.map((type, index) => (
-                    <option key={index} value={type}>
-                      {type}
+                  <option value="">Select Business Type</option>
+                  {types.map((t, index) => (
+                    <option key={index} value={t.value}>
+                      {t.label}
                     </option>
                   ))}
                 </select>
+                {validationErrors.typeofBusiness && (
+                  <p className="text-red-500 text-xs mt-1">
+                    ⚠ {validationErrors.typeofBusiness}
+                  </p>
+                )}
               </div>
-            </div>
 
-            <div className="sm:col-span-3">
-              <label
-                htmlFor="country"
-                className="block text-sm font-medium leading-6 text-gray-900"
-              >
-                <h6>Class of Assets Supply </h6>
-              </label>
-              <div className="mt-2">
+              {/* Class of Assets */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mt-2 mb-2">
+                  Class of Assets Supply <span className="text-red-500">*</span>
+                </label>
                 <select
-                  id="country"
                   value={classOfAssets}
                   onChange={(e) => setClassOfAssets(e.target.value)}
-                  name="country"
-                  autoComplete="country-name"
-                  className="block w-full h-12 rounded-md border-1 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600  sm:text-sm sm:leading-6"
+                  className={`w-full px-3 py-2 border rounded-md shadow-sm ${validationErrors.classOfAssets
+                    ? "border-red-500 bg-red-50"
+                    : "border-gray-300"
+                    }`}
                 >
-                  <option value="">Assets Class</option>
-                  {types.map((type, index) => (
-                    <option key={index} value={type}>
-                      {type}
+                  <option value="">Select Assets Class</option>
+                  {types.map((t, index) => (
+                    <option key={index} value={t.value}>
+                      {t.label}
                     </option>
                   ))}
                 </select>
+                {validationErrors.classOfAssets && (
+                  <p className="text-red-500 text-xs mt-1">
+                    ⚠ {validationErrors.classOfAssets}
+                  </p>
+                )}
               </div>
             </div>
           </div>
-        </div>
-      </div>
 
-      <div className="mt-6 flex items-center justify-end gap-x-6 mr-40 mb-10">
-      <Link to="/allvendors">
-        <button
-          type="button"
-          className="rounded-md h-12 w-24 bg-[#404040] px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-black"
-        >
-          Cancel
-        </button>
-      </Link>  
-        <button
-          type="submit"
-          className="rounded-md bg-[#961C1E] h-12 w-24 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-[#761C1D]"
-        >
-          Save
-        </button>
+          {/* Footer */}
+          <div className="flex items-center justify-end gap-x-4 px-6 py-4 border-t border-gray-200">
+            <button
+              type="button"
+              onClick={() => navigate("/allvendors")}
+              className="px-6 py-2.5 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 transition-colors"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              disabled={loading}
+              className="px-6 py-2.5 text-sm font-medium text-white bg-[#961C1E] border border-transparent rounded-lg hover:bg-[#7A1517] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#961C1E] disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
+            >
+              {loading ? "Saving..." : "Save"}
+            </button>
+          </div>
+        </form>
       </div>
-    </form>
+    </div>
   );
 }

@@ -15,14 +15,20 @@ export default function AddUserModal({ isOpen, onClose, onUserAdded }) {
   const [loading, setLoading] = useState(false);
   const [validationErrors, setValidationErrors] = useState({});
 
+  // const roles = [
+  //   "admin",
+  //   "procurement Officer",
+  //   "Finance officers",
+  //   "department",
+  //   "approver",
+  //   "TECofficer",
+  // ];
+
   const roles = [
-    "admin",
-    "procurement Officer",
-    "Finance officers",
-    "department",
-    "approver",
-    "TECofficer",
+    { value: "admin", label: "Admin" },
+    { value: "procurement Officer", label: "Procurement Officer" },
   ];
+
   const departments = ["DEIE", "DCEE", "DMME", "DCE", "DMNNE", "DIS", "NONE"];
 
   // Reset form when modal opens/closes
@@ -83,6 +89,23 @@ export default function AddUserModal({ isOpen, onClose, onUserAdded }) {
     if (!password) {
       errors.password = "Password is required";
       isValid = false;
+    } else {
+      if (password.length < 8) {
+        errors.password = "Password must be at least 8 characters long";
+        isValid = false;
+      } else if (!/[A-Z]/.test(password)) {
+        errors.password = "Password must contain at least one uppercase letter";
+        isValid = false;
+      } else if (!/[a-z]/.test(password)) {
+        errors.password = "Password must contain at least one lowercase letter";
+        isValid = false;
+      } else if (!/[0-9]/.test(password)) {
+        errors.password = "Password must contain at least one number";
+        isValid = false;
+      } else if (!/[!@#$%^&*(),.?":{}|<>]/.test(password)) {
+        errors.password = "Password must contain at least one special character";
+        isValid = false;
+      }
     }
 
     setValidationErrors(errors);
@@ -112,7 +135,7 @@ export default function AddUserModal({ isOpen, onClose, onUserAdded }) {
     axios
       .post("http://localhost:8000/user/create", newUser)
       .then(() => {
-        toast.success("User details successfully added!");
+        // toast.success("User details successfully added!");
         setLoading(false);
         resetForm();
         onUserAdded(); // Callback to refresh user list
@@ -130,7 +153,7 @@ export default function AddUserModal({ isOpen, onClose, onUserAdded }) {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       {/* Background overlay */}
-      <div 
+      <div
         className="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity"
         onClick={onClose}
       ></div>
@@ -165,16 +188,17 @@ export default function AddUserModal({ isOpen, onClose, onUserAdded }) {
                   value={role}
                   onChange={(e) => setRole(e.target.value)}
                   className={`w-full px-3 py-2 border rounded-md shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors ${
-                    validationErrors.role ? "border-red-500 bg-red-50" : "border-gray-300"
-                  }`}
+                      validationErrors.role ? "border-red-500 bg-red-50" : "border-gray-300"
+                    }`}
                 >
                   <option value="">Select your role</option>
-                  {roles.map((type, index) => (
-                    <option key={index} value={type}>
-                      {type}
+                  {roles.map((roleOption, index) => (
+                    <option key={index} value={roleOption.value}>
+                      {roleOption.label}
                     </option>
                   ))}
                 </select>
+
                 {validationErrors.role && (
                   <p className="text-red-500 text-xs mt-1 flex items-center">
                     <span className="mr-1">⚠</span>

@@ -26,7 +26,7 @@ function EventPlanner() {
       />
       {showEventModal && <EventModal />}
    
-      <div className="h-screen flex flex-col mt-20">
+      <div className="h-screen flex flex-col">
         <CalendarHeader />
         <div className="flex flex-1" style={{ filter: showEventModal ? 'blur(5px)' : 'none' }}>
           <Sidebar />

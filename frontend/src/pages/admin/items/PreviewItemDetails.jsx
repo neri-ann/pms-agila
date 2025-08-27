@@ -17,20 +17,18 @@ export default function PreviewItemDetails() {
 
   const handleOutsideClick = () => {
     setOpen(false);
-    navigate("/allitems");
+    navigate("/AllItem");
   };
 
-  const [items, setItems] = useState({});
-  
+  const [item, setItem] = useState({});
 
   useEffect(() => {
     const getItem = async () => {
       try {
         const response = await axios.get(
-          `http://localhost:8000/user/preview-user/${id}`
+          `http://localhost:8000/item/preview-item/${id}`
         );
-        console.log("Item Data:", response.data);
-        setItems(response.data);
+        setItem(response.data);
       } catch (error) {
         console.log("Error fetching item:", error);
       }
@@ -39,10 +37,8 @@ export default function PreviewItemDetails() {
     getItem();
   }, [id]);
 
-  
-
   const handleClose = () => {
-    navigate("/allitems");
+    navigate("/AllItem");
   };
 
   return (
@@ -51,10 +47,10 @@ export default function PreviewItemDetails() {
       <Transition.Root show={open} as={Fragment}>
         <Dialog
           as="div"
-          className="fixed inset-0 z-10 overflow-y-auto"
+          className="fixed inset-0 z-50 overflow-y-auto"
           initialFocus={cancelButtonRef}
-          onClose={() => handleOutsideClick()} // Use onClose to handle both closing and navigating
-          static // Add the static prop here
+          onClose={handleOutsideClick}
+          static
         >
           <Transition.Child
             as={Fragment}
@@ -68,7 +64,7 @@ export default function PreviewItemDetails() {
             <div className="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" />
           </Transition.Child>
 
-          <div className="fixed inset-0 z-10 w-screen overflow-y-auto">
+          <div className="fixed inset-0 z-50 w-screen overflow-y-auto">
             <div>
               <Transition.Child
                 as={Fragment}
@@ -80,33 +76,31 @@ export default function PreviewItemDetails() {
                 leaveTo="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
               >
                 <Dialog.Panel>
-                  <div class="min-h-screen flex items-center justify-center px-4 mt-12">
-                    <div class="max-w-4xl  bg-white w-full rounded-lg shadow-xl     mt-11 p-12">
-                      <div class="p-2 border-b">
-                        <h1 class="text-2xl ">ITEM DETAILS</h1>
-                        <h3 class="text-lg text-[#404040]">
+                  <div className="min-h-screen flex items-center justify-center px-4 mt-12">
+                    <div className="max-w-4xl bg-white w-full rounded-lg shadow-xl mt-11 p-12">
+                      <div className="p-2 border-b">
+                        <h1 className="text-2xl">ITEM DETAILS</h1>
+                        <h3 className="text-lg text-[#404040]">
                           Registered Item Details.
                         </h3>
                       </div>
                       <div className="mt-4">
-                        <div class="md:grid md:grid-cols-2 hover:bg-gray-50 md:space-y-0 space-y-1 p-2 border-b">
-                          <h6 class="text-gray-600">Asset Class</h6>
-                          <p> {items.AssetsClass}</p>
+                        <div className="md:grid md:grid-cols-2 hover:bg-gray-50 md:space-y-0 space-y-1 p-2 border-b">
+                          <h6 className="text-gray-600">Item Name</h6>
+                          <p>{item.itemName}</p>
                         </div>
-                        <div class="md:grid md:grid-cols-2 hover:bg-gray-50 md:space-y-0 space-y-1 p-2 border-b">
-                          <h6 class="text-gray-600">Assets Class</h6>
-                          <p>{items.AssetsSubClass}</p>
+                        <div className="md:grid md:grid-cols-2 hover:bg-gray-50 md:space-y-0 space-y-1 p-2 border-b">
+                          <h6 className="text-gray-600">Assets Class</h6>
+                          <p>{item.AssetsClass}</p>
                         </div>
-                        <div class="md:grid md:grid-cols-2 hover:bg-gray-50 md:space-y-0 space-y-1 p-2 border-b">
-                          <h6 class="text-gray-600">Item Name</h6>
-                          <p>{items.itemName}</p>
+                        <div className="md:grid md:grid-cols-2 hover:bg-gray-50 md:space-y-0 space-y-1 p-2 border-b">
+                          <h6 className="text-gray-600">Assets Sub Class</h6>
+                          <p>{item.AssetsSubClass}</p>
                         </div>
-                        
-
                         <div className="flex gap-2 mt-4 justify-end">
                           <Button
                             variant="outlined"
-                            class="rounded-md bg-[#961C1E] h-12 w-30 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-[#761C1D] focus-visible:outline "
+                            className="rounded-md !bg-[#961C1E] h-12 w-30 px-3 py-2 text-sm font-semibold text-white shadow-sm !hover:bg-[#761C1D] focus-visible:outline"
                             onClick={() => setOpen(false)}
                             ref={cancelButtonRef}
                           >
@@ -117,7 +111,6 @@ export default function PreviewItemDetails() {
                     </div>
                   </div>
                 </Dialog.Panel>
-                {/* Render the PreviewUserCom component here */}
               </Transition.Child>
             </div>
           </div>

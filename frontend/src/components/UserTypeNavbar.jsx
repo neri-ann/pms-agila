@@ -33,8 +33,8 @@ const UserTypeNavbar = ({ userType, onLogout }) => {
     { link: "Manage Vendors", path: "/allvendors", icon: FiShoppingBag },
     { link: "Items", path: "/AllItem", icon: FiPackage },
     { link: "Approver", path: "/ViewForApproval", icon: FiCheckSquare },
-    { link: "Manage Guidance", path: "/ManageGuidance", icon: FiFileText },
-    { link: "Manage Notices", path: "/ManageNotice", icon: FiBell },
+    // { link: "Manage Guidance", path: "/ManageGuidance", icon: FiFileText },
+    // { link: "Manage Notices", path: "/ManageNotice", icon: FiBell },
     { link: "Budget & Plan", path: "/ManageBudget", icon: FiDollarSign },
     { link: "Manage Year Plan", path: "/EventPlanner", icon: FiCalendar },
   ];
@@ -47,12 +47,12 @@ const UserTypeNavbar = ({ userType, onLogout }) => {
 
   const procOfficerOptions = [
     { link: "Dashboard", path: "/procurementhome", icon: FiHome },
-    { link: "Created Projects", path: "/projectList", icon: FiFolder },
-    {
-      link: "Create New Project",
-      path: "/ProjectCreationForm",
-      icon: FiFolderPlus,
-    },
+    // { link: "Created Projects", path: "/projectList", icon: FiFolder },
+    // {
+    //   link: "Create New Project",
+    //   path: "/ProjectCreationForm",
+    //   icon: FiFolderPlus,
+    // },
     { link: "Purchase Requisition", path: `/reqform`, icon: FiEdit3 },
     { link: "Requisition Tracker", path: "/ProgressTrack", icon: FiActivity },
     { link: "Request List", path: "/ViewForRequest", icon: FiList },
@@ -150,7 +150,16 @@ const UserTypeNavbar = ({ userType, onLogout }) => {
 
       <ul className="flex flex-col space-y-3 px-6 w-full">
         {options.map(({ link, path, icon: Icon }) => {
-          const isActive = location.pathname === path;
+          // Normalize paths (remove trailing slashes)
+          const normalize = (p) => p.replace(/\/+$/, "");
+          const current = normalize(location.pathname);
+          const base = normalize(path);
+
+          const isActive =
+            base === ""
+              ? current === base
+              : current === base || current.startsWith(base + "/");
+
           return (
             <li key={path}>
               <Link

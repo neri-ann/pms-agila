@@ -1,58 +1,86 @@
 import React, { useState, useEffect } from "react";
-import Spinner from "../../../components/Spinner";
 import axios from "axios";
+import { XMarkIcon } from "@heroicons/react/24/outline";
 import { useNavigate, useParams } from "react-router-dom";
 import { useSnackbar } from "notistack";
-import Breadcrumb from "../../../components/Breadcrumb.jsx";
-import UserTypeNavbar from "../../../components/UserTypeNavbar.jsx";
-import "../../../styles/button2.css";
+import { toast } from "react-toastify";
 
-export default function UpdateItems() {
+const assets = [
+  "Current Assets",
+  "Inventory",
+  "Supplier Assets",
+  "Contractual Assets",
+];
+
+export default function UpdateItemsModal({ isOpen, onClose, onItemUpdated, id }) {
   const [AssetsClass, setAssetsClass] = useState("");
   const [AssetsSubClass, setAssetsSubClass] = useState("");
   const [itemName, setItemName] = useState("");
   const [loading, setLoading] = useState(false);
-  const AssetsClasses = [
-    "Current Assets",
-    "Inventory ",
-    "Supplier Assets",
-    "Contractual Assets",
-  ];
+  const [validationErrors, setValidationErrors] = useState({});
 
-  // React Router Hook to get the parameter from the URL
-  const { id } = useParams();
-
-  // Snackbar Hook for displaying notifications
   const { enqueueSnackbar } = useSnackbar();
+  const navigate = useNavigate();
 
-  // Fetch user data from the API based on the ID
+  // Fetch item data when modal opens
   useEffect(() => {
-    setLoading(true);
-    axios
-      .get(`http://localhost:8000/item/preview-item/${id}`)
-      .then((response) => {
-        const itemData = response.data;
-      
-        console.log('Fetched user data:', itemData);
-        setAssetsClass(itemData.AssetsClass);
-        setAssetsSubClass(itemData.AssetsSubClass);
-        setItemName(itemData.itemName);
-
-        setLoading(false);
-      })
-      .catch((error) => {
-        setLoading(false);
-        enqueueSnackbar("An error occurred. Please check the console.", {
-          variant: "error",
+    if (isOpen && id) {
+      setLoading(true);
+      axios
+        .get(`http://localhost:8000/item/preview-item/${id}`)
+        .then((response) => {
+          const itemData = response.data;
+          setAssetsClass(itemData.AssetsClass || "");
+          setAssetsSubClass(itemData.AssetsSubClass || "");
+          setItemName(itemData.itemName || "");
+          setLoading(false);
+        })
+        .catch((error) => {
+          setLoading(false);
+          enqueueSnackbar("An error occurred. Please check the console.", {
+            variant: "error",
+          });
+          console.error(error);
         });
-        console.error(error);
-      });
-  }, [id]);
+    }
+    // eslint-disable-next-line
+  }, [isOpen, id]);
 
-  // Handle updating user data
+  const resetForm = () => {
+    setAssetsClass("");
+    setAssetsSubClass("");
+    setItemName("");
+    setValidationErrors({});
+  };
+
+  // Validate the form fields
+  const validateFields = () => {
+    let errors = {};
+    let isValid = true;
+
+    if (!AssetsClass) {
+      errors.AssetsClass = "Assets Class is required";
+      isValid = false;
+    }
+    if (!AssetsSubClass) {
+      errors.AssetsSubClass = "Assets Sub Class is required";
+      isValid = false;
+    }
+    if (!itemName) {
+      errors.itemName = "Item Name is required";
+      isValid = false;
+    }
+
+    setValidationErrors(errors);
+    return isValid;
+  };
+
   function handleUpdateItems(e) {
     e.preventDefault();
-    const newItem = {
+
+    if (!validateFields()) return;
+
+    const updatedItem = {
       AssetsClass,
       AssetsSubClass,
       itemName,
@@ -60,124 +88,177 @@ export default function UpdateItems() {
 
     setLoading(true);
     axios
-      .put(`http://localhost:8000/item/update/${id}`, newItem)
+      .put(`http://localhost:8000/item/update/${id}`, updatedItem)
       .then(() => {
-        alert("Item Updated");
-        // Clear the form
-        setAssetsClass("");
-        setAssetsSubClass("");
-        setItemName("");
-
+        toast.success("Item updated successfully!");
         setLoading(false);
-        enqueueSnackbar("Item details are updated successfully", {
-          variant: "success",
-        });
-        navigate("/AllItem");
+        resetForm();
+        onItemUpdated?.();
+        onClose();
       })
       .catch((error) => {
         setLoading(false);
-        enqueueSnackbar("Error updating item details", { variant: "error" });
+        toast.error("Error updating item details");
         console.error(error);
       });
   }
 
-  // React Router Hook for navigation
-  const navigate = useNavigate();
-  const selected = (crumb) => {
-    console.log(crumb);
-  };
+  if (!isOpen) return null;
 
   return (
-    <form onSubmit={handleUpdateItems}>
-      <div className="space-y-12 ml-40 mr-40 mt-40">
-        <Breadcrumb
-          crumbs={[
-            { label: "Home", link: "/adminhome/:id" },
-            { label: "Items Details", link: "/AllItem" },
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+      {/* Background overlay */}
+      <div
+        className="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity"
+        onClick={onClose}
+      ></div>
 
-            { label: "Add Item Details", link: "/additem" },
-          ]}
-          selected={(crumb) => console.log(`Selected: ${crumb.label}`)}
-        />
+      {/* Modal panel */}
+      <div className="relative bg-white rounded-lg shadow-xl transform transition-all w-full max-w-2xl max-h-[90vh] flex flex-col overflow-hidden">
+        {/* Header */}
+        <div className="bg-white px-6 py-4 border-b border-gray-200 flex-shrink-0">
+          <div className="flex items-center justify-between">
+            <h3 className="text-lg font-medium text-gray-900">Update Item Details</h3>
+            <button
+              onClick={onClose}
+              className="text-gray-400 hover:text-gray-600 transition-colors"
+            >
+              <XMarkIcon className="h-6 w-6" />
+            </button>
+          </div>
+        </div>
 
-        <div className="border-b border-gray-900/10 pb-12">
-          <h2 className=" text-gray-900">ADD ITEM DETAILS.</h2>
-
-          <div className="mt-10 grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-6">
-            <div className="sm:col-span-3">
-              <label
-                htmlFor="first-name"
-                className="block text-sm font-medium leading-6 text-gray-900 "
-              >
-                <h6>Assets Class</h6>
-              </label>
-              <div className="mt-2">
-              <select
-                value={AssetsClass}
-                onChange={(e) => setAssetsClass(e.target.value)}
-                class="bg-gray-100 border border-gray-200 rounded py-1 px-3 block focus:ring-blue-500 focus:border-blue-500 text-gray-700 w-full" 
-         
-       
-              >
-               
-                
-              </select>
-              </div>
-            </div>
-
-            <div className="sm:col-span-3">
-              <label
-                htmlFor="last-name"
-                className="block text-sm font-medium leading-6 text-gray-900"
-              >
-                <h6>Assets Sub Class</h6>
-              </label>
-              <div className="mt-2">
-              <input
-                type='text'
-                value={AssetsClass}
-                onChange={(e) => setAssetsSubClass(e.target.value)}
-                class="bg-gray-100 border border-gray-200 rounded py-1 px-3 block focus:ring-blue-500 focus:border-blue-500 text-gray-700 w-full"
-                placeholder="Update the AssetSubClass name" 
+        {/* Body */}
+        <form
+          onSubmit={handleUpdateItems}
+          className="flex flex-col flex-1 min-h-0"
+        >
+          <div className="flex-1 overflow-y-auto px-6 py-6">
+            <div className="grid grid-cols-1 gap-x-6 gap-y-6 sm:grid-cols-2">
+              {/* Item Name */}
+              <div className="space-y-2 sm:col-span-2">
+                <label className="block text-sm font-medium text-gray-700">
+                  Item Name <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  value={itemName}
+                  onChange={(e) => setItemName(e.target.value)}
+                  placeholder="Enter item name here..."
+                  className={`w-full px-3 py-2 border rounded-md shadow-sm focus:ring-2 focus:ring-indigo-600 focus:border-indigo-600 transition-colors ${
+                    validationErrors.itemName
+                      ? "border-red-500 bg-red-50"
+                      : "border-gray-300"
+                  }`}
                 />
+                {validationErrors.itemName && (
+                  <p className="text-red-500 text-xs mt-1 flex items-center">
+                    <span className="mr-1">⚠</span>
+                    {validationErrors.itemName}
+                  </p>
+                )}
               </div>
-            </div>
 
-            <div className="sm:col-span-3">
-              <label
-                htmlFor="first-name"
-                className="block text-sm font-medium leading-6 text-gray-900 "
-              >
-                <h6>Item Name</h6>
-              </label>
-              <div className="mt-2">
-              <input
-                type='text'
-                value={itemName}
-                onChange={(e) => setItemName(e.target.value)}
-                class="bg-gray-100 border border-gray-200 rounded py-1 px-3 block focus:ring-blue-500 focus:border-blue-500 text-gray-700 w-full"
-                placeholder="Update the Item name." 
+              {/* Assets Class */}
+              <div className="space-y-2">
+                <label className="block text-sm font-medium text-gray-700">
+                  Assets Class <span className="text-red-500">*</span>
+                </label>
+                <select
+                  value={AssetsClass}
+                  onChange={(e) => setAssetsClass(e.target.value)}
+                  className={`w-full px-3 py-2 border rounded-md shadow-sm focus:ring-2 focus:ring-indigo-600 focus:border-indigo-600 transition-colors ${
+                    validationErrors.AssetsClass
+                      ? "border-red-500 bg-red-50"
+                      : "border-gray-300"
+                  }`}
+                >
+                  <option value="">Select Assets Class</option>
+                  {assets.map((type, index) => (
+                    <option key={index} value={type}>
+                      {type}
+                    </option>
+                  ))}
+                </select>
+                {validationErrors.AssetsClass && (
+                  <p className="text-red-500 text-xs mt-1 flex items-center">
+                    <span className="mr-1">⚠</span>
+                    {validationErrors.AssetsClass}
+                  </p>
+                )}
+              </div>
+
+              {/* Assets Sub Class */}
+              <div className="space-y-2">
+                <label className="block text-sm font-medium text-gray-700">
+                  Assets Sub Class <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  value={AssetsSubClass}
+                  onChange={(e) => setAssetsSubClass(e.target.value)}
+                  placeholder="Enter assets sub class here..."
+                  className={`w-full px-3 py-2 border rounded-md shadow-sm focus:ring-2 focus:ring-indigo-600 focus:border-indigo-600 transition-colors ${
+                    validationErrors.AssetsSubClass
+                      ? "border-red-500 bg-red-50"
+                      : "border-gray-300"
+                  }`}
                 />
+                {validationErrors.AssetsSubClass && (
+                  <p className="text-red-500 text-xs mt-1 flex items-center">
+                    <span className="mr-1">⚠</span>
+                    {validationErrors.AssetsSubClass}
+                  </p>
+                )}
               </div>
             </div>
           </div>
-        </div>
-      </div>
 
-      <div className="mt-6 flex items-center justify-end gap-x-6 mr-40 mb-10">
-        <button
-          type="button"
-          className="rounded-md h-12 w-24 bg-[#404040] px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-black"
-        >
-          Cancel
-        </button>
-        <button
-          type="submit"
-          className="rounded-md bg-[#961C1E] h-12 w-24 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-[#761C1D]"
-        >
-          Save
-        </button>
+          {/* Footer */}
+          <div className="bg-gray-50 px-6 py-4 flex items-center justify-end space-x-3 border-t border-gray-200 flex-shrink-0">
+            <button
+              type="button"
+              onClick={onClose}
+              className="px-6 py-2.5 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 transition-colors"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              disabled={loading}
+              className="px-6 py-2.5 text-sm font-medium text-white bg-[#961C1E] border border-transparent rounded-lg hover:bg-[#7A1517] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#961C1E] disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
+            >
+              {loading ? (
+                <span className="flex items-center">
+                  <svg
+                    className="animate-spin -ml-1 mr-2 h-4 w-4 text-white"
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                  >
+                    <circle
+                      className="opacity-25"
+                      cx="12"
+                      cy="12"
+                      r="10"
+                      stroke="currentColor"
+                      strokeWidth="4"
+                    ></circle>
+                    <path
+                      className="opacity-75"
+                      fill="currentColor"
+                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                    ></path>
+                  </svg>
+                  Saving...
+                </span>
+              ) : (
+                "Save"
+              )}
+            </button>
+          </div>
+        </form>
       </div>
-    </form>
+    </div>
   );
 }

@@ -49,7 +49,7 @@ const PreviewUserDetails = () => {
       <Transition.Root show={open} as={Fragment}>
         <Dialog
           as="div"
-          className="fixed inset-0 z-10 overflow-y-auto"
+          className="fixed inset-0 z-50 overflow-y-auto"
           initialFocus={cancelButtonRef}
           onClose={() => handleOutsideClick()} // Use onClose to handle both closing and navigating
           static // Add the static prop here
@@ -66,7 +66,7 @@ const PreviewUserDetails = () => {
             <div className="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" />
           </Transition.Child>
 
-          <div className="fixed inset-0 z-10 w-screen overflow-y-auto">
+          <div className="fixed inset-0 z-50 w-screen overflow-y-auto">
             <div>
               <Transition.Child
                 as={Fragment}
@@ -89,7 +89,14 @@ const PreviewUserDetails = () => {
                       <div className="mt-4">
                         <div class="md:grid md:grid-cols-2 hover:bg-gray-50 md:space-y-0 space-y-1 p-2 border-b">
                           <h6 class="text-gray-600">Role</h6>
-                          <p> {user.role}</p>
+                          <p>
+                            {user.role === "admin"
+                              ? "Admin"
+                              : user.role === "procurement Officer"
+                                ? "Procurement Officer"
+                                : user.role}
+                          </p>
+
                         </div>
                         <div class="md:grid md:grid-cols-2 hover:bg-gray-50 md:space-y-0 space-y-1 p-2 border-b">
                           <h6 class="text-gray-600">Department</h6>

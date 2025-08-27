@@ -12,7 +12,7 @@ import UserTypeNavbar from "../../../components/UserTypeNavbar.jsx";
 import DefaultPagination from "../../../components/DefaultPagination.js";
 import AddUserModal from "./AddUserModal.jsx";
 import EditUserModal from "./EditUserDetails.jsx";
-import { ToastContainer } from "react-toastify";
+import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
 const TABLE_HEAD = [
@@ -36,9 +36,20 @@ export default function UserList() {
   const [currentPage, setCurrentPage] = useState(1); // State to manage current page
   const itemsPerPage = 5; // Number of items per page
 
-  const filteredUsers = users.filter((user) =>
-    user.role.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredUsers = users.filter((user) => {
+    const term = searchTerm.toLowerCase();
+
+    return (
+      user.role?.toLowerCase().includes(term) ||
+      user.email?.toLowerCase().includes(term) ||
+      user.firstname?.toLowerCase().includes(term) ||
+      user.lastname?.toLowerCase().includes(term) ||
+      user.department?.toLowerCase().includes(term) ||
+      user.employeeNumber?.toLowerCase().includes(term) ||
+      user.username?.toLowerCase().includes(term)
+    );
+  });
+
 
   // Fetch users data from your API endpoint
   useEffect(() => {
@@ -58,6 +69,8 @@ export default function UserList() {
 
   const handleUserAdded = () => {
     fetchUsers(); // Refresh the user list
+    setIsAddModalOpen(false); // Close the modal
+    toast.success("User was successfully added!");
   };
 
   const handleEditUser = (userId) => {
@@ -67,6 +80,8 @@ export default function UserList() {
 
   const handleUserUpdated = () => {
     fetchUsers(); // Refresh the user list
+    setIsEditModalOpen(false); // Close the modal
+    toast.success("User was successfully updated!");
   };
 
   // Calculate index of the last item to display on the current page
@@ -80,10 +95,11 @@ export default function UserList() {
   const handlePageChange = (pageNumber) => {
     setCurrentPage(pageNumber);
   };
+
   return (
     <div className="min-h-screen bg-gray-50 p-6">
       <UserTypeNavbar userType="admin" />
-      
+
       <div className="mb-6">
         <Breadcrumb
           crumbs={[
@@ -144,52 +160,60 @@ export default function UserList() {
                 ))}
               </tr>
             </thead>
-            
+
             <tbody className="divide-y divide-gray-200">
               {currentItems.map((user, index) => (
                 <tr key={user._id} className="hover:bg-gray-50">
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                     {index + 1}
                   </td>
-                  
+
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-md ${
-                      user.role === 'admin' ? 'bg-red-100 text-red-800' :
-                      user.role === 'procurement Officer' ? 'bg-blue-100 text-blue-800' :
-                      'bg-green-100 text-green-800'
-                    }`}>
-                      {user.role}
+                    <span
+                      className={`inline-flex px-2 py-1 text-xs font-medium rounded-md ${user.role === "admin"
+                        ? "bg-red-100 text-red-800"
+                        : user.role === "procurement Officer"
+                          ? "bg-blue-100 text-blue-800"
+                          : "bg-green-100 text-green-800"
+                        }`}
+                    >
+                      {user.role === "admin"
+                        ? "Admin"
+                        : user.role === "procurement Officer"
+                          ? "Procurement Officer"
+                          : user.role}
                     </span>
                   </td>
-                  
+
+
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="text-sm text-gray-900">{user.email}</div>
                   </td>
-                  
+
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="text-sm font-medium text-gray-900">{user.firstname}</div>
                   </td>
-                  
+
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="text-sm font-medium text-gray-900">{user.lastname}</div>
                   </td>
-                  
+
                   <td className="px-6 py-4 whitespace-nowrap">
                     <span className="inline-flex px-2 py-1 text-xs font-medium bg-gray-100 text-gray-800 rounded-md">
                       {user.department}
                     </span>
                   </td>
-                  
+
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="text-sm font-mono text-gray-700 bg-gray-50 px-2 py-1 rounded">
                       {user.employeeNumber}
                     </div>
                   </td>
-                  
+
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="text-sm font-medium text-gray-900">{user.username}</div>
                   </td>
-                    
+
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                     <div className="flex items-center space-x-2">
                       <Link to={`/previewUserDetails/${user._id}`}>
@@ -197,14 +221,14 @@ export default function UserList() {
                           <EyeIcon className="h-4 w-4" />
                         </button>
                       </Link>
-                      
-                      <button 
+
+                      <button
                         onClick={() => handleEditUser(user._id)}
                         className="p-2 text-green-600 hover:text-green-800 hover:bg-green-50 rounded-md transition-colors"
                       >
                         <PencilIcon className="h-4 w-4" />
                       </button>
-                      
+
                       <Link to={`/deleteUserDetails/${user._id}`}>
                         <button className="p-2 text-red-600 hover:text-red-800 hover:bg-red-50 rounded-md transition-colors">
                           <TrashIcon className="h-4 w-4" />
@@ -245,7 +269,7 @@ export default function UserList() {
       />
 
       {/* Toast Container */}
-      <ToastContainer 
+      <ToastContainer
         position="top-right"
         autoClose={3000}
         hideProgressBar={false}
