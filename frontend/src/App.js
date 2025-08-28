@@ -18,7 +18,7 @@ import PreviewItem from "./pages/admin/items/PreviewItem.jsx";
 import DeleteItem from "./pages/admin/items/DeleteItem.jsx";
 import AddItem from "./pages/admin/items/AddItem.jsx";
 import FormView from "./pages/department/FormView.jsx";
-import { AddItemCard } from "./pages/department/AddItemCard .jsx";
+import { AddItemCard } from "./pages/department/AddItemCard.jsx";
 import UploadNotice from "./pages/admin/notices/UploadNotice.jsx";
 import ViewNotice from "./pages/admin/notices/viewNoticePdf.jsx";
 import ManageNotices from "./pages/admin/notices/ManageNotices.jsx";

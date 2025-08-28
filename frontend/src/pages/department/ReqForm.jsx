@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { Link, useNavigate } from "react-router-dom";
-import { AddItemCard } from "./AddItemCard ";
+import { AddItemCard }from "./AddItemCard.jsx";
 import { TrashIcon, PlusIcon } from "@heroicons/react/24/outline";
 import Breadcrumb from "../../components/Breadcrumb";
 import { ToastContainer, toast } from "react-toastify";
@@ -22,44 +22,59 @@ const ReqForm = ({ forms }) => {
   const [budgetAllocation, setBudgetAllocation] = useState("");
   const [usedAmount, setUsedAmount] = useState("");
   const [balanceAvailable, setBalanceAvailable] = useState("");
-  const [purpose, setPurpose] = useState("normal");
-  const [sendTo, setSendTo] = useState("dean");
+  const [purpose, setPurpose] = useState("Normal");
   const [items, setItems] = useState({});
   const [files, setFiles] = useState({});
   const [specifications, setSpecifications] = useState({});
-  const departments = ["DCEE", "DEIE", "MENA", "MME", "IS", "NONE"];
+  const departments = ["DEIE", "DCEE", "DMME", "DCE", "DMNNE", "DIS", "NONE"];
   const [requestCreated, setRequestCreated] = useState(false);
   const [validationErrors, setValidationErrors] = useState({});
 
-  useEffect(() => {
-    const formDataFromStorage = localStorage.getItem("formData");
-    if (formDataFromStorage) {
-      const formData = JSON.parse(formDataFromStorage);
-      setRequestId(formData.requestId);
-      setDepartment(formData.department);
-      setFaculty(formData.faculty);
-      setDate(formData.date);
-      setContactPerson(formData.contactPerson);
-      setContactNo(formData.contactNo);
-      setBudgetAllocation(formData.budgetAllocation);
-      setUsedAmount(formData.usedAmount);
-      setBalanceAvailable(formData.balanceAvailable);
-      setPurpose(formData.purpose);
-      setSendTo(formData.sendTo);
-      setItems(formData.items || {});
-      setFiles(formData.files || {});
-      setSpecifications(formData.specifications || {});
+  // Generate request ID in the required format
+  const generateRequestId = async () => {
+    try {
+      // You might want to fetch the last request number from your backend
+      // For now, I'll show a placeholder - replace this with actual API call
+      const response = await axios.get("http://localhost:8000/procReqest/getLastRequestNumber");
+      const lastNumber = response.data.lastNumber || 0;
+      const newNumber = String(lastNumber + 1).padStart(3, '0');
+      return `REQ-${newNumber}`;
+    } catch (error) {
+      console.error("Error generating request ID:", error);
+      // Fallback: generate based on timestamp
+      const timestamp = Date.now().toString().slice(-3);
+      return `REQ-${timestamp}`;
     }
+  };
+
+  // Initialize form with request ID and current date
+  useEffect(() => {
+    const initializeForm = async () => {
+      const newRequestId = await generateRequestId();
+      const currentDate = new Date().toISOString().split('T')[0];
+      setRequestId(newRequestId);
+      setDate(currentDate);
+    };
+
+    initializeForm();
+
+    // Set department from logged in user
     if (loggedInUser && loggedInUser.department) {
       setDepartment(loggedInUser.department);
-      fetchBudgetData(loggedInUser.department);
     }
   }, [loggedInUser]);
 
-  const fetchBudgetData = async (department) => {
+  // Fetch budget data when department changes
+  useEffect(() => {
+    if (department && loggedInUser?.id) {
+      fetchBudgetData(department);
+    }
+  }, [department, loggedInUser?.id]);
+
+  const fetchBudgetData = async (selectedDepartment) => {
     try {
       const response = await axios.get(
-        `http://localhost:8000/budget/getBudgetByDepartment/${loggedInUser.id}`
+        `http://localhost:8000/budget/getBudgetByDepartment/${loggedInUser.id}?department=${selectedDepartment}`
       );
       const { budgetAllocation, usedAmount, availableBalance } = response.data;
       setBudgetAllocation(budgetAllocation);
@@ -67,54 +82,37 @@ const ReqForm = ({ forms }) => {
       setBalanceAvailable(availableBalance);
     } catch (error) {
       console.error("Error fetching budget data:", error);
+      // Reset budget fields if error
+      setBudgetAllocation("");
+      setUsedAmount("");
+      setBalanceAvailable("");
     }
   };
 
-  const handleGenerateRequestId = async () => {
-    try {
-      console.log("Generate Request ID button clicked");
-      const response = await axios.post(
-        `http://localhost:8000/procReqest/generateRequestId`
-      );
-      const generatedId = response.data.requestId;
-      setRequestId(generatedId);
-    } catch (error) {
-      console.error("Error generating request ID", error);
-    }
-  };
-
-  const handleAddItemsClick = (itemData) => {
+  const handleAddItemsClick = () => {
     setShowAddItemCard(true);
-    setItems((prevItems) => ({
-      ...prevItems,
-      [Date.now()]: itemData,
-    }));
+  };
 
-    const formData = {
-      requestId,
-      faculty,
-      department,
-      date,
-      contactPerson,
-      contactNo,
-      budgetAllocation,
-      usedAmount,
-      balanceAvailable,
-      purpose,
-      sendTo,
-      items,
-      files,
-      specifications,
-    };
-    setLoading(true);
-    try {
-      // Fetch updated items after submitting the form
-    } catch (error) {
-      console.error("Error submitting request", error);
-      console.dir(error);
-    }
-    navigate(`/formview/${requestId}`);
-    localStorage.setItem("formData", JSON.stringify(formData));
+  const handleItemAdded = (newItem) => {
+    // Add the new item to the items state
+    const itemKey = Date.now().toString();
+    setItems(prevItems => ({
+      ...prevItems,
+      [itemKey]: {
+        ...newItem,
+        itemId: itemKey // Use timestamp as itemId for now
+      }
+    }));
+    setShowAddItemCard(false);
+    toast.success("Item added successfully!");
+  };
+
+  const handleRemoveItem = (itemKey) => {
+    setItems(prevItems => {
+      const newItems = { ...prevItems };
+      delete newItems[itemKey];
+      return newItems;
+    });
   };
 
   const handleFileUpload = async (requestId, files) => {
@@ -162,18 +160,61 @@ const ReqForm = ({ forms }) => {
     }
   };
 
-  const handleSubmit = async (e, items) => {
+  const clearForm = async () => {
+    // Generate new request ID and date
+    const newRequestId = await generateRequestId();
+    const currentDate = new Date().toISOString().split('T')[0];
+
+    // Reset all form fields
+    setRequestId(newRequestId);
+    setDate(currentDate);
+    setFaculty("");
+    setContactPerson("");
+    setContactNo("");
+    setPurpose("Normal");
+    setItems({});
+    setFiles({});
+    setSpecifications({});
+    setValidationErrors({});
+    setRequestCreated(false);
+
+    // Keep department and budget info if user has department
+    if (loggedInUser && loggedInUser.department) {
+      setDepartment(loggedInUser.department);
+      fetchBudgetData(loggedInUser.department);
+    } else {
+      setDepartment("");
+      setBudgetAllocation("");
+      setUsedAmount("");
+      setBalanceAvailable("");
+    }
+
+    // Clear file inputs
+    const fileInput = document.getElementById("formFileMultiple");
+    const specInput = document.getElementById("formFileMultiple1");
+    if (fileInput) fileInput.value = "";
+    if (specInput) specInput.value = "";
+  };
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    
-    // Validation logic here
+
+    // Validation logic
     const errors = {};
     if (!faculty) errors.faculty = "Faculty/Admin is required";
     if (!department) errors.department = "Department is required";
     if (!contactPerson) errors.contactPerson = "Contact person is required";
-    if (!contactNo) errors.contactNo = "Contact number is required";
-    
+    if (!contactNo) {
+      errors.contactNo = "Contact number is required";
+    } else if (!/^\d+$/.test(contactNo)) {
+      errors.contactNo = "Contact number must contain only digits";
+    }
+
+    if (Object.keys(items).length === 0) errors.items = "At least one item is required";
+
     if (Object.keys(errors).length > 0) {
       setValidationErrors(errors);
+      toast.error("Please fill in all required fields");
       return;
     }
 
@@ -188,7 +229,6 @@ const ReqForm = ({ forms }) => {
       usedAmount,
       balanceAvailable,
       purpose,
-      sendTo,
       items,
       files,
       specifications,
@@ -201,8 +241,11 @@ const ReqForm = ({ forms }) => {
         data
       );
       console.log("Request created successfully:", response.data);
-      setRequestCreated(true);
       toast.success("Request created successfully!");
+
+      // Clear the form after successful submission
+      await clearForm();
+
     } catch (error) {
       console.error("Error creating request:", error);
       toast.error("Error creating request");
@@ -211,14 +254,15 @@ const ReqForm = ({ forms }) => {
     }
   };
 
-  const handleGeneratePDF = async () => {
-    // PDF generation logic here
-    console.log("Generating PDF...");
-  };
-
-  const navigateToViewRequest = () => {
-    navigate(`/ViewFormRequest/${requestId}`);
-  };
+  // Show AddItemCard modal
+  // if (showAddItemCard) {
+  //   return (
+  //     <AddItemCard
+  //       handleAddItemsClick={handleItemAdded}
+  //       onCancel={() => setShowAddItemCard(false)}
+  //     />
+  //   );
+  // }
 
   return (
     <div className="min-h-screen bg-gray-50 p-6">
@@ -240,68 +284,30 @@ const ReqForm = ({ forms }) => {
               <h1 className="text-2xl font-semibold text-gray-900">Purchase Requisition Form</h1>
               <p className="text-gray-600 mt-1">Create a new procurement request</p>
             </div>
-            <div className="flex items-center space-x-3">
-              <button
-                type="button"
-                onClick={handleGenerateRequestId}
-                className="flex items-center space-x-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md transition-colors duration-200"
-              >
-                <span>Generate Request ID</span>
-              </button>
-            </div>
           </div>
         </div>
 
         {/* Form Content */}
         <div className="p-6">
-          <form onSubmit={(e) => handleSubmit(e, items)}>
+          <form onSubmit={handleSubmit}>
             <div className="space-y-8">
-              {/* Request ID Section */}
-              <div className="bg-gray-50 p-4 rounded-lg">
-                <div className="flex items-center justify-between">
-                  <div className="flex-1">
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Request ID
-                    </label>
-                    <input
-                      type="text"
-                      value={requestId}
-                      onChange={(e) => setRequestId(e.target.value)}
-                      className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 bg-gray-100"
-                      disabled={true}
-                    />
-                  </div>
-                  <div className="ml-4">
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Date
-                    </label>
-                    <input
-                      type="date"
-                      value={date}
-                      onChange={(e) => setDate(e.target.value)}
-                      className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
-                    />
-                  </div>
-                </div>
-              </div>
-
               {/* User Details Section */}
               <div className="bg-white border border-gray-200 rounded-lg p-6">
                 <h3 className="text-lg font-medium text-gray-900 mb-4">User Details</h3>
                 <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Faculty/Admin
+                      Faculty/Admin *
                     </label>
                     <input
                       type="text"
                       value={faculty}
                       onChange={(e) => setFaculty(e.target.value)}
-                      className={`block w-full px-3 py-2 border rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 ${
-                        validationErrors.faculty
-                          ? "border-red-300 focus:ring-red-500 focus:border-red-500"
-                          : "border-gray-300"
-                      }`}
+                      className={`block w-full px-3 py-2 border rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 ${validationErrors.faculty
+                        ? "border-red-300 focus:ring-red-500 focus:border-red-500"
+                        : "border-gray-300"
+                        }`}
+                      placeholder="Enter faculty/admin name"
                     />
                     {validationErrors.faculty && (
                       <p className="text-red-500 text-sm mt-1">
@@ -312,16 +318,15 @@ const ReqForm = ({ forms }) => {
 
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Department/Branch
+                      Department/Branch *
                     </label>
                     <select
                       value={department}
                       onChange={(e) => setDepartment(e.target.value)}
-                      className={`block w-full px-3 py-2 border rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 ${
-                        validationErrors.department
-                          ? "border-red-300 focus:ring-red-500 focus:border-red-500"
-                          : "border-gray-300"
-                      }`}
+                      className={`block w-full px-3 py-2 border rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 ${validationErrors.department
+                        ? "border-red-300 focus:ring-red-500 focus:border-red-500"
+                        : "border-gray-300"
+                        }`}
                     >
                       <option value="">Select your department</option>
                       {departments.map((type, index) => (
@@ -339,17 +344,17 @@ const ReqForm = ({ forms }) => {
 
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Contact Person
+                      Contact Person *
                     </label>
                     <input
                       type="text"
                       value={contactPerson}
                       onChange={(e) => setContactPerson(e.target.value)}
-                      className={`block w-full px-3 py-2 border rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 ${
-                        validationErrors.contactPerson
-                          ? "border-red-300 focus:ring-red-500 focus:border-red-500"
-                          : "border-gray-300"
-                      }`}
+                      className={`block w-full px-3 py-2 border rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 ${validationErrors.contactPerson
+                        ? "border-red-300 focus:ring-red-500 focus:border-red-500"
+                        : "border-gray-300"
+                        }`}
+                      placeholder="Enter contact person name"
                     />
                     {validationErrors.contactPerson && (
                       <p className="text-red-500 text-sm mt-1">
@@ -360,17 +365,17 @@ const ReqForm = ({ forms }) => {
 
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Telephone No
+                      Telephone No *
                     </label>
                     <input
                       type="text"
                       value={contactNo}
                       onChange={(e) => setContactNo(e.target.value)}
-                      className={`block w-full px-3 py-2 border rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 ${
-                        validationErrors.contactNo
-                          ? "border-red-300 focus:ring-red-500 focus:border-red-500"
-                          : "border-gray-300"
-                      }`}
+                      className={`block w-full px-3 py-2 border rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 ${validationErrors.contactNo
+                        ? "border-red-300 focus:ring-red-500 focus:border-red-500"
+                        : "border-gray-300"
+                        }`}
+                      placeholder="Enter telephone number"
                     />
                     {validationErrors.contactNo && (
                       <p className="text-red-500 text-sm mt-1">
@@ -383,7 +388,10 @@ const ReqForm = ({ forms }) => {
 
               {/* Budget Details Section */}
               <div className="bg-white border border-gray-200 rounded-lg p-6">
-                <h3 className="text-lg font-medium text-gray-900 mb-4">Annual Budget Details</h3>
+                <h3 className="text-lg font-medium text-gray-900 mb-2">Annual Budget Details</h3>
+                <p className="mb-4 text-sm text-gray-600">
+                  Budget information is automatically loaded based on selected department.
+                </p>
                 <div className="grid grid-cols-1 gap-6 sm:grid-cols-3">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -392,8 +400,9 @@ const ReqForm = ({ forms }) => {
                     <input
                       type="number"
                       value={budgetAllocation}
-                      onChange={(e) => setBudgetAllocation(e.target.value)}
-                      className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                      className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm bg-gray-50"
+                      disabled
+                      readOnly
                     />
                   </div>
 
@@ -404,8 +413,9 @@ const ReqForm = ({ forms }) => {
                     <input
                       type="text"
                       value={usedAmount}
-                      onChange={(e) => setUsedAmount(e.target.value)}
-                      className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                      className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm bg-gray-50"
+                      disabled
+                      readOnly
                     />
                   </div>
 
@@ -416,8 +426,9 @@ const ReqForm = ({ forms }) => {
                     <input
                       type="text"
                       value={balanceAvailable}
-                      onChange={(e) => setBalanceAvailable(e.target.value)}
-                      className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                      className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm bg-gray-50"
+                      disabled
+                      readOnly
                     />
                     <p className="mt-2 text-sm text-gray-600">
                       Please check your available balance here before requesting purchasing items.
@@ -429,7 +440,9 @@ const ReqForm = ({ forms }) => {
               {/* Item Details Section */}
               <div className="bg-white border border-gray-200 rounded-lg p-6">
                 <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-lg font-medium text-gray-900">Requesting Item Details</h3>
+                  <h3 className="text-lg font-medium text-gray-900">
+                    Requesting Item Details *
+                  </h3>
                   <button
                     type="button"
                     onClick={handleAddItemsClick}
@@ -440,12 +453,18 @@ const ReqForm = ({ forms }) => {
                   </button>
                 </div>
 
+                {validationErrors.items && (
+                  <p className="text-red-500 text-sm mb-4">
+                    {validationErrors.items}
+                  </p>
+                )}
+
                 <div className="overflow-x-auto">
                   <table className="w-full">
                     <thead className="bg-gray-100 border-b border-gray-200">
                       <tr>
                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">No</th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Item ID</th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Item Name</th>
                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Description</th>
                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Cost (Approx.)</th>
                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Qty Required</th>
@@ -454,43 +473,53 @@ const ReqForm = ({ forms }) => {
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-200">
-                      {Object.entries(items).map(([key, item], index) => (
-                        <tr key={key} className="hover:bg-gray-50">
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                            {index + 1}
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                            {item.itemId}
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                            {item.itemName}
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                            {item.cost}
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                            {item.qtyRequired}
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                            {item.qtyAvailable}
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                            <Link to={`/DeleteItem/${requestId}/${item.itemId}`}>
-                              <button className="p-2 text-red-600 hover:text-red-800 hover:bg-red-50 rounded-md transition-colors">
-                                <TrashIcon className="h-4 w-4" />
-                              </button>
-                            </Link>
+                      {Object.keys(items).length === 0 ? (
+                        <tr>
+                          <td colSpan="6" className="px-6 py-8 text-center text-gray-500">
+                            No items added yet. Click "Add Items" to get started.
                           </td>
                         </tr>
-                      ))}
+                      ) : (
+                        Object.entries(items).map(([key, item], index) => (
+                          <tr key={key} className="hover:bg-gray-50">
+                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                              {index + 1}
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                              {item.itemName}
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                              {item.description}
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                              {item.cost}
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                              {item.qtyRequired}
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                              {item.qtyAvailable}
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                              <button
+                                type="button"
+                                onClick={() => handleRemoveItem(key)}
+                                className="p-2 text-red-600 hover:text-red-800 hover:bg-red-50 rounded-md transition-colors"
+                              >
+                                <TrashIcon className="h-4 w-4" />
+                              </button>
+                            </td>
+                          </tr>
+                        ))
+                      )}
                     </tbody>
                   </table>
                 </div>
               </div>
 
-              {/* Purpose and Settings Section */}
+              {/* Purpose and File Upload Section */}
               <div className="bg-white border border-gray-200 rounded-lg p-6">
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                   {/* Purpose Selection */}
                   <div>
                     <h3 className="text-lg font-medium text-gray-900 mb-4">Purpose</h3>
@@ -572,86 +601,35 @@ const ReqForm = ({ forms }) => {
                       </div>
                     </div>
                   </div>
-
-                  {/* Send To Selection */}
-                  <div>
-                    <h3 className="text-lg font-medium text-gray-900 mb-4">Send Request To</h3>
-                    <div className="space-y-3">
-                      <div className="flex items-center">
-                        <input
-                          id="viceChancellor"
-                          name="sendTo"
-                          type="radio"
-                          value="viceChancellor"
-                          checked={sendTo === "viceChancellor"}
-                          onChange={() => setSendTo("viceChancellor")}
-                          className="h-4 w-4 border-gray-300 text-blue-600 focus:ring-blue-500"
-                        />
-                        <label htmlFor="viceChancellor" className="ml-3 text-sm font-medium text-gray-700">
-                          Vice Chancellor <span className="text-gray-500">(Up to 1,000,000)</span>
-                        </label>
-                      </div>
-                      <div className="flex items-center">
-                        <input
-                          id="dean"
-                          name="sendTo"
-                          type="radio"
-                          value="dean"
-                          checked={sendTo === "dean"}
-                          onChange={() => setSendTo("dean")}
-                          className="h-4 w-4 border-gray-300 text-blue-600 focus:ring-blue-500"
-                        />
-                        <label htmlFor="dean" className="ml-3 text-sm font-medium text-gray-700">
-                          Dean <span className="text-gray-500">(Up to 100,000)</span>
-                        </label>
-                      </div>
-                      <div className="flex items-center">
-                        <input
-                          id="registrar"
-                          name="sendTo"
-                          type="radio"
-                          value="registrar"
-                          checked={sendTo === "registrar"}
-                          onChange={() => setSendTo("registrar")}
-                          className="h-4 w-4 border-gray-300 text-blue-600 focus:ring-blue-500"
-                        />
-                        <label htmlFor="registrar" className="ml-3 text-sm font-medium text-gray-700">
-                          Registrar <span className="text-gray-500">(Up to 25,000)</span>
-                        </label>
-                      </div>
-                    </div>
-                  </div>
                 </div>
               </div>
 
               {/* Submit Section */}
               <div className="flex items-center justify-end space-x-4 pt-6 border-t border-gray-200">
-                {requestCreated ? (
-                  <button
-                    type="button"
-                    onClick={navigateToViewRequest}
-                    className="flex items-center space-x-2 bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-md transition-colors duration-200"
-                  >
-                    <span>Generate PDF</span>
-                  </button>
-                ) : (
-                  <button
-                    type="submit"
-                    disabled={loading}
-                    className="flex items-center space-x-2 bg-[#961C1E] hover:bg-[#761C1D] text-white px-6 py-3 rounded-md transition-colors duration-200 disabled:opacity-50"
-                  >
-                    {loading ? (
-                      <span>Creating...</span>
-                    ) : (
-                      <span>Create New Request</span>
-                    )}
-                  </button>
-                )}
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="flex items-center space-x-2 bg-[#961C1E] hover:bg-[#761C1D] text-white px-6 py-3 rounded-md transition-colors duration-200 disabled:opacity-50"
+                >
+                  {loading ? (
+                    <span>Creating...</span>
+                  ) : (
+                    <span>Create New Request</span>
+                  )}
+                </button>
               </div>
             </div>
           </form>
         </div>
       </div>
+
+      {showAddItemCard && (
+        <AddItemCard
+          isOpen={showAddItemCard}
+          onClose={() => setShowAddItemCard(false)}
+          handleAddItemsClick={handleItemAdded}
+        />
+      )}
 
       <ToastContainer />
     </div>

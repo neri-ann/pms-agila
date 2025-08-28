@@ -17,7 +17,7 @@ import { ToastContainer } from "react-toastify";
 
 const TABLE_HEAD = [
   "No",
-  "Request ID",
+  // "Request ID",
   "Department",
   "Requested Date",
   "Status",
@@ -221,9 +221,9 @@ const ApprovalList = ({ userType: propUserType }) => {
                       {indexOfFirstItem + index + 1}
                     </td>
                     
-                    <td className="px-6 py-4 whitespace-nowrap">
+                    {/* <td className="px-6 py-4 whitespace-nowrap">
                       <div className="text-sm font-medium text-gray-900">{request.requestId}</div>
-                    </td>
+                    </td> */}
                     
                     <td className="px-6 py-4 whitespace-nowrap">
                       <span className="inline-flex px-2 py-1 text-xs font-medium bg-gray-100 text-gray-800 rounded-md">

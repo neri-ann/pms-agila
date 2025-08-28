@@ -4,7 +4,7 @@ import React from 'react';
 import { useNavigate, useParams,useLocation } from 'react-router-dom';
 import { useSnackbar } from 'notistack';
 import Form from './ReqForm';
-import { AddItemCard } from './AddItemCard ';
+import { AddItemCard } from './AddItemCard.jsx';
 
 
 
