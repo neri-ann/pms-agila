@@ -171,6 +171,7 @@ export default function AddSupplierModal({ isOpen, onClose, onSupplierAdded }) {
                   type="text"
                   value={supplierName}
                   onChange={(e) => setSupplierName(e.target.value)}
+                  placeholder="Enter supplier name"
                   className={`w-full px-3 py-2 border rounded-md shadow-sm ${validationErrors.supplierName ? "border-red-500 bg-red-50" : "border-gray-300"
                     }`}
                 />
@@ -186,6 +187,7 @@ export default function AddSupplierModal({ isOpen, onClose, onSupplierAdded }) {
                   type="text"
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
+                  placeholder="Enter username"
                   className={`w-full px-3 py-2 border rounded-md shadow-sm focus:ring-2 focus:ring-[#961C1E] focus:border-[#961C1E] ${validationErrors.username ? "border-red-500 bg-red-50" : "border-gray-300"
                     }`}
                 />
@@ -244,6 +246,7 @@ export default function AddSupplierModal({ isOpen, onClose, onSupplierAdded }) {
                       type="text"
                       value={contactOfficer}
                       onChange={(e) => setContactOfficer(e.target.value)}
+                      placeholder="Enter contact officer"
                       className={`w-full px-3 py-2 border rounded-md shadow-sm ${validationErrors.contactOfficer ? "border-red-500 bg-red-50" : "border-gray-300"
                         }`}
                     />
@@ -261,6 +264,7 @@ export default function AddSupplierModal({ isOpen, onClose, onSupplierAdded }) {
                       type="text"
                       value={contactNumbers1}
                       onChange={(e) => setContactNumbers1(e.target.value)}
+                      placeholder="Enter contact number"
                       className={`w-full px-3 py-2 border rounded-md shadow-sm ${validationErrors.contactNumbers ? "border-red-500 bg-red-50" : "border-gray-300"
                         }`}
                     />
@@ -272,12 +276,13 @@ export default function AddSupplierModal({ isOpen, onClose, onSupplierAdded }) {
                   {/* Email */}
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Email <span className="text-red-500">*</span>
+                      Email Address <span className="text-red-500">*</span>
                     </label>
                     <input
                       type="email"
                       value={emails1}
                       onChange={(e) => setEmails1(e.target.value)}
+                      placeholder="Enter email address"
                       className={`w-full px-3 py-2 border rounded-md shadow-sm ${validationErrors.emails ? "border-red-500 bg-red-50" : "border-gray-300"
                         }`}
                     />

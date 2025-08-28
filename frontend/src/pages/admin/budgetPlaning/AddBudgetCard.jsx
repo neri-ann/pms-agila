@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { XMarkIcon } from "@heroicons/react/24/outline";
 import { toast } from "react-toastify";
@@ -21,6 +21,18 @@ const AddBudgetCard = ({ onSave, onCancel }) => {
   const [loading, setLoading] = useState(false);
   const [validationErrors, setValidationErrors] = useState({});
 
+  // Auto-fill usedAmount when availableBalance or budgetAllocation changes
+  useEffect(() => {
+    const alloc = parseFloat(budgetAllocation);
+    const avail = parseFloat(availableBalance);
+    if (!isNaN(alloc) && !isNaN(avail)) {
+      const used = alloc - avail;
+      setUsedAmount(used >= 0 ? used.toString() : "");
+    } else {
+      setUsedAmount("");
+    }
+  }, [availableBalance, budgetAllocation]);
+
   const resetForm = () => {
     setDepartment("");
     setBudgetAllocation("");
@@ -33,20 +45,41 @@ const AddBudgetCard = ({ onSave, onCancel }) => {
     let errors = {};
     let isValid = true;
 
+    const alloc = parseFloat(budgetAllocation);
+    const avail = parseFloat(availableBalance);
+    const used = parseFloat(usedAmount);
+
     if (!department) {
       errors.department = "Department is required";
       isValid = false;
     }
     if (!budgetAllocation) {
-      errors.budgetAllocation = "Budget Allocation is required";
+      errors.budgetAllocation = "Budget allocation is required";
+      isValid = false;
+    } else if (isNaN(alloc) || alloc <= 0) {
+      errors.budgetAllocation = "Budget allocation must be a positive number";
       isValid = false;
     }
     if (!availableBalance) {
-      errors.availableBalance = "Available Balance is required";
+      errors.availableBalance = "Available balance is required";
+      isValid = false;
+    } else if (isNaN(avail) || avail < 0) {
+      errors.availableBalance = "Available balance must be a non-negative number";
       isValid = false;
     }
-    if (!usedAmount) {
-      errors.usedAmount = "Used Amount is required";
+    if (!usedAmount && usedAmount !== 0) {
+      errors.usedAmount = "Used amount is required";
+      isValid = false;
+    } else if (isNaN(used) || used < 0) {
+      errors.usedAmount = "Used amount must be a non-negative number";
+      isValid = false;
+    }
+    if (
+      isValid &&
+      (Math.abs((avail + used) - alloc) > 0.01) // Allowing small floating point error
+    ) {
+      errors.availableBalance = "Available + Used must equal Budget Allocation";
+      errors.usedAmount = "Available + Used must equal Budget Allocation";
       isValid = false;
     }
 
@@ -69,7 +102,7 @@ const AddBudgetCard = ({ onSave, onCancel }) => {
     axios
       .post("http://localhost:8000/budget/create", newBudget)
       .then((response) => {
-        toast.success("Budget successfully added!");
+        // toast.success("Budget successfully added!");
         setLoading(false);
         resetForm();
         onSave(response.data);
@@ -152,6 +185,8 @@ const AddBudgetCard = ({ onSave, onCancel }) => {
                       : "border-gray-300"
                   }`}
                   placeholder="Enter budget allocation here..."
+                  min="0"
+                  step="any"
                 />
                 {validationErrors.budgetAllocation && (
                   <p className="text-red-500 text-xs mt-1 flex items-center">
@@ -176,6 +211,8 @@ const AddBudgetCard = ({ onSave, onCancel }) => {
                       : "border-gray-300"
                   }`}
                   placeholder="Enter available balance here..."
+                  min="0"
+                  step="any"
                 />
                 {validationErrors.availableBalance && (
                   <p className="text-red-500 text-xs mt-1 flex items-center">
@@ -193,13 +230,15 @@ const AddBudgetCard = ({ onSave, onCancel }) => {
                 <input
                   type="number"
                   value={usedAmount}
-                  onChange={(e) => setUsedAmount(e.target.value)}
-                  className={`w-full px-3 py-2 border rounded-md shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors ${
+                  readOnly
+                  className={`w-full px-3 py-2 border rounded-md shadow-sm bg-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors ${
                     validationErrors.usedAmount
                       ? "border-red-500 bg-red-50"
                       : "border-gray-300"
                   }`}
-                  placeholder="Enter used amount here..."
+                  placeholder="Auto-calculated"
+                  min="0"
+                  step="any"
                 />
                 {validationErrors.usedAmount && (
                   <p className="text-red-500 text-xs mt-1 flex items-center">

@@ -24,12 +24,9 @@ export default function UpdateBudget({ id, onClose, onBudgetUpdated }) {
 
   const { enqueueSnackbar } = useSnackbar();
 
+  // Fetch budget data
   useEffect(() => {
-    if (!id) {
-      console.error("No ID provided to UpdateBudget component");
-      return;
-    }
-
+    if (!id) return;
     axios
       .get(`http://localhost:8000/budget/previewBudget/${id}`)
       .then((response) => {
@@ -47,24 +44,57 @@ export default function UpdateBudget({ id, onClose, onBudgetUpdated }) {
       });
   }, [id, enqueueSnackbar]);
 
+  // Auto-calculate usedAmount
+  useEffect(() => {
+    const alloc = parseFloat(budgetAllocation);
+    const avail = parseFloat(availableBalance);
+    if (!isNaN(alloc) && !isNaN(avail)) {
+      const used = alloc - avail;
+      setUsedAmount(used >= 0 ? used.toString() : "");
+    } else {
+      setUsedAmount("");
+    }
+  }, [availableBalance, budgetAllocation]);
+
   const validateFields = () => {
     let errors = {};
     let isValid = true;
+
+    const alloc = parseFloat(budgetAllocation);
+    const avail = parseFloat(availableBalance);
+    const used = parseFloat(usedAmount);
 
     if (!department) {
       errors.department = "Department is required";
       isValid = false;
     }
-    if (!budgetAllocation || parseFloat(budgetAllocation) <= 0) {
-      errors.budgetAllocation = "Budget Allocation must be a positive number";
+    if (!budgetAllocation) {
+      errors.budgetAllocation = "Budget allocation is required";
+      isValid = false;
+    } else if (isNaN(alloc) || alloc <= 0) {
+      errors.budgetAllocation = "Budget allocation must be a positive number";
       isValid = false;
     }
-    if (!availableBalance || parseFloat(availableBalance) < 0) {
-      errors.availableBalance = "Available Balance cannot be negative";
+    if (!availableBalance) {
+      errors.availableBalance = "Available balance is required";
+      isValid = false;
+    } else if (isNaN(avail) || avail < 0) {
+      errors.availableBalance = "Available balance must be a non-negative number";
       isValid = false;
     }
-    if (!usedAmount || parseFloat(usedAmount) < 0) {
-      errors.usedAmount = "Used Amount cannot be negative";
+    if (!usedAmount && usedAmount !== 0) {
+      errors.usedAmount = "Used amount is required";
+      isValid = false;
+    } else if (isNaN(used) || used < 0) {
+      errors.usedAmount = "Used amount must be a non-negative number";
+      isValid = false;
+    }
+    if (
+      isValid &&
+      (Math.abs((avail + used) - alloc) > 0.01)
+    ) {
+      errors.availableBalance = "Available + Used must equal Budget Allocation";
+      errors.usedAmount = "Available + Used must equal Budget Allocation";
       isValid = false;
     }
 
@@ -74,7 +104,7 @@ export default function UpdateBudget({ id, onClose, onBudgetUpdated }) {
 
   const handleUpdateBudgets = (e) => {
     e.preventDefault();
-    
+
     if (!validateFields()) {
       toast.error("Please fix the validation errors before submitting.");
       return;
@@ -93,14 +123,10 @@ export default function UpdateBudget({ id, onClose, onBudgetUpdated }) {
       .put(`http://localhost:8000/budget/updateBudget/${id}`, updatedBudget)
       .then((response) => {
         setLoading(false);
-        toast.success("Budget updated successfully!");
-        
-        // Call the parent's update handler with the updated data
+        // toast.success("Budget updated successfully!");
         if (onBudgetUpdated) {
           onBudgetUpdated({ ...updatedBudget, _id: id });
         }
-        
-        // Close the modal
         onClose();
       })
       .catch((error) => {
@@ -112,7 +138,6 @@ export default function UpdateBudget({ id, onClose, onBudgetUpdated }) {
   };
 
   const handleOverlayClick = (e) => {
-    // Only close if clicking the overlay, not the modal content
     if (e.target === e.currentTarget) {
       onClose();
     }
@@ -170,7 +195,7 @@ export default function UpdateBudget({ id, onClose, onBudgetUpdated }) {
                 </select>
                 {validationErrors.department && (
                   <p className="text-red-500 text-xs mt-1 flex items-center">
-                    <span className="mr-1">âš </span>
+                    <span className="mr-1">⚠</span>
                     {validationErrors.department}
                   </p>
                 )}
@@ -192,10 +217,12 @@ export default function UpdateBudget({ id, onClose, onBudgetUpdated }) {
                   }`}
                   placeholder="Enter budget allocation here..."
                   disabled={loading}
+                  min="0"
+                  step="any"
                 />
                 {validationErrors.budgetAllocation && (
                   <p className="text-red-500 text-xs mt-1 flex items-center">
-                    <span className="mr-1">âš </span>
+                    <span className="mr-1">⚠</span>
                     {validationErrors.budgetAllocation}
                   </p>
                 )}
@@ -217,10 +244,12 @@ export default function UpdateBudget({ id, onClose, onBudgetUpdated }) {
                   }`}
                   placeholder="Enter available balance here..."
                   disabled={loading}
+                  min="0"
+                  step="any"
                 />
                 {validationErrors.availableBalance && (
                   <p className="text-red-500 text-xs mt-1 flex items-center">
-                    <span className="mr-1">âš </span>
+                    <span className="mr-1">⚠</span>
                     {validationErrors.availableBalance}
                   </p>
                 )}
@@ -234,18 +263,20 @@ export default function UpdateBudget({ id, onClose, onBudgetUpdated }) {
                 <input
                   type="number"
                   value={usedAmount}
-                  onChange={(e) => setUsedAmount(e.target.value)}
-                  className={`w-full px-3 py-2 border rounded-md shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors ${
+                  readOnly
+                  className={`w-full px-3 py-2 border rounded-md shadow-sm bg-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors ${
                     validationErrors.usedAmount
                       ? "border-red-500 bg-red-50"
                       : "border-gray-300"
                   }`}
-                  placeholder="Enter used amount here..."
+                  placeholder="Auto-calculated"
+                  min="0"
+                  step="any"
                   disabled={loading}
                 />
                 {validationErrors.usedAmount && (
                   <p className="text-red-500 text-xs mt-1 flex items-center">
-                    <span className="mr-1">âš </span>
+                    <span className="mr-1">⚠</span>
                     {validationErrors.usedAmount}
                   </p>
                 )}

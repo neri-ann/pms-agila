@@ -150,15 +150,9 @@ const UserTypeNavbar = ({ userType, onLogout }) => {
 
       <ul className="flex flex-col space-y-3 px-6 w-full">
         {options.map(({ link, path, icon: Icon }) => {
-          // Normalize paths (remove trailing slashes)
-          const normalize = (p) => p.replace(/\/+$/, "");
-          const current = normalize(location.pathname);
-          const base = normalize(path);
-
           const isActive =
-            base === ""
-              ? current === base
-              : current === base || current.startsWith(base + "/");
+            location.pathname === path ||
+            location.pathname.startsWith(path + "/");
 
           return (
             <li key={path}>

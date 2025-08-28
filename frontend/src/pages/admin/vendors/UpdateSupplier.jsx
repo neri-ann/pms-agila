@@ -1,10 +1,9 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { XMarkIcon } from "@heroicons/react/24/outline";
-import { useNavigate, useParams } from "react-router-dom";
-import { useSnackbar } from "notistack";
+import { toast } from "react-toastify";
 
-export default function UpdateSupplier() {
+export default function UpdateSupplierModal({ isOpen, onClose, onSupplierUpdated, supplierId }) {
   const [username, setUsername] = useState("");
   const [supplierName, setSupplierName] = useState("");
   const [addressStreet, setAddressStreet] = useState("");
@@ -24,14 +23,11 @@ export default function UpdateSupplier() {
     { value: "Contractors", label: "Contractors" },
   ];
 
-  const { id } = useParams();
-  const { enqueueSnackbar } = useSnackbar();
-  const navigate = useNavigate();
-
   useEffect(() => {
+    if (!isOpen || !supplierId) return;
     setLoading(true);
     axios
-      .get(`http://localhost:8000/supplyer/preview-supplyer/${id}`)
+      .get(`http://localhost:8000/supplyer/preview-supplyer/${supplierId}`)
       .then((response) => {
         const data = response.data;
         setUsername(data.username || "");
@@ -70,12 +66,10 @@ export default function UpdateSupplier() {
       })
       .catch((error) => {
         setLoading(false);
-        enqueueSnackbar("An error occurred. Please check the console.", {
-          variant: "error",
-        });
+        toast.error("An error occurred. Please check the console.");
         console.error(error);
       });
-  }, [id, enqueueSnackbar]);
+  }, [isOpen, supplierId]);
 
   const validateFields = () => {
     let errors = {};
@@ -141,22 +135,21 @@ export default function UpdateSupplier() {
     setLoading(true);
 
     axios
-      .put(`http://localhost:8000/supplyer/update/${id}`, UpdateSupplyer)
+      .put(`http://localhost:8000/supplyer/update/${supplierId}`, UpdateSupplyer)
       .then(() => {
-        enqueueSnackbar("Supplier is updated successfully", {
-          variant: "success",
-        });
+        // toast.success("Supplier is updated successfully");
         setLoading(false);
-        navigate("/allvendors");
+        onSupplierUpdated?.();
+        onClose();
       })
       .catch((error) => {
         setLoading(false);
-        enqueueSnackbar(`Error updating supplier account: ${error.message}`, {
-          variant: "error",
-        });
+        toast.error(`Error updating supplier account: ${error.message}`);
         console.error(error);
       });
   };
+
+  if (!isOpen) return null;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-gray-500 bg-opacity-75">
@@ -164,7 +157,7 @@ export default function UpdateSupplier() {
         <div className="bg-white px-6 py-4 border-b border-gray-200 flex items-center justify-between">
           <h3 className="text-lg font-medium text-gray-900">Edit Supplier Details</h3>
           <button
-            onClick={() => navigate("/allvendors")}
+            onClick={onClose}
             className="text-gray-400 hover:text-gray-600 transition-colors"
           >
             <XMarkIcon className="h-6 w-6" />
@@ -186,6 +179,7 @@ export default function UpdateSupplier() {
                   type="text"
                   value={supplierName}
                   onChange={(e) => setSupplierName(e.target.value)}
+                  placeholder="Enter supplier name"
                   className={`w-full px-3 py-2 border rounded-md shadow-sm ${validationErrors.supplierName
                     ? "border-red-500 bg-red-50"
                     : "border-gray-300"
@@ -207,6 +201,7 @@ export default function UpdateSupplier() {
                   type="text"
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
+                  placeholder="Enter username"
                   className={`w-full px-3 py-2 border rounded-md shadow-sm focus:ring-2 focus:ring-[#961C1E] focus:border-[#961C1E] ${validationErrors.username
                     ? "border-red-500 bg-red-50"
                     : "border-gray-300"
@@ -279,6 +274,7 @@ export default function UpdateSupplier() {
                       type="text"
                       value={contactOfficer}
                       onChange={(e) => setContactOfficer(e.target.value)}
+                      placeholder="Enter contact offficer"
                       className={`w-full px-3 py-2 border rounded-md shadow-sm ${validationErrors.contactOfficer
                         ? "border-red-500 bg-red-50"
                         : "border-gray-300"
@@ -300,6 +296,7 @@ export default function UpdateSupplier() {
                       type="text"
                       value={contactNumbers1}
                       onChange={(e) => setContactNumbers1(e.target.value)}
+                      placeholder="Enter contact number"
                       className={`w-full px-3 py-2 border rounded-md shadow-sm ${validationErrors.contactNumbers
                         ? "border-red-500 bg-red-50"
                         : "border-gray-300"
@@ -315,12 +312,13 @@ export default function UpdateSupplier() {
                   {/* Email */}
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Email <span className="text-red-500">*</span>
+                      Email Address <span className="text-red-500">*</span>
                     </label>
                     <input
                       type="email"
                       value={emails1}
                       onChange={(e) => setEmails1(e.target.value)}
+                      placeholder="Enter email address"
                       className={`w-full px-3 py-2 border rounded-md shadow-sm ${validationErrors.emails
                         ? "border-red-500 bg-red-50"
                         : "border-gray-300"
@@ -395,7 +393,7 @@ export default function UpdateSupplier() {
           <div className="flex items-center justify-end gap-x-4 px-6 py-4 border-t border-gray-200">
             <button
               type="button"
-              onClick={() => navigate("/allvendors")}
+              onClick={onClose}
               className="px-6 py-2.5 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 transition-colors"
             >
               Cancel

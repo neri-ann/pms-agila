@@ -59,15 +59,15 @@ export default function UpdateItemsModal({ isOpen, onClose, onItemUpdated, id })
     let isValid = true;
 
     if (!AssetsClass) {
-      errors.AssetsClass = "Assets Class is required";
+      errors.AssetsClass = "Assets class is required";
       isValid = false;
     }
     if (!AssetsSubClass) {
-      errors.AssetsSubClass = "Assets Sub Class is required";
+      errors.AssetsSubClass = "Assets sub class is required";
       isValid = false;
     }
     if (!itemName) {
-      errors.itemName = "Item Name is required";
+      errors.itemName = "Item name is required";
       isValid = false;
     }
 
@@ -144,7 +144,7 @@ export default function UpdateItemsModal({ isOpen, onClose, onItemUpdated, id })
                   type="text"
                   value={itemName}
                   onChange={(e) => setItemName(e.target.value)}
-                  placeholder="Enter item name here..."
+                  placeholder="Enter item name"
                   className={`w-full px-3 py-2 border rounded-md shadow-sm focus:ring-2 focus:ring-indigo-600 focus:border-indigo-600 transition-colors ${
                     validationErrors.itemName
                       ? "border-red-500 bg-red-50"
@@ -197,7 +197,7 @@ export default function UpdateItemsModal({ isOpen, onClose, onItemUpdated, id })
                   type="text"
                   value={AssetsSubClass}
                   onChange={(e) => setAssetsSubClass(e.target.value)}
-                  placeholder="Enter assets sub class here..."
+                  placeholder="Enter assets sub class"
                   className={`w-full px-3 py-2 border rounded-md shadow-sm focus:ring-2 focus:ring-indigo-600 focus:border-indigo-600 transition-colors ${
                     validationErrors.AssetsSubClass
                       ? "border-red-500 bg-red-50"

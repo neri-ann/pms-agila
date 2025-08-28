@@ -8,7 +8,8 @@ import UserTypeNavbar from "../../../components/UserTypeNavbar.jsx";
 import DefaultPagination from "../../../components/DefaultPagination.js";
 import AddItemsModal from "./Additems";
 import UpdateItemsModal from "./updateItems"; // 1. Import at the top
-
+import { ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 const TABLE_HEAD = [
   "No",
@@ -98,6 +99,16 @@ export default function ItemDetails() {
     setCurrentPage(pageNumber);
   };
 
+  // Replace onItemAdded and onItemUpdated with a fetch
+  const handleItemAdded = () => {
+    fetchItems();
+    setShowAddModal(false);
+  };
+
+  const handleItemUpdated = () => {
+    fetchItems();
+    setShowUpdateModal(false);
+  };
 
   return (
     <div className="min-h-screen bg-gray-50 p-6">
@@ -254,15 +265,28 @@ export default function ItemDetails() {
       <AddItemsModal
         isOpen={showAddModal}
         onClose={() => setShowAddModal(false)}
-        onItemAdded={fetchItems}
+        onItemAdded={handleItemAdded}
       />
 
       <UpdateItemsModal
         isOpen={showUpdateModal}
         onClose={() => setShowUpdateModal(false)}
-        onItemUpdated={fetchItems}
-        id={selectedItemId} // Pass the selected item ID as a prop
+        onItemUpdated={handleItemUpdated}
+        id={selectedItemId}
+      />
+
+      {/* Toast notifications */}
+      <ToastContainer
+        position="top-right"
+        autoClose={3000}
+        hideProgressBar={false}
+        newestOnTop={false}
+        closeOnClick
+        rtl={false}
+        pauseOnFocusLoss
+        draggable
+        pauseOnHover
       />
     </div>
-  )
+  );
 }

@@ -11,6 +11,9 @@ import Breadcrumb from "../../../components/Breadcrumb.jsx";
 import UserTypeNavbar from "../../../components/UserTypeNavbar.jsx";
 import DefaultPagination from "../../../components/DefaultPagination.js";
 import AddSupplierModal from "./AddSupplier.jsx";
+import { ToastContainer, toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
+import UpdateSupplierModal from "./UpdateSupplier";
 
 const TABLE_HEAD = [
   "No",
@@ -104,6 +107,8 @@ export default function VendorDetails() {
 
   const [searchTerm, setSearchTerm] = useState("");
   const [isAddSupplierOpen, setIsAddSupplierOpen] = useState(false);
+  const [isUpdateSupplierOpen, setIsUpdateSupplierOpen] = useState(false);
+  const [selectedSupplierId, setSelectedSupplierId] = useState(null);
 
   const filteredVendors = vendors.filter((vendor) => {
     const term = searchTerm.toLowerCase();
@@ -151,6 +156,20 @@ export default function VendorDetails() {
       .catch((error) =>
         console.error("Error refreshing suppliers:", error)
       );
+    toast.success("Supplier was successfully added!");
+    setIsAddSupplierOpen(false);
+  };
+
+  // refresh vendors after updating
+  const handleSupplierUpdated = () => {
+    axios
+      .get("http://localhost:8000/supplyer/view-supplyers")
+      .then((response) => setVendors(response.data))
+      .catch((error) =>
+        console.error("Error refreshing suppliers:", error)
+      );
+    toast.success("Supplier was successfully updated!");
+    setIsUpdateSupplierOpen(false);
   };
 
   const handleSearchChange = (e) => {
@@ -303,11 +322,15 @@ export default function VendorDetails() {
                             <EyeIcon className="h-4 w-4" />
                           </button>
                         </Link>
-                        <Link to={`/updateSupplier/${supplier._id}`}>
-                          <button className="text-green-600 hover:text-green-900 p-1">
-                            <PencilIcon className="h-4 w-4" />
-                          </button>
-                        </Link>
+                        <button
+                          className="text-green-600 hover:text-green-900 p-1"
+                          onClick={() => {
+                            setSelectedSupplierId(supplier._id);
+                            setIsUpdateSupplierOpen(true);
+                          }}
+                        >
+                          <PencilIcon className="h-4 w-4" />
+                        </button>
                         <Link to={`/deleteSupplier/${supplier._id}`}>
                           <button className="text-red-600 hover:text-red-900 p-1">
                             <TrashIcon className="h-4 w-4" />
@@ -345,6 +368,26 @@ export default function VendorDetails() {
         onSupplierAdded={handleSupplierAdded}
       />
 
+      {/* Update Supplier Modal */}
+      <UpdateSupplierModal
+        isOpen={isUpdateSupplierOpen}
+        onClose={() => setIsUpdateSupplierOpen(false)}
+        onSupplierUpdated={handleSupplierUpdated}
+        supplierId={selectedSupplierId}
+      />
+
+      {/* Toast Container */}
+      <ToastContainer
+        position="top-right"
+        autoClose={3000}
+        hideProgressBar={false}
+        newestOnTop={false}
+        closeOnClick
+        rtl={false}
+        pauseOnFocusLoss
+        draggable
+        pauseOnHover
+      />
     </div>
   );
 }

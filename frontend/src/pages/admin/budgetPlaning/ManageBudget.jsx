@@ -12,7 +12,8 @@ import AddBudgetCard from "./AddBudgetCard";
 import UpdateBudget from "./UpdateBudget";
 import UserTypeNavbar from "../../../components/UserTypeNavbar.jsx";
 import DefaultPagination from "../../../components/DefaultPagination.js";
-import { toast } from "react-toastify";
+import { toast, ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 const TABLE_HEAD = [
   "No",
@@ -249,6 +250,19 @@ export default function ManageBudget() {
           onBudgetUpdated={handleBudgetUpdated}
         />
       )}
+
+      {/* Toast notifications */}
+      <ToastContainer
+        position="top-right"
+        autoClose={3000}
+        hideProgressBar={false}
+        newestOnTop={false}
+        closeOnClick
+        rtl={false}
+        pauseOnFocusLoss
+        draggable
+        pauseOnHover
+      />
     </div>
   );
 }
