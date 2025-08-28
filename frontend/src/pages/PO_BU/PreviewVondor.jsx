@@ -5,7 +5,7 @@ import axios from "axios";
 import { useNavigate, useParams } from "react-router-dom";
 import { useSnackbar } from "notistack";
 import { Button } from "flowbite-react";
-import VendorsList from "./VendorsList";
+import VendorsList from "./suppliers/PO_VendorsList.jsx";
 
 export default function PreviewVendor() {
   const [open, setOpen] = useState(true);

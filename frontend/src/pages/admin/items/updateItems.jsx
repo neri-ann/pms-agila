@@ -153,7 +153,7 @@ export default function UpdateItemsModal({ isOpen, onClose, onItemUpdated, id })
                 />
                 {validationErrors.itemName && (
                   <p className="text-red-500 text-xs mt-1 flex items-center">
-                    <span className="mr-1">⚠</span>
+                    <span className="mr-1">⚠ </span>
                     {validationErrors.itemName}
                   </p>
                 )}
@@ -182,7 +182,7 @@ export default function UpdateItemsModal({ isOpen, onClose, onItemUpdated, id })
                 </select>
                 {validationErrors.AssetsClass && (
                   <p className="text-red-500 text-xs mt-1 flex items-center">
-                    <span className="mr-1">⚠</span>
+                    <span className="mr-1">⚠ </span>
                     {validationErrors.AssetsClass}
                   </p>
                 )}
@@ -206,7 +206,7 @@ export default function UpdateItemsModal({ isOpen, onClose, onItemUpdated, id })
                 />
                 {validationErrors.AssetsSubClass && (
                   <p className="text-red-500 text-xs mt-1 flex items-center">
-                    <span className="mr-1">⚠</span>
+                    <span className="mr-1">⚠ </span>
                     {validationErrors.AssetsSubClass}
                   </p>
                 )}

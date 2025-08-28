@@ -10,25 +10,23 @@ import { PencilIcon, UserPlusIcon } from "@heroicons/react/24/solid";
 import Breadcrumb from "../../../components/Breadcrumb.jsx";
 import UserTypeNavbar from "../../../components/UserTypeNavbar.jsx";
 import DefaultPagination from "../../../components/DefaultPagination.js";
-import AddSupplierModal from "./AddSupplier.jsx";
+import PO_AddSupplierModal from "./PO_AddSupplier.jsx";
+import PO_UpdateSupplierModal from "./PO_UpdateSupplier.jsx";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import UpdateSupplierModal from "./UpdateSupplier";
 
 const TABLE_HEAD = [
   "No",
-  // "Supplier ID",
   "Supplier Name",
   "Address",
   "Contact Officer",
-  // "Fax Number",
   "Contact Number",
   "Contact Email",
   "Type of Business",
   "Actions",
 ];
 
-export default function VendorDetails() {
+export default function PO_VendorsList() {
   const [vendors, setVendors] = useState([]);
   const [loading, setLoading] = useState(false);
 
@@ -37,34 +35,18 @@ export default function VendorDetails() {
   const [isUpdateSupplierOpen, setIsUpdateSupplierOpen] = useState(false);
   const [selectedSupplierId, setSelectedSupplierId] = useState(null);
 
-  const filteredVendors = vendors.filter((vendor) => {
-    const term = searchTerm.toLowerCase();
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 5;
 
-    return (
-      // vendor.supplierId?.toLowerCase().includes(term) ||
-      vendor.supplierName?.toLowerCase().includes(term) ||
-      vendor.address?.toLowerCase().includes(term) ||
-      vendor.contactOfficer?.toLowerCase().includes(term) ||
-      vendor.faxNumber1?.toLowerCase().includes(term) ||
-      vendor.faxNumber2?.toLowerCase().includes(term) ||
-      vendor.contactNumber?.some((num) => num.toLowerCase().includes(term)) ||
-      vendor.email?.some((email) => email.toLowerCase().includes(term)) ||
-      vendor.typeofBusiness?.toLowerCase().includes(term)
-    );
-  });
-
-
-  const [searchQuery, setSearchQuery] = useState("");
-  const [searchOption, setSearchOption] = useState("");
-  const [currentPage, setCurrentPage] = useState(1); // State to manage current page
-  const itemsPerPage = 5; // Number of items per page
-
-  // Fetch users data from your API endpoint
+  // Fetch vendors
   useEffect(() => {
-    console.log("Suppliers:", vendors);
+    fetchVendors();
+  }, []);
+
+  const fetchVendors = () => {
     setLoading(true);
     axios
-      .get("http://localhost:8000/supplyer/view-supplyers") // Update the API endpoint
+      .get("http://localhost:8000/supplyer/view-supplyers")
       .then((response) => {
         setVendors(response.data);
         setLoading(false);
@@ -73,78 +55,77 @@ export default function VendorDetails() {
         console.error("Error fetching suppliers:", error);
         setLoading(false);
       });
-  }, []);
+  };
 
-  // refresh vendors after adding
+  // After adding
   const handleSupplierAdded = () => {
-    axios
-      .get("http://localhost:8000/supplyer/view-supplyers")
-      .then((response) => setVendors(response.data))
-      .catch((error) =>
-        console.error("Error refreshing suppliers:", error)
-      );
+    fetchVendors();
     toast.success("Supplier was successfully added!");
     setIsAddSupplierOpen(false);
   };
 
-  // refresh vendors after updating
+  // After updating
   const handleSupplierUpdated = () => {
-    axios
-      .get("http://localhost:8000/supplyer/view-supplyers")
-      .then((response) => setVendors(response.data))
-      .catch((error) =>
-        console.error("Error refreshing suppliers:", error)
-      );
+    fetchVendors();
     toast.success("Supplier was successfully updated!");
     setIsUpdateSupplierOpen(false);
   };
 
-  const handleSearchChange = (e) => {
-    setSearchQuery(e.target.value);
-    setCurrentPage(1); // Reset current page when search query changes
-  };
+  // Filtered search (searches across multiple fields)
+  const filteredVendors = vendors.filter((vendor) => {
+    const term = searchTerm.toLowerCase();
+    return (
+      vendor.supplierName?.toLowerCase().includes(term) ||
+      vendor.address?.toLowerCase().includes(term) ||
+      vendor.contactOfficer?.toLowerCase().includes(term) ||
+      vendor.contactNumber?.some((num) =>
+        num.toLowerCase().includes(term)
+      ) ||
+      vendor.email?.some((email) =>
+        email.toLowerCase().includes(term)
+      ) ||
+      vendor.typeofBusiness?.toLowerCase().includes(term)
+    );
+  });
 
-  const handleSearchOptionChange = (e) => {
-    setSearchOption(e.target.value);
-    setCurrentPage(1); // Reset current page when search option changes
-  };
-
-  // Calculate index of the last item to display on the current page
+  // Pagination
   const indexOfLastItem = currentPage * itemsPerPage;
-  // Calculate index of the first item to display on the current page
   const indexOfFirstItem = indexOfLastItem - itemsPerPage;
-
-  // Slice the array of filtered requests to display only the items for the current page
   const currentItems = filteredVendors.slice(indexOfFirstItem, indexOfLastItem);
 
-  const handlePageChange = (pageNumber) => {
-    setCurrentPage(pageNumber);
-  };
+  const handlePageChange = (pageNumber) => setCurrentPage(pageNumber);
 
   return (
     <div className="min-h-screen bg-gray-50 p-6">
-      <UserTypeNavbar userType="admin" />
+      <UserTypeNavbar userType="procurement Officer" />
 
+      {/* Breadcrumb */}
       <div className="mb-6">
         <Breadcrumb
           crumbs={[
-            { label: "Home", link: "/adminhome/:id" },
-            { label: "Vendor Details", link: "/vendorsDetails" },
+            { label: "Home", link: "/PO_BuHome/:id" },
+            { label: "Vendor Details", link: "/PO_VendorsList" },
           ]}
           selected={(crumb) => console.log(`Selected: ${crumb.label}`)}
         />
       </div>
 
       <div className="bg-white rounded-lg shadow-sm border border-gray-200">
-        {/* Simple Header */}
+        {/* Header */}
         <div className="border-b border-gray-200 p-6">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-2xl font-semibold text-gray-900">Supplier Management</h1>
-              <p className="text-gray-600 mt-1">Manage and monitor all approved suppliers</p>
+              <h1 className="text-2xl font-semibold text-gray-900">
+                Supplier Management
+              </h1>
+              <p className="text-gray-600 mt-1">
+                Manage and monitor all approved suppliers
+              </p>
             </div>
             <div className="flex items-center space-x-3">
-              <span className="text-sm text-gray-500">Total: {vendors.length} suppliers</span>
+              <span className="text-sm text-gray-500">
+                Total: {vendors.length} suppliers
+              </span>
               <button
                 onClick={() => setIsAddSupplierOpen(true)}
                 className="flex items-center space-x-2 bg-[#961C1E] hover:bg-[#761C1D] text-white px-4 py-2 rounded-md transition-colors duration-200"
@@ -156,23 +137,21 @@ export default function VendorDetails() {
           </div>
         </div>
 
-        {/* Simple Search Section */}
+        {/* Search */}
         <div className="p-6 border-b border-gray-200">
-          <div className="flex items-center space-x-4">
-            <div className="relative flex-1 max-w-md">
-              <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-              <input
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                type="search"
-                placeholder="Search by supplier ID..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-              />
-            </div>
+          <div className="relative flex-1 max-w-md">
+            <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+            <input
+              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              type="search"
+              placeholder="Search suppliers..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
           </div>
         </div>
 
-        {/* Simple Table */}
+        {/* Table */}
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead className="bg-gray-100">
@@ -190,61 +169,59 @@ export default function VendorDetails() {
             <tbody className="bg-white divide-y divide-gray-200">
               {loading ? (
                 <tr>
-                  <td colSpan={TABLE_HEAD.length} className="px-6 py-4 text-center text-gray-500">
+                  <td
+                    colSpan={TABLE_HEAD.length}
+                    className="px-6 py-4 text-center text-gray-500"
+                  >
                     Loading...
                   </td>
                 </tr>
               ) : currentItems.length === 0 ? (
                 <tr>
-                  <td colSpan={TABLE_HEAD.length} className="px-6 py-4 text-center text-gray-500">
+                  <td
+                    colSpan={TABLE_HEAD.length}
+                    className="px-6 py-4 text-center text-gray-500"
+                  >
                     No suppliers found
                   </td>
                 </tr>
               ) : (
                 currentItems.map((supplier, index) => (
                   <tr key={supplier._id} className="hover:bg-gray-50">
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                    <td className="px-6 py-4 text-sm text-gray-900">
                       {indexOfFirstItem + index + 1}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                    <td className="px-6 py-4 text-sm text-gray-900">
                       {supplier.supplierName}
                     </td>
                     <td className="px-6 py-4 text-sm text-gray-900 max-w-xs truncate">
                       {supplier.address}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                    <td className="px-6 py-4 text-sm text-gray-900">
                       {supplier.contactOfficer}
                     </td>
                     <td className="px-6 py-4 text-sm text-gray-900">
                       <div className="space-y-1">
-                        {supplier.contactNumber?.map((number, idx) => (
-                          <div key={idx} className="text-xs">{number}</div>
+                        {supplier.contactNumber?.map((num, i) => (
+                          <div key={i} className="text-xs">{num}</div>
                         ))}
                       </div>
                     </td>
                     <td className="px-6 py-4 text-sm text-gray-900">
                       <div className="space-y-1">
-                        {supplier.email?.map((email, idx) => (
-                          <div key={idx} className="text-xs text-blue-600">{email}</div>
+                        {supplier.email?.map((mail, i) => (
+                          <div key={i} className="text-xs text-blue-600">{mail}</div>
                         ))}
                       </div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
+                    <td className="px-6 py-4 text-sm text-gray-900">
                       <span className="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-gray-100 text-gray-800">
-                        {supplier.typeofBusiness === "SoleImporter"
-                          ? "Sole Importer"
-                          : supplier.typeofBusiness === "SoleDistributor"
-                            ? "Sole Distributor"
-                            : supplier.typeofBusiness === "LocalAgent"
-                              ? "Local Agent"
-                              : supplier.typeofBusiness === "Contractors"
-                                ? "Contractors"
-                                : supplier.typeofBusiness}
+                        {supplier.typeofBusiness}
                       </span>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                    <td className="px-6 py-4 text-sm font-medium">
                       <div className="flex items-center space-x-2">
-                        <Link to={`/previewVendorDetails/${supplier._id}`}>
+                        <Link to={`/PO_PreviewSupplier/${supplier._id}`}>
                           <button className="text-blue-600 hover:text-blue-900 p-1">
                             <EyeIcon className="h-4 w-4" />
                           </button>
@@ -258,7 +235,7 @@ export default function VendorDetails() {
                         >
                           <PencilIcon className="h-4 w-4" />
                         </button>
-                        <Link to={`/deleteSupplier/${supplier._id}`}>
+                        <Link to={`/PO_DeleteSupplier/${supplier._id}`}>
                           <button className="text-red-600 hover:text-red-900 p-1">
                             <TrashIcon className="h-4 w-4" />
                           </button>
@@ -272,11 +249,13 @@ export default function VendorDetails() {
           </table>
         </div>
 
-        {/* Simple Pagination */}
+        {/* Pagination */}
         <div className="px-6 py-4 border-t border-gray-200">
           <div className="flex items-center justify-between">
             <span className="text-sm text-gray-600">
-              Showing {indexOfFirstItem + 1} to {Math.min(indexOfLastItem, filteredVendors.length)} of {filteredVendors.length} suppliers
+              Showing {filteredVendors.length === 0 ? 0 : indexOfFirstItem + 1} to{" "}
+              {Math.min(indexOfLastItem, filteredVendors.length)} of{" "}
+              {filteredVendors.length} suppliers
             </span>
             <DefaultPagination
               totalItems={filteredVendors.length}
@@ -289,32 +268,22 @@ export default function VendorDetails() {
       </div>
 
       {/* Add Supplier Modal */}
-      <AddSupplierModal
+      <PO_AddSupplierModal
         isOpen={isAddSupplierOpen}
         onClose={() => setIsAddSupplierOpen(false)}
         onSupplierAdded={handleSupplierAdded}
       />
 
       {/* Update Supplier Modal */}
-      <UpdateSupplierModal
+      <PO_UpdateSupplierModal
         isOpen={isUpdateSupplierOpen}
         onClose={() => setIsUpdateSupplierOpen(false)}
         onSupplierUpdated={handleSupplierUpdated}
         supplierId={selectedSupplierId}
       />
 
-      {/* Toast Container */}
-      <ToastContainer
-        position="top-right"
-        autoClose={3000}
-        hideProgressBar={false}
-        newestOnTop={false}
-        closeOnClick
-        rtl={false}
-        pauseOnFocusLoss
-        draggable
-        pauseOnHover
-      />
+      {/* Toast notifications */}
+      <ToastContainer position="top-right" autoClose={3000} />
     </div>
   );
 }

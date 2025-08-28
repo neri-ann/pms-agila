@@ -69,7 +69,6 @@ import PreviewProjectDetails from "./pages/PO_BU/PreviewProjectDetails.jsx";
 import BiddingDocumentsList from "./pages/PO_BU/BiddingDocumentsList.jsx";
 import DownloadBidDoc from "./pages/PO_BU/DownloadBidDoc.jsx";
 import InvitesBids from "./pages/PO_BU/InvitesBids.jsx";
-import VendorsList from "./pages/PO_BU/VendorsList.jsx";
 import DeleteProject from "./pages/PO_BU/DeleteProject.jsx";
 import PreviewSupplyerDetails from "./pages/PO_BU/PreviewSupplerDetails.jsx";
 import ProfilePage from "./pages/Profile settings/ProfilePage.jsx";
@@ -80,6 +79,16 @@ import DeleteBudget from "./pages/admin/budgetPlaning/DeleteBudget.jsx";
 import UpdateBudget from "./pages/admin/budgetPlaning/UpdateBudget.jsx";
 import PreviewVendor from "./pages/PO_BU/PreviewVondor.jsx";
 import UserTypeNavbar from "./components/UserTypeNavbar";
+import PO_ItemDetails from "./pages/PO_BU/items/PO_ItemDetails.jsx";
+import PO_AddItems from "./pages/PO_BU/items/PO_AddItems.jsx";
+import PO_UpdateItems from "./pages/PO_BU/items/PO_UpdateItems.jsx";
+import PO_DeleteItems from "./pages/PO_BU/items/PO_DeleteItems.jsx";
+import PO_PreviewItemDetails from "./pages/PO_BU/items/PO_PreviewItemDetails.jsx";
+import PO_VendorsList from "./pages/PO_BU/suppliers/PO_VendorsList.jsx";
+import PO_AddSupplier from "./pages/PO_BU/suppliers/PO_AddSupplier.jsx";
+import PO_UpdateSupplier from "./pages/PO_BU/suppliers/PO_UpdateSupplier.jsx";
+import PO_DeleteSupplier from "./pages/PO_BU/suppliers/PO_DeleteSupplier.jsx";
+import PO_PreviewSupplier from "./pages/PO_BU/suppliers/PO_PreviewSupplier.jsx";
 
 
 const App = () => {
@@ -315,12 +324,23 @@ const App = () => {
           <Route path="/ViewBidDoc/:projectId" element={<ViewShippingPdf />} />
           <Route path="/DownloadBidDoc/:projectId/:biddingType" element={<DownloadBidDoc />} />
           <Route path="/InvitesBids" element={<InvitesBids />} />
-          <Route path="/VendorsList" element={<VendorsList />} />
           <Route path="/PreviewVendor/:id" element={<PreviewVendor />} />
 
           <Route path="/PreviewSupplyerDetails/:id" element={<PreviewSupplyerDetails />} />
 
+          {/* PO Supplier Management Routes */}
+          <Route path="/PO_VendorsList" element={<PO_VendorsList />} />
+          <Route path="/PO_AddSupplier" element={<PO_AddSupplier />} />
+          <Route path="/PO_UpdateSupplier/:id" element={<PO_UpdateSupplier />} />
+          <Route path="/PO_DeleteSupplier/:id" element={<PO_DeleteSupplier />} />
+          <Route path="/PO_PreviewSupplier/:id" element={<PO_PreviewSupplier />} />
 
+          {/* PO Items Management Routes */}
+          <Route path="/PO_Items" element={<PO_ItemDetails />} />
+          <Route path="/PO_AddItems" element={<PO_AddItems />} />
+          <Route path="/PO_UpdateItems/:id" element={<PO_UpdateItems />} />
+          <Route path="/PO_DeleteItems/:id" element={<PO_DeleteItems />} />
+          <Route path="/PO_PreviewItems/:id" element={<PO_PreviewItemDetails />} />
 
           <Route path="/EventPlanner" element={<ContextWrapper><EventPlanner />  </ContextWrapper>} />
           <Route path="/viewNoticePdf/:noticeId" element={<ViewNoticePdf />} />

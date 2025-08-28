@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { XMarkIcon } from "@heroicons/react/24/outline";
+import { useNavigate, useParams } from "react-router-dom";
+import { useSnackbar } from "notistack";
 import { toast } from "react-toastify";
 
 const assets = [
@@ -10,19 +12,39 @@ const assets = [
     "Contractual Assets",
 ];
 
-export default function AddItemsModal({ isOpen, onClose, onItemAdded }) {
+export default function PO_UpdateItemsModal({ isOpen, onClose, onItemUpdated, id }) {
     const [AssetsClass, setAssetsClass] = useState("");
     const [AssetsSubClass, setAssetsSubClass] = useState("");
     const [itemName, setItemName] = useState("");
     const [loading, setLoading] = useState(false);
     const [validationErrors, setValidationErrors] = useState({});
 
-    // Reset form when modal opens/closes
-    React.useEffect(() => {
-        if (isOpen) {
-            resetForm();
+    const { enqueueSnackbar } = useSnackbar();
+    const navigate = useNavigate();
+
+    // Fetch item data when modal opens
+    useEffect(() => {
+        if (isOpen && id) {
+            setLoading(true);
+            axios
+                .get(`http://localhost:8000/item/preview-item/${id}`)
+                .then((response) => {
+                    const itemData = response.data;
+                    setAssetsClass(itemData.AssetsClass || "");
+                    setAssetsSubClass(itemData.AssetsSubClass || "");
+                    setItemName(itemData.itemName || "");
+                    setLoading(false);
+                })
+                .catch((error) => {
+                    setLoading(false);
+                    enqueueSnackbar("An error occurred. Please check the console.", {
+                        variant: "error",
+                    });
+                    console.error(error);
+                });
         }
-    }, [isOpen]);
+        // eslint-disable-next-line
+    }, [isOpen, id]);
 
     const resetForm = () => {
         setAssetsClass("");
@@ -53,30 +75,31 @@ export default function AddItemsModal({ isOpen, onClose, onItemAdded }) {
         return isValid;
     };
 
-    function handleSaveItem(e) {
+    function handleUpdateItems(e) {
         e.preventDefault();
 
         if (!validateFields()) return;
 
-        const newItem = {
+        const updatedItem = {
             AssetsClass,
             AssetsSubClass,
             itemName,
         };
+
         setLoading(true);
         axios
-            .post("http://localhost:8000/item/create", newItem)
+            .put(`http://localhost:8000/item/update/${id}`, updatedItem)
             .then(() => {
-                toast.success("Item successfully added!");
+                toast.success("Item updated successfully!");
                 setLoading(false);
                 resetForm();
-                onItemAdded?.();
+                onItemUpdated?.();
                 onClose();
             })
             .catch((error) => {
-                console.error("Error:", error);
-                toast.error("Failed to add item. Please try again.");
                 setLoading(false);
+                toast.error("Error updating item details");
+                console.error(error);
             });
     }
 
@@ -95,7 +118,7 @@ export default function AddItemsModal({ isOpen, onClose, onItemAdded }) {
                 {/* Header */}
                 <div className="bg-white px-6 py-4 border-b border-gray-200 flex-shrink-0">
                     <div className="flex items-center justify-between">
-                        <h3 className="text-lg font-medium text-gray-900">Add New Item</h3>
+                        <h3 className="text-lg font-medium text-gray-900">Update Item Details</h3>
                         <button
                             onClick={onClose}
                             className="text-gray-400 hover:text-gray-600 transition-colors"
@@ -106,7 +129,10 @@ export default function AddItemsModal({ isOpen, onClose, onItemAdded }) {
                 </div>
 
                 {/* Body */}
-                <form onSubmit={handleSaveItem} className="flex flex-col flex-1 min-h-0">
+                <form
+                    onSubmit={handleUpdateItems}
+                    className="flex flex-col flex-1 min-h-0"
+                >
                     <div className="flex-1 overflow-y-auto px-6 py-6">
                         <div className="grid grid-cols-1 gap-x-6 gap-y-6 sm:grid-cols-2">
                             {/* Item Name */}
@@ -120,8 +146,8 @@ export default function AddItemsModal({ isOpen, onClose, onItemAdded }) {
                                     onChange={(e) => setItemName(e.target.value)}
                                     placeholder="Enter item name"
                                     className={`w-full px-3 py-2 border rounded-md shadow-sm focus:ring-2 focus:ring-indigo-600 focus:border-indigo-600 transition-colors ${validationErrors.itemName
-                                        ? "border-red-500 bg-red-50"
-                                        : "border-gray-300"
+                                            ? "border-red-500 bg-red-50"
+                                            : "border-gray-300"
                                         }`}
                                 />
                                 {validationErrors.itemName && (
@@ -141,8 +167,8 @@ export default function AddItemsModal({ isOpen, onClose, onItemAdded }) {
                                     value={AssetsClass}
                                     onChange={(e) => setAssetsClass(e.target.value)}
                                     className={`w-full px-3 py-2 border rounded-md shadow-sm focus:ring-2 focus:ring-indigo-600 focus:border-indigo-600 transition-colors ${validationErrors.AssetsClass
-                                        ? "border-red-500 bg-red-50"
-                                        : "border-gray-300"
+                                            ? "border-red-500 bg-red-50"
+                                            : "border-gray-300"
                                         }`}
                                 >
                                     <option value="">Select Assets Class</option>
@@ -171,8 +197,8 @@ export default function AddItemsModal({ isOpen, onClose, onItemAdded }) {
                                     onChange={(e) => setAssetsSubClass(e.target.value)}
                                     placeholder="Enter assets sub class"
                                     className={`w-full px-3 py-2 border rounded-md shadow-sm focus:ring-2 focus:ring-indigo-600 focus:border-indigo-600 transition-colors ${validationErrors.AssetsSubClass
-                                        ? "border-red-500 bg-red-50"
-                                        : "border-gray-300"
+                                            ? "border-red-500 bg-red-50"
+                                            : "border-gray-300"
                                         }`}
                                 />
                                 {validationErrors.AssetsSubClass && (

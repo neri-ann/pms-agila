@@ -140,7 +140,7 @@ export function AddItemCard({ isOpen, onClose, handleAddItemsClick }) {
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
                   rows="3"
-                  placeholder="Enter item description..."
+                  placeholder="Enter item description"
                   className={`w-full px-3 py-2 border rounded-md shadow-sm focus:ring-2 focus:ring-indigo-600 focus:border-indigo-600 transition-colors ${validationErrors.description
                     ? "border-red-500 bg-red-50"
                     : "border-gray-300"
@@ -155,7 +155,7 @@ export function AddItemCard({ isOpen, onClose, handleAddItemsClick }) {
               </div>
 
               {/* Cost */}
-              <div className="space-y-2">
+              <div className="space-y-2 sm:col-span-2">
                 <label className="block text-sm font-medium text-gray-700">
                   Cost (₱) <span className="text-red-500">*</span>
                 </label>
@@ -179,52 +179,50 @@ export function AddItemCard({ isOpen, onClose, handleAddItemsClick }) {
                 )}
               </div>
 
-              {/* Quantity Required */}
-              <div className="space-y-2">
-                <label className="block text-sm font-medium text-gray-700">
-                  Quantity Required <span className="text-red-500">*</span>
-                </label>
-                <input
-                  type="number"
-                  min="1"
-                  value={qtyRequired}
-                  onChange={(e) => setQtyRequired(e.target.value)}
-                  placeholder="Enter quantity needed"
-                  className={`w-full px-3 py-2 border rounded-md shadow-sm focus:ring-2 focus:ring-indigo-600 focus:border-indigo-600 transition-colors ${validationErrors.qtyRequired
-                    ? "border-red-500 bg-red-50"
-                    : "border-gray-300"
-                    }`}
-                />
-                {validationErrors.qtyRequired && (
-                  <p className="text-red-500 text-xs mt-1 flex items-center">
-                    <span className="mr-1">⚠</span>
-                    {validationErrors.qtyRequired}
-                  </p>
-                )}
-              </div>
+              <div className="sm:col-span-2 grid grid-cols-2 gap-x-6 mt-2 mb-3">
+                {/* Quantity Required */}
+                <div className="space-y-2">
+                  <label className="block text-sm font-medium text-gray-700">
+                    Quantity Required <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="number"
+                    min="1"
+                    value={qtyRequired}
+                    onChange={(e) => setQtyRequired(e.target.value)}
+                    placeholder="Enter quantity needed"
+                    className={`w-full px-3 py-2 border rounded-md shadow-sm focus:ring-2 focus:ring-indigo-600 focus:border-indigo-600 transition-colors ${validationErrors.qtyRequired ? "border-red-500 bg-red-50" : "border-gray-300"
+                      }`}
+                  />
+                  {validationErrors.qtyRequired && (
+                    <p className="text-red-500 text-xs mt-1 flex items-center">
+                      <span className="mr-1">⚠</span>
+                      {validationErrors.qtyRequired}
+                    </p>
+                  )}
+                </div>
 
-              {/* Quantity Available */}
-              <div className="space-y-2">
-                <label className="block text-sm font-medium text-gray-700">
-                  Quantity Available <span className="text-red-500">*</span>
-                </label>
-                <input
-                  type="number"
-                  min="0"
-                  value={qtyAvailable}
-                  onChange={(e) => setQtyAvailable(e.target.value)}
-                  placeholder="Enter quantity currently available"
-                  className={`w-full px-3 py-2 border rounded-md shadow-sm focus:ring-2 focus:ring-indigo-600 focus:border-indigo-600 transition-colors ${validationErrors.qtyAvailable
-                    ? "border-red-500 bg-red-50"
-                    : "border-gray-300"
-                    }`}
-                />
-                {validationErrors.qtyAvailable && (
-                  <p className="text-red-500 text-xs mt-1 flex items-center">
-                    <span className="mr-1">⚠</span>
-                    {validationErrors.qtyAvailable}
-                  </p>
-                )}
+                {/* Quantity Available */}
+                <div className="space-y-2">
+                  <label className="block text-sm font-medium text-gray-700">
+                    Quantity Available <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="number"
+                    min="0"
+                    value={qtyAvailable}
+                    onChange={(e) => setQtyAvailable(e.target.value)}
+                    placeholder="Enter quantity currently available"
+                    className={`w-full px-3 py-2 border rounded-md shadow-sm focus:ring-2 focus:ring-indigo-600 focus:border-indigo-600 transition-colors ${validationErrors.qtyAvailable ? "border-red-500 bg-red-50" : "border-gray-300"
+                      }`}
+                  />
+                  {validationErrors.qtyAvailable && (
+                    <p className="text-red-500 text-xs mt-1 flex items-center">
+                      <span className="mr-1">⚠</span>
+                      {validationErrors.qtyAvailable}
+                    </p>
+                  )}
+                </div>
               </div>
             </div>
           </div>

@@ -10,7 +10,7 @@ const assets = [
     "Contractual Assets",
 ];
 
-export default function AddItemsModal({ isOpen, onClose, onItemAdded }) {
+export default function PO_AddItemsModal({ isOpen, onClose, onItemAdded }) {
     const [AssetsClass, setAssetsClass] = useState("");
     const [AssetsSubClass, setAssetsSubClass] = useState("");
     const [itemName, setItemName] = useState("");

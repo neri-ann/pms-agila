@@ -54,15 +54,16 @@ const UserTypeNavbar = ({ userType, onLogout }) => {
     //   icon: FiFolderPlus,
     // },
     { link: "Purchase Requisition", path: `/reqform`, icon: FiEdit3 },
-    { link: "Requisition Tracker", path: "/ProgressTrack", icon: FiActivity },
+    // { link: "Requisition Tracker", path: "/ProgressTrack", icon: FiActivity },
+    { link: "Items", path: "/PO_Items", icon: FiPackage },
     { link: "Request List", path: "/ViewForRequest", icon: FiList },
-    {
-      link: "Approved Purchase Requisition List ",
-      path: "/ApprovedRequestList",
-      icon: FiCheckSquare,
-    },
+    // {
+    //   link: "Approved Purchase Requisition List ",
+    //   path: "/ApprovedRequestList",
+    //   icon: FiCheckSquare,
+    // },
     // { link: "Bidding Documents", path: "/biddingDocuments", icon: FiFileText },
-    { link: "Vendors List", path: "/VendorsList", icon: FiUsers },
+    { link: "Vendors List", path: "/PO_VendorsList", icon: FiUsers },
     // { link: "Invites Bids", path: "/InvitesBids", icon: FiMail },
   ];
 

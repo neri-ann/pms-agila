@@ -1,35 +1,28 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { Link } from "react-router-dom";
-import { 
+import {
   MagnifyingGlassIcon,
   EyeIcon,
-  ArrowDownTrayIcon,
-  PaperAirplaneIcon
+  XMarkIcon
 } from "@heroicons/react/24/outline";
-import { CheckCircleIcon, PlusIcon } from "@heroicons/react/24/solid";
+import { PlusIcon } from "@heroicons/react/24/solid";
 import { useAuth } from "../../context/AuthContext";
 import Breadcrumb from "../../components/Breadcrumb";
 import DefaultPagination from "../../components/DefaultPagination";
 import { ToastContainer } from "react-toastify";
+import PreviewRequestDetails from "./PreviewRequestDetails";
 
 const TABLE_HEAD = [
   "No",
-  "Request ID",
-  "Request Form Name",
-  "Sender",
+  "Requestor Name",
   "Department",
+  "Purpose",
   "Status",
   "Actions",
 ];
 
-const RequestList = ({
-  isAuthenticated,
-  handleSignOut,
-  username,
-  userId,
-  department,
-}) => {
+const RequestList = ({ isAuthenticated, handleSignOut, username, userId, department }) => {
   const { loggedInUser } = useAuth();
   const [loading, setLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
@@ -37,47 +30,38 @@ const RequestList = ({
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 5;
 
+  // Modal state
+  const [showModal, setShowModal] = useState(false);
+  const [selectedRequest, setSelectedRequest] = useState(null);
+
   const filteredRequests = requests.filter((request) => {
     return (
-      request.requestId.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      request.department.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      request.sendTo.toLowerCase().includes(searchTerm.toLowerCase())
+      request.sendTo?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      request.department?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      request.purpose?.toLowerCase().includes(searchTerm.toLowerCase())
     );
   });
 
   useEffect(() => {
-    if (loggedInUser) {
-      setLoading(true);
-      axios
-        .get(
-          `http://localhost:8000/procReqest/viewRequestsByDepartment/${loggedInUser.id}`
-        )
-        .then((response) => {
-          const requestsWithStatus = response.data.map((request) => ({
-            ...request,
-            sent: false,
-            status: request.status || 'Pending'
-          }));
-          setRequests(requestsWithStatus);
-          setLoading(false);
-        })
-        .catch((error) => {
-          console.error("Error fetching requests:", error);
-          setLoading(false);
-        });
-    }
-  }, [loggedInUser]);
-
-  const generateFileName = (requestId) => {
-    return `Purchase_Requisition_${requestId}.pdf`;
-  };
-
-  const handleSendRequest = (requestId) => {
-    const updatedRequests = requests.map((req) =>
-      req.requestId === requestId ? { ...req, sent: true } : req
-    );
-    setRequests(updatedRequests);
-  };
+    // 🚨 For now, just mock data instead of axios
+    setRequests([
+      {
+        _id: "1",
+        requestId: "REQ-001",
+        sendTo: "John Doe",
+        department: "IT Department",
+        purpose: "Purchase new laptops",
+        status: "Pending",
+        contactPerson: "Jane Smith",
+        telephone: "123-456-7890",
+        items: [
+          { name: "Laptop", cost: "₱40,000", qtyRequired: 10, qtyAvailable: 2 },
+          { name: "Mouse", cost: "₱500", qtyRequired: 20, qtyAvailable: 15 },
+        ],
+        attachments: ["quotation.pdf", "specs.docx"]
+      }
+    ]);
+  }, []);
 
   const getStatusColor = (status) => {
     switch (status) {
@@ -94,13 +78,18 @@ const RequestList = ({
     }
   };
 
-  // Calculate pagination
+  // Pagination
   const indexOfLastItem = currentPage * itemsPerPage;
   const indexOfFirstItem = indexOfLastItem - itemsPerPage;
   const currentItems = filteredRequests.slice(indexOfFirstItem, indexOfLastItem);
 
   const handlePageChange = (pageNumber) => {
     setCurrentPage(pageNumber);
+  };
+
+  const handleView = (request) => {
+    setSelectedRequest(request);
+    setShowModal(true);
   };
 
   return (
@@ -112,7 +101,6 @@ const RequestList = ({
             { label: "Purchase Requisition", link: "/reqForm" },
             { label: "Purchase Requisition List", link: "/ViewForRequest" },
           ]}
-          selected={(crumb) => console.log(`Selected: ${crumb.label}`)}
         />
       </div>
 
@@ -126,7 +114,7 @@ const RequestList = ({
             </div>
             <div className="flex items-center space-x-3">
               <span className="text-sm text-gray-500">Total: {requests.length} requests</span>
-              <Link to="/reqForm">
+              <Link to="/reqForm" className="no-underline">
                 <button className="flex items-center space-x-2 bg-[#961C1E] hover:bg-[#761C1D] text-white px-4 py-2 rounded-md transition-colors duration-200">
                   <PlusIcon className="h-4 w-4" />
                   <span>New Request</span>
@@ -136,125 +124,89 @@ const RequestList = ({
           </div>
         </div>
 
-        {/* Search Section */}
+        {/* Search */}
         <div className="p-6 border-b border-gray-200">
-          <div className="flex items-center space-x-4">
-            <div className="relative flex-1 max-w-md">
-              <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-              <input
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                type="search"
-                placeholder="Search requests..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-              />
-            </div>
+          <div className="relative flex-1 max-w-md">
+            <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+            <input
+              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500"
+              type="search"
+              placeholder="Search by requestor, department, or purpose..."
+              value={searchTerm}
+              onChange={(e) => {
+                setSearchTerm(e.target.value);
+                setCurrentPage(1);
+              }}
+            />
           </div>
         </div>
 
         {/* Table */}
-        {loading ? (
-          <div className="flex items-center justify-center p-8">
-            <div className="text-lg text-gray-600">Loading...</div>
-          </div>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead className="bg-gray-100 border-b border-gray-200">
-                <tr>
-                  {TABLE_HEAD.map((head) => (
-                    <th
-                      key={head}
-                      className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider"
-                    >
-                      {head}
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              
-              <tbody className="divide-y divide-gray-200">
-                {currentItems.map((request, index) => (
+        <div className="overflow-x-auto">
+          <table className="w-full">
+            <thead className="bg-gray-100 border-b border-gray-200">
+              <tr>
+                {TABLE_HEAD.map((head) => (
+                  <th key={head} className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">
+                    {head}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-200">
+              {loading ? (
+                <tr><td colSpan={TABLE_HEAD.length} className="text-center py-4">Loading...</td></tr>
+              ) : currentItems.length === 0 ? (
+                <tr><td colSpan={TABLE_HEAD.length} className="text-center py-4">No requests found</td></tr>
+              ) : (
+                currentItems.map((request, index) => (
                   <tr key={request._id} className="hover:bg-gray-50">
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      {indexOfFirstItem + index + 1}
-                    </td>
-                    
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm font-medium text-gray-900">{request.requestId}</div>
-                    </td>
-                    
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-900">{generateFileName(request.requestId)}</div>
-                    </td>
-                    
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-900">{request.sendTo}</div>
-                    </td>
-                    
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span className="inline-flex px-2 py-1 text-xs font-medium bg-gray-100 text-gray-800 rounded-md">
-                        {request.department}
+                    <td className="px-6 py-4">{indexOfFirstItem + index + 1}</td>
+                    <td className="px-6 py-4">{request.sendTo}</td>
+                    <td className="px-6 py-4">{request.department}</td>
+                    <td className="px-6 py-4">{request.purpose}</td>
+                    <td className="px-6 py-4">
+                      <span className={`px-2 py-1 text-xs rounded-md ${getStatusColor(request.status)}`}>
+                        {request.status}
                       </span>
                     </td>
-                    
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-md ${
-                        request.sent ? getStatusColor('Sent') : getStatusColor(request.status)
-                      }`}>
-                        {request.sent ? 'Sent' : request.status}
-                      </span>
-                    </td>
-                      
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                      <div className="flex items-center space-x-2">
-                        <Link to={`/ViewFormRequest/${request.requestId}`}>
-                          <button className="p-2 text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded-md transition-colors">
-                            <EyeIcon className="h-4 w-4" />
-                          </button>
-                        </Link>
-                        
-                        <Link to={`/DownloadRequest/${request.requestId}`}>
-                          <button className="p-2 text-green-600 hover:text-green-800 hover:bg-green-50 rounded-md transition-colors">
-                            <ArrowDownTrayIcon className="h-4 w-4" />
-                          </button>
-                        </Link>
-                        
-                        {request.sent ? (
-                          <button className="p-2 text-gray-400 cursor-not-allowed rounded-md">
-                            <CheckCircleIcon className="h-4 w-4" />
-                          </button>
-                        ) : (
-                          <Link to={`/SendRequest/${request.requestId}/${request.sendTo}`}>
-                            <button 
-                              onClick={() => handleSendRequest(request.requestId)}
-                              className="p-2 text-purple-600 hover:text-purple-800 hover:bg-purple-50 rounded-md transition-colors"
-                            >
-                              <PaperAirplaneIcon className="h-4 w-4" />
-                            </button>
-                          </Link>
-                        )}
-                      </div>
+                    <td className="px-6 py-4">
+                      <button
+                        onClick={() => handleView(request)}
+                        className="p-2 text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded-md"
+                      >
+                        <EyeIcon className="h-5 w-5" />
+                      </button>
                     </td>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
 
-        {/* Footer */}
-        <div className="bg-gray-50 px-6 py-4 border-t border-gray-200">
-          <div className="flex items-center justify-between">
-            <div className="text-sm text-gray-700">
-              Showing {indexOfFirstItem + 1} to {Math.min(indexOfLastItem, filteredRequests.length)} of {filteredRequests.length} requests
-            </div>
-            <DefaultPagination onPageChange={handlePageChange} />
+        {/* Pagination */}
+        <div className="bg-gray-50 px-6 py-4 border-t flex justify-between items-center">
+          <div className="text-sm text-gray-700">
+            Showing {indexOfFirstItem + 1} to {Math.min(indexOfLastItem, filteredRequests.length)} of {filteredRequests.length}
           </div>
+          <DefaultPagination
+            totalItems={filteredRequests.length}
+            itemsPerPage={itemsPerPage}
+            currentPage={currentPage}
+            onPageChange={handlePageChange}
+          />
         </div>
       </div>
 
-      <ToastContainer />
+      <PreviewRequestDetails
+        open={showModal}
+        setOpen={setShowModal}
+        request={selectedRequest}
+      />
+
+      {/* Toast */}
+      <ToastContainer position="top-right" autoClose={3000} />
     </div>
   );
 };
