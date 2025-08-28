@@ -161,16 +161,16 @@ const RequestList = ({ isAuthenticated, handleSignOut, username, userId, departm
               ) : (
                 currentItems.map((request, index) => (
                   <tr key={request._id} className="hover:bg-gray-50">
-                    <td className="px-6 py-4">{indexOfFirstItem + index + 1}</td>
-                    <td className="px-6 py-4">{request.sendTo}</td>
-                    <td className="px-6 py-4">{request.department}</td>
-                    <td className="px-6 py-4">{request.purpose}</td>
-                    <td className="px-6 py-4">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{indexOfFirstItem + index + 1}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm">{request.sendTo}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm">{request.department}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm">{request.purpose}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm">
                       <span className={`px-2 py-1 text-xs rounded-md ${getStatusColor(request.status)}`}>
                         {request.status}
                       </span>
                     </td>
-                    <td className="px-6 py-4">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm">
                       <button
                         onClick={() => handleView(request)}
                         className="p-2 text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded-md"

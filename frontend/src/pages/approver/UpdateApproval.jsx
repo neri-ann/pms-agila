@@ -1,109 +1,73 @@
-// ApprovalForm.js
-import React, { Fragment, useRef, useState, useEffect } from "react";
+import { Fragment, useRef, useState } from "react";
 import { Dialog, Transition } from "@headlessui/react";
-import { Typography, DialogHeader, DialogBody } from "@material-tailwind/react";
-import { Button } from "flowbite-react";
-import { useNavigate, useParams } from "react-router-dom";
+import { CheckCircleIcon } from "@heroicons/react/24/outline";
+import { Typography, DialogHeader, DialogBody, DialogFooter } from "@material-tailwind/react";
 import axios from "axios";
-import { useSnackbar } from "notistack";
-import ApprovalList from "./ApprovalList_new";
-import { ToastContainer, toast } from "react-toastify";
-import "react-toastify/dist/ReactToastify.css";
+import { toast } from "react-toastify";
 
-export default function ApprovalForm() {
-  const [open, setOpen] = useState(true);
-  const navigate = useNavigate();
+export default function ApprovalConfirmationModal({ open, setOpen, request, onApprovalSuccess }) {
   const cancelButtonRef = useRef(null);
   const [loading, setLoading] = useState(false);
-  const [status, setStatus] = useState("");
-  const statuses = ["Pending", "Approved", "Rejected"];
-  const { id } = useParams();
-  const { enqueueSnackbar } = useSnackbar();
 
-  useEffect(() => {
+  const handleApprove = () => {
+    if (!request) return;
+    
     setLoading(true);
-    axios
-      .get(`http://localhost:8000/procReqest/viewRequests/${id}`)
-      .then((response) => {
-        const userData = response.data;
-        console.log("Fetched user data:", userData);
-        setStatus(userData.status);
-        setLoading(false);
-      })
+    const approvalData = { status: "Approved" };
 
+    axios
+      .put(`http://localhost:8000/approvalReqest/updateStatus/${request._id}`, approvalData)
+      .then(() => {
+        setLoading(false);
+        toast.success("Request has been successfully approved!", {
+          className: "mt-10",
+        });
+        
+        // Call the success callback to refresh the list
+        if (onApprovalSuccess) {
+          onApprovalSuccess();
+        }
+        
+        // Close modal after delay
+        setTimeout(() => {
+          setOpen(false);
+        }, 1000);
+      })
       .catch((error) => {
         setLoading(false);
-        enqueueSnackbar("An error occurred. Please check the console.", {
-          variant: "error",
-        });
+        toast.error("Error approving request. Please try again!");
         console.error(error);
       });
-  }, [id, enqueueSnackbar]);
-
-  const handleOutsideClick = () => {
-    setOpen(false);
-    navigate("/ViewForApproval");
   };
 
   const handleClose = () => {
     setOpen(false);
-    navigate("/ViewForApproval");
   };
 
-  const handleUpdateStatus = (e) => {
-    e.preventDefault();
-    const newStatus = { status };
-
-    setLoading(true);
-    axios
-      .put(`http://localhost:8000/approvalReqest/updateStatus/${id}`, newStatus)
-      .then(() => {
-        setLoading(false);
-        toast.success("Request statues is  Successfully updated!", {
-          className: "mt-10", // Apply Tailwind classes directly
-        });
-
-        // Delay the navigation to give time for the toast to display
-        setTimeout(() => {
-          navigate("/ViewForApproval");
-        }, 2000);
-      })
-      .catch((error) => {
-        setLoading(false);
-        toast.error("Error to approve the Purchase requisition !");
-        console.error(error);
-      });
-  };
+  if (!request) return null;
 
   return (
-    <div>
-      <ApprovalList />
-      <Transition.Root show={open} as={Fragment}>
-        <Dialog
-          as="div"
-          className="fixed inset-0 overflow-y-auto"
-          onClose={handleClose}
-          initialFocus={cancelButtonRef}
+    <Transition.Root show={open} as={Fragment}>
+      <Dialog
+        as="div"
+        className="relative !z-[9999]"
+        initialFocus={cancelButtonRef}
+        onClose={handleClose}
+      >
+        <Transition.Child
+          as={Fragment}
+          enter="ease-out duration-300"
+          enterFrom="opacity-0"
+          enterTo="opacity-100"
+          leave="ease-in duration-200"
+          leaveFrom="opacity-100"
+          leaveTo="opacity-0"
         >
-          <div className="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:p-0">
-            <Transition.Child
-              as={Fragment}
-              enter="ease-out duration-300"
-              enterFrom="opacity-0"
-              enterTo="opacity-100"
-              leave="ease-in duration-200"
-              leaveFrom="opacity-100"
-              leaveTo="opacity-0"
-            >
-              <Dialog.Overlay className="fixed inset-0 transition-opacity bg-gray-500 bg-opacity-75" />
-            </Transition.Child>
+          <div className="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity z-[9999]" />
+        </Transition.Child>
 
-            <span
-              className="hidden sm:inline-block sm:align-middle sm:h-screen"
-              aria-hidden="true"
-            >
-              &#8203;
-            </span>
+        <div className="fixed inset-0 !z-[9999] w-screen overflow-y-auto">
+          <div className="flex min-h-full items-center justify-center p-4 text-center sm:p-6">
             <Transition.Child
               as={Fragment}
               enter="ease-out duration-300"
@@ -113,63 +77,85 @@ export default function ApprovalForm() {
               leaveFrom="opacity-100 translate-y-0 sm:scale-100"
               leaveTo="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
             >
-              <div className="bg-white rounded-lg overflow-hidden shadow-xl transform transition-all sm:max-w-lg sm:w-full">
-                <div className="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
-                  <div className="sm:flex sm:items-start">
-                    <div className="mt-3 text-left sm:mt-0 sm:ml-4">
-                      <Dialog.Panel className="relative transform overflow-hidden rounded-lg bg-white text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-lg">
-                        <DialogHeader className="grid place-items-center">
-                          <Typography
-                            variant="h5"
-                            color="red"
-                            className="text-center"
-                          >
-                            <h4>Approve Purchase Requisition</h4>
-                          </Typography>
-                        </DialogHeader>
-                        <DialogBody divider className="grid place-items-center">
-                          <img
-                            src="https://www.bitdefender.com/images/Knowledge%20Base%20SMB/admonitions/important.png"
-                            alt=""
-                            className="max-w-24 h-24 md:max-w-md lg:max-w-24 md:h-24 w-24"
-                          />
-                          <Typography className="mt-4 mb-2" variant="h6">
-                            Are you sure to approve?
-                          </Typography>
-                          <Typography className="mt-4 mb-2" variant="h6">
-                            Choose Action:
-                          </Typography>
-                          <div>
-                            <select
-                              value={status}
-                              onChange={(e) => setStatus(e.target.value)}
-                              className="bg-gray-100 border border-gray-200 rounded py-1 px-6 block focus:ring-blue-500 focus:border-blue-500 text-gray-700 w-full"
-                            >
-                              <option value="">Update your status</option>
-                              {statuses.map((type, index) => (
-                                <option key={index} value={type}>
-                                  {type}
-                                </option>
-                              ))}
-                            </select>
-                          </div>
-                        </DialogBody>
-                        <div className="mt-4 flex justify-center">
-                          <Button className="mr-2" onClick={handleOutsideClick}>
-                            No
-                          </Button>
-                          <Button onClick={handleUpdateStatus}>Yes</Button>
-                        </div>
-                      </Dialog.Panel>
+              <Dialog.Panel className="relative transform overflow-hidden rounded-xl bg-white text-left shadow-2xl transition-all sm:my-8 sm:w-full sm:max-w-lg border border-gray-200">
+                <DialogHeader className="grid place-items-center pt-6 pb-2">
+                  <Typography variant="h5" color="black">
+                    <h4 className="text-xl font-semibold text-gray-800">
+                      Approve Request
+                    </h4>
+                  </Typography>
+                </DialogHeader>
+
+                <DialogBody divider className="grid place-items-center px-6 py-4">
+                  <div className="flex justify-center mb-6">
+                    <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center">
+                      <CheckCircleIcon className="w-10 h-10 text-green-600" />
                     </div>
                   </div>
-                </div>
-              </div>
+
+                  <Typography className="text-center font-normal mb-4">
+                    <h4 className="text-lg text-gray-700">
+                      Are you sure you want to approve this request?
+                    </h4>
+                  </Typography>
+
+                  <div className="text-center text-sm text-gray-600 bg-gray-50 p-3 rounded-lg border border-gray-200">
+                    <p><strong>Department:</strong> {request.department}</p>
+                    <p><strong>Requestor:</strong> {request.faculty}</p>
+                  </div>
+                </DialogBody>
+
+                <DialogFooter className="flex justify-center space-x-4 px-6 pb-6">
+                  <button
+                    type="button"
+                    className="px-6 py-2.5 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+                    onClick={handleClose}
+                    ref={cancelButtonRef}
+                    disabled={loading}
+                  >
+                    Cancel
+                  </button>
+
+                  <button
+                    type="button"
+                    className="px-6 py-2.5 text-sm font-medium text-white bg-green-600 border border-transparent rounded-lg hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-600 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
+                    onClick={handleApprove}
+                    disabled={loading}
+                  >
+                    {loading ? (
+                      <>
+                        <svg
+                          className="animate-spin -ml-1 mr-2 h-4 w-4 text-white"
+                          xmlns="http://www.w3.org/2000/svg"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                        >
+                          <circle
+                            className="opacity-25"
+                            cx="12"
+                            cy="12"
+                            r="10"
+                            stroke="currentColor"
+                            strokeWidth="4"
+                          ></circle>
+                          <path
+                            className="opacity-75"
+                            fill="currentColor"
+                            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                          ></path>
+                        </svg>
+                        Approving...
+                      </>
+                    ) : (
+                      "Yes, Approve"
+                    )}
+                  </button>
+                </DialogFooter>
+              </Dialog.Panel>
             </Transition.Child>
           </div>
-        </Dialog>
-      </Transition.Root>
-      <ToastContainer className="mt-16" />
-    </div>
+        </div>
+      </Dialog>
+    </Transition.Root>
   );
 }

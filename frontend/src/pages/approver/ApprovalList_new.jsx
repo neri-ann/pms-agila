@@ -5,19 +5,19 @@ import {
   MagnifyingGlassIcon,
   EyeIcon,
   CheckIcon,
-  XMarkIcon,
-  PaperAirplaneIcon
+  XMarkIcon
 } from "@heroicons/react/24/outline";
-import { CheckCircleIcon } from "@heroicons/react/24/solid";
 import UserTypeNavbar from "../../components/UserTypeNavbar";
 import Breadcrumb from "../../components/Breadcrumb";
 import DefaultPagination from "../../components/DefaultPagination";
 import { useAuth } from "../../context/AuthContext";
 import { ToastContainer } from "react-toastify";
+import ViewApprovalDetails from "./ViewApprovalDetails";
+import UpdateApproval from "./UpdateApproval";
+import DenyRequest from "./DenyRequest";
 
 const TABLE_HEAD = [
   "No",
-  // "Request ID",
   "Department",
   "Requested Date",
   "Status",
@@ -29,19 +29,22 @@ const ApprovalList = ({ userType: propUserType }) => {
   const location = useLocation();
   const { loggedInUser } = useAuth();
   
+  // Modal states
+  const [showViewModal, setShowViewModal] = useState(false);
+  const [showApproveModal, setShowApproveModal] = useState(false);
+  const [showRejectModal, setShowRejectModal] = useState(false);
+  const [selectedRequest, setSelectedRequest] = useState(null);
+  
   // Function to determine userType with fallback logic
   const getUserType = () => {
-    // First try to get from AuthContext
     if (loggedInUser?.role) {
       return loggedInUser.role;
     }
     
-    // If userType is passed as prop, use it
     if (propUserType) {
       return propUserType;
     }
     
-    // Try to get user data from localStorage for page refresh
     try {
       const storedUser = localStorage.getItem('loggedInUser');
       if (storedUser) {
@@ -52,8 +55,25 @@ const ApprovalList = ({ userType: propUserType }) => {
       console.error('Error parsing stored user data:', error);
     }
     
-    // Default to admin for admin routes, procOfficer otherwise
     return location.pathname === '/ViewForApproval' ? 'admin' : 'procOfficer';
+  };
+
+  // Function to determine priority based on purpose
+  const getPriorityFromPurpose = (purpose) => {
+    if (!purpose) return 'Low';
+    
+    const purposeLower = purpose.toLowerCase();
+    
+    if (purposeLower === 'urgent') {
+      return 'High';
+    } else if (purposeLower === 'fast track') {
+      return 'Medium';
+    } else if (purposeLower === 'normal') {
+      return 'Low';
+    }
+    
+    // Default fallback
+    return 'Low';
   };
 
   const userType = getUserType();
@@ -64,10 +84,12 @@ const ApprovalList = ({ userType: propUserType }) => {
   const itemsPerPage = 5;
 
   const filteredRequests = requests.filter((request) => {
+    const priority = getPriorityFromPurpose(request.purpose);
     return (
       request.requestId.toLowerCase().includes(searchTerm.toLowerCase()) ||
       request.department.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      request.status.toLowerCase().includes(searchTerm.toLowerCase())
+      request.status.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      priority.toLowerCase().includes(searchTerm.toLowerCase())
     );
   });
 
@@ -80,11 +102,7 @@ const ApprovalList = ({ userType: propUserType }) => {
     axios
       .get("http://localhost:8000/procReqest/viewRequests")
       .then((response) => {
-        const requestsWithIsSent = response.data.map((request) => ({
-          ...request,
-          isSent: false,
-        }));
-        setRequests(requestsWithIsSent);
+        setRequests(response.data);
         setLoading(false);
       })
       .catch((error) => {
@@ -119,21 +137,28 @@ const ApprovalList = ({ userType: propUserType }) => {
     }
   };
 
-  const handleSendRequest = (requestId) => {
-    axios
-      .post(`http://localhost:8000/sendApproval/${requestId}`)
-      .then((response) => {
-        setRequests((prevRequests) =>
-          prevRequests.map((request) =>
-            request.requestId === requestId
-              ? { ...request, isSent: true }
-              : request
-          )
-        );
-      })
-      .catch((error) => {
-        console.error("Error sending request:", error);
-      });
+  // Modal handlers
+  const handleView = (request) => {
+    setSelectedRequest(request);
+    setShowViewModal(true);
+  };
+
+  const handleApprove = (request) => {
+    setSelectedRequest(request);
+    setShowApproveModal(true);
+  };
+
+  const handleReject = (request) => {
+    setSelectedRequest(request);
+    setShowRejectModal(true);
+  };
+
+  const onApprovalSuccess = () => {
+    fetchRequests(); // Refresh the list
+  };
+
+  const onRejectSuccess = () => {
+    fetchRequests(); // Refresh the list
   };
 
   // Calculate pagination
@@ -215,79 +240,66 @@ const ApprovalList = ({ userType: propUserType }) => {
               </thead>
               
               <tbody className="divide-y divide-gray-200">
-                {currentItems.map((request, index) => (
-                  <tr key={request._id} className="hover:bg-gray-50">
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      {indexOfFirstItem + index + 1}
-                    </td>
-                    
-                    {/* <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm font-medium text-gray-900">{request.requestId}</div>
-                    </td> */}
-                    
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span className="inline-flex px-2 py-1 text-xs font-medium bg-gray-100 text-gray-800 rounded-md">
-                        {request.department}
-                      </span>
-                    </td>
-                    
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-900">
-                        {new Date(request.date).toLocaleDateString()}
-                      </div>
-                    </td>
-                    
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-md ${getStatusColor(request.status)}`}>
-                        {request.status}
-                      </span>
-                    </td>
-                    
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-md ${getPriorityColor(request.priority || 'Medium')}`}>
-                        {request.priority || 'Medium'}
-                      </span>
-                    </td>
+                {currentItems.map((request, index) => {
+                  const priority = getPriorityFromPurpose(request.purpose);
+                  
+                  return (
+                    <tr key={request._id} className="hover:bg-gray-50">
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                        {indexOfFirstItem + index + 1}
+                      </td>
                       
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                      <div className="flex items-center space-x-2">
-                        <Link to={`/ViewForApproval/${request.requestId}`}>
-                          <button className="p-2 text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded-md transition-colors">
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <span className="inline-flex px-2 py-1 text-xs font-medium bg-gray-100 text-gray-800 rounded-md">
+                          {request.department}
+                        </span>
+                      </td>
+                      
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="text-sm text-gray-900">
+                          {new Date(request.date).toLocaleDateString()}
+                        </div>
+                      </td>
+                      
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-md ${getStatusColor(request.status)}`}>
+                          {request.status}
+                        </span>
+                      </td>
+                      
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-md ${getPriorityColor(priority)}`}>
+                          {priority}
+                        </span>
+                      </td>
+                        
+                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                        <div className="flex items-center space-x-2">
+                          <button
+                            onClick={() => handleView(request)}
+                            className="p-2 text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded-md transition-colors"
+                          >
                             <EyeIcon className="h-4 w-4" />
                           </button>
-                        </Link>
-                        
-                        <Link to={`/ApprovalForm/${request.requestId}`}>
-                          <button className="p-2 text-green-600 hover:text-green-800 hover:bg-green-50 rounded-md transition-colors">
+                          
+                          <button
+                            onClick={() => handleApprove(request)}
+                            className="p-2 text-green-600 hover:text-green-800 hover:bg-green-50 rounded-md transition-colors"
+                          >
                             <CheckIcon className="h-4 w-4" />
                           </button>
-                        </Link>
-                        
-                        <Link to={`/DenyApproval/${request.requestId}`}>
-                          <button className="p-2 text-red-600 hover:text-red-800 hover:bg-red-50 rounded-md transition-colors">
+                          
+                          <button
+                            onClick={() => handleReject(request)}
+                            className="p-2 text-red-600 hover:text-red-800 hover:bg-red-50 rounded-md transition-colors"
+                          >
                             <XMarkIcon className="h-4 w-4" />
                           </button>
-                        </Link>
-
-                        <button
-                          onClick={() => handleSendRequest(request.requestId)}
-                          disabled={request.isSent}
-                          className={`p-2 rounded-md transition-colors ${
-                            request.isSent
-                              ? 'text-gray-400 cursor-not-allowed'
-                              : 'text-purple-600 hover:text-purple-800 hover:bg-purple-50'
-                          }`}
-                        >
-                          {request.isSent ? (
-                            <CheckCircleIcon className="h-4 w-4" />
-                          ) : (
-                            <PaperAirplaneIcon className="h-4 w-4" />
-                          )}
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>
@@ -303,6 +315,27 @@ const ApprovalList = ({ userType: propUserType }) => {
           </div>
         </div>
       </div>
+
+      {/* Modals */}
+      <ViewApprovalDetails
+        open={showViewModal}
+        setOpen={setShowViewModal}
+        request={selectedRequest}
+      />
+
+      <UpdateApproval
+        open={showApproveModal}
+        setOpen={setShowApproveModal}
+        request={selectedRequest}
+        onApprovalSuccess={onApprovalSuccess}
+      />
+
+      <DenyRequest
+        open={showRejectModal}
+        setOpen={setShowRejectModal}
+        request={selectedRequest}
+        onRejectSuccess={onRejectSuccess}
+      />
 
       <ToastContainer />
     </div>

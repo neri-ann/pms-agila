@@ -56,7 +56,7 @@ export default function PreviewRequestDetails({ open, setOpen, request }) {
                     <p><span className="font-medium text-gray-600">Faculty/Admin:</span> {request.sendTo}</p>
                     <p><span className="font-medium text-gray-600">Department/Branch:</span> {request.department}</p>
                     <p><span className="font-medium text-gray-600">Contact Person:</span> {request.contactPerson}</p>
-                    <p><span className="font-medium text-gray-600">Telephone No:</span> {request.telephone}</p>
+                    <p><span className="font-medium text-gray-600">Contact No:</span> {request.contactNo}</p>
                   </div>
                 </div>
 
