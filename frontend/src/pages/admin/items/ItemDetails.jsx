@@ -6,8 +6,8 @@ import Breadcrumb from "../../../components/Breadcrumb.jsx";
 import { Link } from "react-router-dom";
 import UserTypeNavbar from "../../../components/UserTypeNavbar.jsx";
 import DefaultPagination from "../../../components/DefaultPagination.js";
-import AddItemsModal from "./Additems";
-import UpdateItemsModal from "./updateItems"; // 1. Import at the top
+import AddItemsModal from "./Additems.jsx";
+import UpdateItemsModal from "./updateItems.jsx";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
