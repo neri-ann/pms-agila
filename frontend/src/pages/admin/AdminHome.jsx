@@ -9,13 +9,34 @@ import UserTypeNavbar from "../../components/UserTypeNavbar.jsx";
 function AdminHome() {
   const { id } = useParams();
 
-  // Date filter state
-  const today = new Date();
-  const defaultStart = useMemo(() => new Date(today.getFullYear(), 0, 1), [today]);
-  const defaultEnd = useMemo(() => today, [today]);
+  // Helper function to get current date in Asia/Manila timezone
+  const getManilaDate = () => {
+    const now = new Date();
+    // Get Manila time offset (UTC+8)
+    const manilaOffset = 8 * 60; // 8 hours in minutes
+    const utc = now.getTime() + (now.getTimezoneOffset() * 60000);
+    const manilaTime = new Date(utc + (manilaOffset * 60000));
+    return manilaTime;
+  };
+
+  // Helper function to format date in Manila timezone as YYYY-MM-DD
+  const formatManilaDate = (date) => {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  };
+
+  // Date filter state - dynamic today that updates with Asia/Manila timezone
+  const today = useMemo(() => getManilaDate(), []);
+  const defaultStart = useMemo(() => {
+    const manilaDate = getManilaDate();
+    return new Date(manilaDate.getFullYear(), 0, 1);
+  }, []);
+  const defaultEnd = useMemo(() => getManilaDate(), []);
   const [dateRange, setDateRange] = useState({
-    startDate: defaultStart.toISOString().slice(0, 10),
-    endDate: defaultEnd.toISOString().slice(0, 10)
+    startDate: formatManilaDate(defaultStart),
+    endDate: formatManilaDate(defaultEnd)
   });
   const [selectedYear, setSelectedYear] = useState('all');
   // Multi-select months (custom dropdown)
@@ -162,9 +183,12 @@ function AdminHome() {
   };
 
   const resetFilters = () => {
+    // Get current date in Asia/Manila timezone
+    const currentDate = getManilaDate();
+    const currentStartDate = new Date(currentDate.getFullYear(), 0, 1);
     setDateRange({
-      startDate: defaultStart.toISOString().slice(0, 10),
-      endDate: defaultEnd.toISOString().slice(0, 10)
+      startDate: formatManilaDate(currentStartDate),
+      endDate: formatManilaDate(currentDate)
     });
     setSelectedYear('all');
     setSelectedMonths(['all']);
@@ -186,7 +210,7 @@ function AdminHome() {
   }
 
   // Destructure dashboard data
-  const { totalUsers, totalUsersChange, newUsersThisMonth, newUsersLastWeek, activeVendors, activeVendorsChange, newVendorsThisMonth, newVendorsLastWeek, budgetRequests, budgetRequestsChange, requestsSinceLastWeek, budgetData, vendorStatus, monthlyRequests, vendorTotal } = dashboardData || {};
+  const { totalUsers, totalUsersFiltered, totalUsersChange, newUsersThisMonth, newUsersLastWeek, activeVendors, activeVendorsFiltered, inactiveVendorsFiltered, vendorTotalAllTime, activeVendorsChange, newVendorsThisMonth, newVendorsLastWeek, budgetRequests, budgetRequestsFiltered, budgetRequestsChange, requestsSinceLastWeek, budgetData, vendorStatus, monthlyRequests, vendorTotal } = dashboardData || {};
   const vendorData = vendorStatus || [];
   const requestData = monthlyRequests || [];
   const maxRequests = requestData.length > 0 ? Math.max(...requestData) : 1;
@@ -227,7 +251,7 @@ function AdminHome() {
                 </div>
               </div>
               <h2 className="text-lg font-semibold text-gray-700 mb-1">Total Users</h2>
-              <span className="text-3xl font-bold text-gray-900 mb-3 block">{totalUsers}</span>
+              <span className="text-3xl font-bold text-gray-900 mb-3 block">{totalUsersFiltered || 0}</span>
               <div className="text-sm text-gray-600 mb-4">
                 +{newUsersLastWeek} new users this week
               </div>
@@ -256,7 +280,7 @@ function AdminHome() {
                 </div>
               </div>
               <h2 className="text-lg font-semibold text-gray-700 mb-1">Active Vendors</h2>
-              <span className="text-3xl font-bold text-gray-900 mb-3 block">{activeVendors}</span>
+              <span className="text-3xl font-bold text-gray-900 mb-3 block">{activeVendorsFiltered || 0}</span>
               <div className="text-sm text-gray-600 mb-4">
                 +{newVendorsLastWeek} new vendors approved
               </div>
@@ -285,7 +309,7 @@ function AdminHome() {
                 </div>
               </div>
               <h2 className="text-lg font-semibold text-gray-700 mb-1">Budget Requests</h2>
-              <span className="text-3xl font-bold text-gray-900 mb-3 block">{budgetRequests}</span>
+              <span className="text-3xl font-bold text-gray-900 mb-3 block">{typeof budgetRequestsFiltered === 'number' ? budgetRequestsFiltered : budgetRequests}</span>
               <div className="text-sm text-gray-600 mb-4">
                 {requestsSinceLastWeek} requests since last week
               </div>
@@ -401,6 +425,7 @@ function AdminHome() {
                   type="date"
                   value={dateRange.endDate}
                   min={dateRange.startDate}
+                  max={formatManilaDate(getManilaDate())}
                   onChange={(e) => handleDateRangeChange('endDate', e.target.value)}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
                 />

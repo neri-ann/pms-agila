@@ -92,68 +92,96 @@ exports.getAdminStats = async (req, res) => {
     return monthList.includes(d.getMonth() + 1);
   }
 
-  // Total users (filtered)
-  const totalUsers = await User.countDocuments({
+  // Total users (all-time)
+  const totalUsers = await User.countDocuments({});
+  // Total users within current filter window (for reference and optional UI)
+  const totalUsersFiltered = await User.countDocuments({
     createdAt: { $gte: filterStart, $lte: filterEnd },
     ...(monthList.length && { $expr: { $in: [{ $month: "$createdAt" }, monthList] } })
   });
-  // Previous period total users
+  // Previous period total users (filtered window for percent change context)
   const prevTotalUsers = await User.countDocuments({ createdAt: { $gte: prevStart, $lte: prevEnd } });
-  const totalUsersChange = prevTotalUsers ? Math.round(((totalUsers - prevTotalUsers) / prevTotalUsers) * 100) : (totalUsers > 0 ? 100 : 0);
+  const totalUsersChange = prevTotalUsers ? Math.round(((totalUsersFiltered - prevTotalUsers) / prevTotalUsers) * 100) : (totalUsersFiltered > 0 ? 100 : 0);
   // New users this month (filtered to filterStart/filterEnd's month)
   const newUsersThisMonth = await User.countDocuments({ createdAt: { $gte: startMonth, $lte: endMonth } });
   // For dashboard: new users last week
   const newUsersLastWeek = await User.countDocuments({ createdAt: { $gte: lastWeek, $lte: nowDate } });
 
     // Vendors: Active = isDeleted: false, Inactive = isDeleted: true
-      // Active vendors: not deleted, and effective date (createdAt) within filter window
-      const activeVendors = await Vendor.countDocuments({
-        $and: [
-          { $or: [ { isDeleted: false }, { isDeleted: { $exists: false } } ] },
-          { createdAt: { $gte: filterStart, $lte: filterEnd } },
-          ...(monthList.length ? [{ $expr: { $in: [{ $month: "$createdAt" }, monthList] } }] : [])
-        ]
-      });
+    
+    // Active vendors (filtered): isDeleted = false, filter by createdAt within window
+    const activeVendorsFiltered = await Vendor.countDocuments({
+      $and: [
+        { $or: [ { isDeleted: false }, { isDeleted: { $exists: false } } ] },
+        { createdAt: { $gte: filterStart, $lte: filterEnd } },
+        ...(monthList.length ? [{ $expr: { $in: [{ $month: "$createdAt" }, monthList] } }] : [])
+      ]
+    });
 
-      // Inactive vendors: deleted, and effective deletion date within filter window
-      // Use isDeletedAt if present, otherwise fallback to createdAt (as a last resort)
-      const inactiveDateMatch = monthList.length
-        ? { $expr: { $in: [{ $month: { $ifNull: ["$isDeletedAt", "$createdAt"] } }, monthList] } }
-        : {};
-      const inactiveVendors = await Vendor.countDocuments({
-        $and: [
-          { isDeleted: true },
-          { $expr: { $gte: [ { $ifNull: ["$isDeletedAt", "$createdAt"] }, filterStart ] } },
-          { $expr: { $lte: [ { $ifNull: ["$isDeletedAt", "$createdAt"] }, filterEnd ] } },
-          inactiveDateMatch
-        ]
-      });
-    // Previous period
+    // Active vendors (all-time): isDeleted = false
+    const activeVendorsAllTime = await Vendor.countDocuments({
+      $or: [ { isDeleted: false }, { isDeleted: { $exists: false } } ]
+    });
+
+    // Inactive vendors (filtered): isDeleted = true, filter by isDeletedAt within window
+    const inactiveVendorsFiltered = await Vendor.countDocuments({
+      $and: [
+        { isDeleted: true },
+        { isDeletedAt: { $ne: null } },
+        { isDeletedAt: { $gte: filterStart, $lte: filterEnd } },
+        ...(monthList.length ? [{ $expr: { $in: [{ $month: "$isDeletedAt" }, monthList] } }] : [])
+      ]
+    });
+
+    // Inactive vendors (all-time): isDeleted = true
+    const inactiveVendorsAllTime = await Vendor.countDocuments({
+      isDeleted: true
+    });
+
+    // Total vendors = active + inactive (all documents)
+    const vendorTotalAllTime = activeVendorsAllTime + inactiveVendorsAllTime;
+
+    // Previous period active vendors (for change calculation)
     const prevActiveVendors = await Vendor.countDocuments({
       $and: [
         { $or: [ { isDeleted: false }, { isDeleted: { $exists: false } } ] },
         { createdAt: { $gte: prevStart, $lte: prevEnd } }
       ]
     });
-    const activeVendorsChange = prevActiveVendors ? Math.round(((activeVendors - prevActiveVendors) / prevActiveVendors) * 100) : (activeVendors > 0 ? 100 : 0);
-    // New vendors this month: created in this month
-    const newVendorsThisMonth = await Vendor.countDocuments({ isDeleted: false, createdAt: { $gte: startMonth, $lte: endMonth } });
-    const newVendorsLastWeek = await Vendor.countDocuments({ isDeleted: false, createdAt: { $gte: lastWeek, $lte: nowDate } });
-  const vendorTotal = activeVendors + inactiveVendors;
+    const activeVendorsChange = prevActiveVendors ? Math.round(((activeVendorsFiltered - prevActiveVendors) / prevActiveVendors) * 100) : (activeVendorsFiltered > 0 ? 100 : 0);
+    
+    // New vendors this month: created in this month and active
+    const newVendorsThisMonth = await Vendor.countDocuments({ 
+      $and: [
+        { $or: [ { isDeleted: false }, { isDeleted: { $exists: false } } ] },
+        { createdAt: { $gte: startMonth, $lte: endMonth } }
+      ]
+    });
+    const newVendorsLastWeek = await Vendor.countDocuments({ 
+      $and: [
+        { $or: [ { isDeleted: false }, { isDeleted: { $exists: false } } ] },
+        { createdAt: { $gte: lastWeek, $lte: nowDate } }
+      ]
+    });
+
+    // For charts, use filtered totals
+    const vendorTotal = activeVendorsFiltered + inactiveVendorsFiltered;
     const vendorStatus = [
-      { name: 'Active', value: activeVendors, color: '#3B82F6', percentage: vendorTotal ? Math.round((activeVendors / vendorTotal) * 100) : 0 },
-      { name: 'Inactive', value: inactiveVendors, color: '#EF4444', percentage: vendorTotal ? Math.round((inactiveVendors / vendorTotal) * 100) : 0 },
+  { name: 'Active', value: activeVendorsFiltered, color: '#3B82F6', percentage: vendorTotal ? Math.round((activeVendorsFiltered / vendorTotal) * 100) : 0 },
+  { name: 'Inactive', value: inactiveVendorsFiltered, color: '#EF4444', percentage: vendorTotal ? Math.round((inactiveVendorsFiltered / vendorTotal) * 100) : 0 },
     ];
 
   // Budget requests (filtered)
-  const budgetRequests = await Budget.countDocuments({
+  const budgetRequestsFiltered = await Budget.countDocuments({
     createdAt: { $gte: filterStart, $lte: filterEnd },
     ...(monthList.length && { $expr: { $in: [{ $month: "$createdAt" }, monthList] } })
   });
   // Requests in previous period (matching filter)
   const prevBudgetRequests = await Budget.countDocuments({ createdAt: { $gte: prevStart, $lte: prevEnd } });
   // Show the percent change for dashboard
-  const budgetRequestsChange = prevBudgetRequests ? Math.round(((budgetRequests - prevBudgetRequests) / prevBudgetRequests) * 100) : (budgetRequests > 0 ? 100 : 0);
+  const budgetRequestsChange = prevBudgetRequests ? Math.round(((budgetRequestsFiltered - prevBudgetRequests) / prevBudgetRequests) * 100) : (budgetRequestsFiltered > 0 ? 100 : 0);
+  // Budget requests (all-time): big number
+  const budgetRequests = await Budget.countDocuments({});
   // For reference, keep requestsSinceLastWeek as before
   const requestsSinceLastWeek = await Budget.countDocuments({ createdAt: { $gte: lastWeek, $lt: nowDate } });
 
@@ -210,14 +238,19 @@ exports.getAdminStats = async (req, res) => {
 
       res.json({
         totalUsers,
+        totalUsersFiltered,
         totalUsersChange,
         newUsersThisMonth,
         newUsersLastWeek,
-        activeVendors,
+        activeVendors: activeVendorsAllTime,
+        activeVendorsFiltered,
+        inactiveVendorsFiltered,
+        vendorTotalAllTime,
         activeVendorsChange,
         newVendorsThisMonth,
         newVendorsLastWeek,
         budgetRequests,
+        budgetRequestsFiltered,
         budgetRequestsChange,
         requestsSinceLastWeek,
         budgetData,
