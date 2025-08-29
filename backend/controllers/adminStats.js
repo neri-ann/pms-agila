@@ -101,7 +101,24 @@ exports.getAdminStats = async (req, res) => {
   });
   // Previous period total users (filtered window for percent change context)
   const prevTotalUsers = await User.countDocuments({ createdAt: { $gte: prevStart, $lte: prevEnd } });
-  const totalUsersChange = prevTotalUsers ? Math.round(((totalUsersFiltered - prevTotalUsers) / prevTotalUsers) * 100) : (totalUsersFiltered > 0 ? 100 : 0);
+  
+  // Also get users from the last 30 days for more stable comparison
+  const last30Days = new Date(now);
+  last30Days.setDate(now.getDate() - 30);
+  const prev30Days = new Date(now);
+  prev30Days.setDate(now.getDate() - 60);
+  const usersLast30Days = await User.countDocuments({ createdAt: { $gte: last30Days, $lte: now } });
+  const usersPrev30Days = await User.countDocuments({ createdAt: { $gte: prev30Days, $lte: last30Days } });
+  
+  // Calculate percentage change - use 30-day comparison for more stability
+  let totalUsersChange = 0;
+  if (usersPrev30Days > 0) {
+    totalUsersChange = Math.round(((usersLast30Days - usersPrev30Days) / usersPrev30Days) * 100);
+  } else if (usersLast30Days > 0) {
+    // If no users in previous period, show growth based on weekly average
+    const weeklyAverage = Math.ceil(usersLast30Days / 4); // 30 days ≈ 4 weeks
+    totalUsersChange = Math.min(weeklyAverage * 25, 100); // More reasonable growth indicator
+  }
   // New users this month (filtered to filterStart/filterEnd's month)
   const newUsersThisMonth = await User.countDocuments({ createdAt: { $gte: startMonth, $lte: endMonth } });
   // For dashboard: new users last week
@@ -148,7 +165,30 @@ exports.getAdminStats = async (req, res) => {
         { createdAt: { $gte: prevStart, $lte: prevEnd } }
       ]
     });
-    const activeVendorsChange = prevActiveVendors ? Math.round(((activeVendorsFiltered - prevActiveVendors) / prevActiveVendors) * 100) : (activeVendorsFiltered > 0 ? 100 : 0);
+    
+    // Also get vendors from the last 30 days for more stable comparison
+    const vendorsLast30Days = await Vendor.countDocuments({
+      $and: [
+        { $or: [ { isDeleted: false }, { isDeleted: { $exists: false } } ] },
+        { createdAt: { $gte: last30Days, $lte: now } }
+      ]
+    });
+    const vendorsPrev30Days = await Vendor.countDocuments({
+      $and: [
+        { $or: [ { isDeleted: false }, { isDeleted: { $exists: false } } ] },
+        { createdAt: { $gte: prev30Days, $lte: last30Days } }
+      ]
+    });
+    
+    // Calculate percentage change for active vendors - use 30-day comparison
+    let activeVendorsChange = 0;
+    if (vendorsPrev30Days > 0) {
+      activeVendorsChange = Math.round(((vendorsLast30Days - vendorsPrev30Days) / vendorsPrev30Days) * 100);
+    } else if (vendorsLast30Days > 0) {
+      // If no vendors in previous period, show growth based on actual new vendors
+      const weeklyAverage = Math.ceil(vendorsLast30Days / 4);
+      activeVendorsChange = Math.min(weeklyAverage * 30, 100); // More reasonable growth indicator
+    }
     
     // New vendors this month: created in this month and active
     const newVendorsThisMonth = await Vendor.countDocuments({ 
@@ -178,8 +218,20 @@ exports.getAdminStats = async (req, res) => {
   });
   // Requests in previous period (matching filter)
   const prevBudgetRequests = await Budget.countDocuments({ createdAt: { $gte: prevStart, $lte: prevEnd } });
-  // Show the percent change for dashboard
-  const budgetRequestsChange = prevBudgetRequests ? Math.round(((budgetRequestsFiltered - prevBudgetRequests) / prevBudgetRequests) * 100) : (budgetRequestsFiltered > 0 ? 100 : 0);
+  
+  // Also get budget requests from the last 30 days for more stable comparison
+  const budgetsLast30Days = await Budget.countDocuments({ createdAt: { $gte: last30Days, $lte: now } });
+  const budgetsPrev30Days = await Budget.countDocuments({ createdAt: { $gte: prev30Days, $lte: last30Days } });
+  
+  // Show the percent change for dashboard - use 30-day comparison
+  let budgetRequestsChange = 0;
+  if (budgetsPrev30Days > 0) {
+    budgetRequestsChange = Math.round(((budgetsLast30Days - budgetsPrev30Days) / budgetsPrev30Days) * 100);
+  } else if (budgetsLast30Days > 0) {
+    // If no requests in previous period, show growth based on actual new requests
+    const weeklyAverage = Math.ceil(budgetsLast30Days / 4);
+    budgetRequestsChange = Math.min(weeklyAverage * 20, 100); // More reasonable growth indicator
+  }
   // Budget requests (all-time): big number
   const budgetRequests = await Budget.countDocuments({});
   // For reference, keep requestsSinceLastWeek as before
