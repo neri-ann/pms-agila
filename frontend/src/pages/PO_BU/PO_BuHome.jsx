@@ -1,6 +1,7 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Link, useParams } from "react-router-dom";
-import { FiFileText, FiUsers, FiDollarSign, FiTrendingUp, FiTrendingDown, FiShoppingBag, FiCalendar, FiFilter, FiClipboard, FiPackage } from 'react-icons/fi';
+import { FiFileText, FiUsers, FiDollarSign, FiTrendingUp, FiTrendingDown, FiShoppingBag, FiCalendar, FiFilter, FiClipboard, FiPackage, FiRefreshCw } from 'react-icons/fi';
+import axios from 'axios';
 
 import UserTypeNavbar from "../../components/UserTypeNavbar.jsx";
 
@@ -8,34 +9,39 @@ export default function PO_BuHome() {
     const { id } = useParams();
 
     // State for date filters
-    const [selectedYear, setSelectedYear] = useState('2024');
+    const [selectedYear, setSelectedYear] = useState('all');
     const [selectedMonth, setSelectedMonth] = useState('all');
     const [dateRange, setDateRange] = useState({
       startDate: '',
       endDate: ''
     });
 
-    // Sample data for procurement-specific charts
-    const projectData = [
-      { month: 'Jan', projects: 8, completed: 6 },
-      { month: 'Feb', projects: 12, completed: 10 },
-      { month: 'Mar', projects: 10, completed: 8 },
-      { month: 'Apr', projects: 15, completed: 13 },
-      { month: 'May', projects: 18, completed: 16 },
-      { month: 'Jun', projects: 14, completed: 11 },
-    ];
-
-    const bidData = [
-      { name: 'Submitted', value: 28, color: '#3B82F6', percentage: 54 },
-      { name: 'Pending Review', value: 15, color: '#F59E0B', percentage: 29 },
-      { name: 'Under Evaluation', value: 9, color: '#EF4444', percentage: 17 },
-    ];
-
-    const requisitionData = [12, 18, 22, 16, 25, 20];
-    const maxRequisitions = Math.max(...requisitionData);
+    // State for dashboard data
+    const [dashboardData, setDashboardData] = useState({
+        stats: {
+            activeProjects: { count: 0, trend: { percentage: 0, direction: 'neutral' } },
+            approvedVendors: { count: 0, trend: { percentage: 0, direction: 'neutral' } },
+            pendingRequisitions: { count: 0, trend: { percentage: 0, direction: 'neutral' } }
+        },
+        charts: {
+            monthlyProjects: [],
+            bidStatus: [],
+            monthlyRequisitions: []
+        }
+    });
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
+    const [lastUpdated, setLastUpdated] = useState(null);
 
     // Available years and months for filters
-    const availableYears = ['2024', '2023', '2022', '2021'];
+    const availableYears = [
+      { value: 'all', label: 'All Years' },
+      { value: '2025', label: '2025' },
+      { value: '2024', label: '2024' },
+      { value: '2023', label: '2023' },
+      { value: '2022', label: '2022' },
+      { value: '2021', label: '2021' }
+    ];
     const availableMonths = [
       { value: 'all', label: 'All Months' },
       { value: '01', label: 'January' },
@@ -51,6 +57,99 @@ export default function PO_BuHome() {
       { value: '11', label: 'November' },
       { value: '12', label: 'December' }
     ];
+
+    // Fetch dashboard data
+    const fetchDashboardData = async () => {
+        try {
+            setLoading(true);
+            setError(null);
+            
+            const params = new URLSearchParams();
+            // Only add year and month filters if they're not 'all'
+            if (selectedYear !== 'all' && selectedMonth !== 'all') {
+                params.append('year', selectedYear);
+                params.append('month', selectedMonth);
+            } else if (selectedYear !== 'all' && selectedMonth === 'all') {
+                // If year is selected but month is 'all', don't filter by date
+                // This will show all data for better user experience
+            }
+            if (dateRange.startDate) params.append('startDate', dateRange.startDate);
+            if (dateRange.endDate) params.append('endDate', dateRange.endDate);
+
+            console.log('Fetching dashboard data with params:', params.toString());
+            
+            const response = await axios.get(`http://localhost:8000/api/proc-dashboard/stats?${params.toString()}`);
+            
+            if (response.data.success) {
+                setDashboardData(response.data.data);
+                setLastUpdated(new Date());
+                console.log('Dashboard data received:', response.data.data);
+            } else {
+                throw new Error(response.data.message || 'Failed to fetch dashboard data');
+            }
+        } catch (err) {
+            console.error('Dashboard fetch error:', err);
+            setError('Error loading dashboard data. Showing sample data.');
+            
+            // Fallback to sample data
+            setDashboardData({
+                stats: {
+                    activeProjects: { count: 25, trend: { percentage: 15, direction: 'up' } },
+                    approvedVendors: { count: 52, trend: { percentage: 12, direction: 'up' } },
+                    pendingRequisitions: { count: 18, trend: { percentage: 8, direction: 'down' } }
+                },
+                charts: {
+                    monthlyProjects: [
+                        { month: 1, month_name: 'January', total_projects: 8, completed_projects: 6 },
+                        { month: 2, month_name: 'February', total_projects: 12, completed_projects: 10 },
+                        { month: 3, month_name: 'March', total_projects: 10, completed_projects: 8 },
+                        { month: 4, month_name: 'April', total_projects: 15, completed_projects: 13 },
+                        { month: 5, month_name: 'May', total_projects: 18, completed_projects: 16 },
+                        { month: 6, month_name: 'June', total_projects: 14, completed_projects: 11 },
+                    ],
+                    bidStatus: [
+                        { status: 'submitted', count: 28, percentage: 54 },
+                        { status: 'pending', count: 15, percentage: 29 },
+                        { status: 'under_evaluation', count: 9, percentage: 17 },
+                    ],
+                    monthlyRequisitions: [
+                        { month: 1, month_name: 'January', requisitions: 12 },
+                        { month: 2, month_name: 'February', requisitions: 18 },
+                        { month: 3, month_name: 'March', requisitions: 22 },
+                        { month: 4, month_name: 'April', requisitions: 16 },
+                        { month: 5, month_name: 'May', requisitions: 25 },
+                        { month: 6, month_name: 'June', requisitions: 20 },
+                    ]
+                }
+            });
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    // Effect to fetch data on component mount and filter changes
+    useEffect(() => {
+        fetchDashboardData();
+    }, [selectedYear, selectedMonth, dateRange.startDate, dateRange.endDate]);
+
+    // Auto-refresh dashboard data every 30 seconds
+    useEffect(() => {
+        const interval = setInterval(() => {
+            fetchDashboardData();
+        }, 30000); // 30 seconds
+
+        return () => clearInterval(interval);
+    }, [selectedYear, selectedMonth, dateRange.startDate, dateRange.endDate]);
+
+    // Refresh when window gains focus (user comes back to the page)
+    useEffect(() => {
+        const handleFocus = () => {
+            fetchDashboardData();
+        };
+
+        window.addEventListener('focus', handleFocus);
+        return () => window.removeEventListener('focus', handleFocus);
+    }, [selectedYear, selectedMonth, dateRange.startDate, dateRange.endDate]);
 
     // Handle filter changes
     const handleYearChange = (e) => {
@@ -69,10 +168,52 @@ export default function PO_BuHome() {
     };
 
     const resetFilters = () => {
-      setSelectedYear('2024');
+      setSelectedYear('all');
       setSelectedMonth('all');
       setDateRange({ startDate: '', endDate: '' });
     };
+
+    // Helper functions
+    const renderTrendIcon = (trend) => {
+        if (trend.direction === 'up') {
+            return <FiTrendingUp className="text-lg text-green-600" />;
+        } else if (trend.direction === 'down') {
+            return <FiTrendingDown className="text-lg text-red-600" />;
+        }
+        return <div className="w-5 h-5 bg-gray-300 rounded-full"></div>;
+    };
+
+    const getTrendColor = (trend) => {
+        return trend.direction === 'up' ? 'text-green-600' : 
+               trend.direction === 'down' ? 'text-red-600' : 'text-gray-600';
+    };
+
+    // Transform data for charts
+    const projectData = dashboardData.charts.monthlyProjects.map(item => ({
+        month: item.month_name?.substring(0, 3) || 'N/A',
+        projects: item.total_projects || 0,
+        completed: item.completed_projects || 0
+    }));
+
+    const bidData = dashboardData.charts.bidStatus.map(item => {
+        const colorMap = {
+            'submitted': '#3B82F6',
+            'pending': '#F59E0B',
+            'under_evaluation': '#EF4444',
+            'approved': '#10B981',
+            'rejected': '#6B7280'
+        };
+        
+        return {
+            name: item.status?.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase()) || 'Unknown',
+            value: item.count || 0,
+            color: colorMap[item.status] || '#6B7280',
+            percentage: item.percentage || 0
+        };
+    });
+
+    const requisitionData = dashboardData.charts.monthlyRequisitions.map(item => item.requisitions || 0);
+    const maxRequisitions = Math.max(...requisitionData, 1);
 
     return (
       <div id="Home">
@@ -80,38 +221,65 @@ export default function PO_BuHome() {
         <div className="bg-NeutralSilver min-h-screen">
           <div className="px-4 lg:px-14 max-w-screen-2xl mx-auto">
             {/* Dashboard Header */}
-            <div className="pt-8 pb-4">
-              <h1 className="text-3xl md:text-4xl font-bold text-NeutralDGrey mb-2">
-                Procurement Dashboard
-              </h1>
-              <p className="text-NeutralGrey text-lg">
-                Welcome back! Here's an overview of your procurement activities.
-              </p>
+            <div className="pt-8 pb-4 flex justify-between items-center">
+              <div>
+                <h1 className="text-3xl md:text-4xl font-bold text-NeutralDGrey mb-2">
+                  Procurement Dashboard
+                </h1>
+                <p className="text-NeutralGrey text-lg">
+                  Welcome back! Here's an overview of your procurement activities.
+                </p>
+                {lastUpdated && (
+                  <p className="text-sm text-gray-500 mt-1">
+                    Last updated: {lastUpdated.toLocaleTimeString()}
+                  </p>
+                )}
+                {error && (
+                  <div className="text-sm text-amber-600 mt-2 flex items-center space-x-1">
+                    <span>⚠️</span>
+                    <span>{error}</span>
+                  </div>
+                )}
+              </div>
+              {loading && (
+                <div className="flex items-center space-x-2 text-blue-600">
+                  <FiRefreshCw className="animate-spin" />
+                  <span>Loading...</span>
+                </div>
+              )}
             </div>
 
             {/* Quick Stats */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 py-8">
-              {/* Active Projects Card */}
+              {/* Items Card (instead of Active Projects) */}
               <div className="bg-white rounded-2xl shadow-lg p-6 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
                 <div className="flex items-center justify-between mb-4">
                   <div className="bg-blue-500 p-3 rounded-full">
-                    <FiClipboard className="text-white text-2xl" />
+                    <FiPackage className="text-white text-2xl" />
                   </div>
-                  <div className="flex items-center space-x-1 text-green-600">
-                    <FiTrendingUp className="text-lg" />
-                    <span className="text-sm font-semibold">+15%</span>
+                  <div className="flex items-center space-x-1">
+                    {renderTrendIcon(dashboardData.stats.activeProjects.trend)}
+                    <span className={`text-sm font-semibold ${getTrendColor(dashboardData.stats.activeProjects.trend)}`}>
+                      {dashboardData.stats.activeProjects.trend.percentage > 0 ? 
+                        `${dashboardData.stats.activeProjects.trend.direction === 'up' ? '+' : '-'}${dashboardData.stats.activeProjects.trend.percentage}%` : 
+                        'No change'
+                      }
+                    </span>
                   </div>
                 </div>
-                <h2 className="text-lg font-semibold text-gray-700 mb-1">Active Projects</h2>
-                <span className="text-3xl font-bold text-gray-900 mb-3 block">24</span>
+                <h2 className="text-lg font-semibold text-gray-700 mb-1">Total Items</h2>
+                <span className="text-3xl font-bold text-gray-900 mb-3 block">
+                  {dashboardData.stats.activeProjects.count}
+                </span>
                 <div className="text-sm text-gray-600 mb-4">
-                  +4 new projects this month
+                  {dashboardData.stats.activeProjects.trend.direction === 'up' ? 'Increased' : 
+                   dashboardData.stats.activeProjects.trend.direction === 'down' ? 'Decreased' : 'No change'} from last year
                 </div>
                 <Link 
-                  to="/projectList" 
+                  to="/PO_Items" 
                   className="inline-flex items-center justify-center w-full bg-blue-500 hover:bg-blue-600 text-white font-medium py-2 px-4 rounded-lg transition-colors duration-200"
                 >
-                  View Projects
+                  View Items
                 </Link>
               </div>
 
@@ -121,18 +289,26 @@ export default function PO_BuHome() {
                   <div className="bg-green-500 p-3 rounded-full">
                     <FiUsers className="text-white text-2xl" />
                   </div>
-                  <div className="flex items-center space-x-1 text-green-600">
-                    <FiTrendingUp className="text-lg" />
-                    <span className="text-sm font-semibold">+12%</span>
+                  <div className="flex items-center space-x-1">
+                    {renderTrendIcon(dashboardData.stats.approvedVendors.trend)}
+                    <span className={`text-sm font-semibold ${getTrendColor(dashboardData.stats.approvedVendors.trend)}`}>
+                      {dashboardData.stats.approvedVendors.trend.percentage > 0 ? 
+                        `${dashboardData.stats.approvedVendors.trend.direction === 'up' ? '+' : '-'}${dashboardData.stats.approvedVendors.trend.percentage}%` : 
+                        'No change'
+                      }
+                    </span>
                   </div>
                 </div>
-                <h2 className="text-lg font-semibold text-gray-700 mb-1">Approved Vendors</h2>
-                <span className="text-3xl font-bold text-gray-900 mb-3 block">52</span>
+                <h2 className="text-lg font-semibold text-gray-700 mb-1">Total Vendors</h2>
+                <span className="text-3xl font-bold text-gray-900 mb-3 block">
+                  {dashboardData.stats.approvedVendors.count}
+                </span>
                 <div className="text-sm text-gray-600 mb-4">
-                  +6 vendors approved this month
+                  {dashboardData.stats.approvedVendors.trend.direction === 'up' ? 'Increased' : 
+                   dashboardData.stats.approvedVendors.trend.direction === 'down' ? 'Decreased' : 'No change'} from last year
                 </div>
                 <Link 
-                  to="/VendorsList" 
+                  to="/PO_VendorsList" 
                   className="inline-flex items-center justify-center w-full bg-green-500 hover:bg-green-600 text-white font-medium py-2 px-4 rounded-lg transition-colors duration-200"
                 >
                   Manage Vendors
@@ -145,18 +321,26 @@ export default function PO_BuHome() {
                   <div className="bg-orange-500 p-3 rounded-full">
                     <FiFileText className="text-white text-2xl" />
                   </div>
-                  <div className="flex items-center space-x-1 text-red-600">
-                    <FiTrendingDown className="text-lg" />
-                    <span className="text-sm font-semibold">-8%</span>
+                  <div className="flex items-center space-x-1">
+                    {renderTrendIcon(dashboardData.stats.pendingRequisitions.trend)}
+                    <span className={`text-sm font-semibold ${getTrendColor(dashboardData.stats.pendingRequisitions.trend)}`}>
+                      {dashboardData.stats.pendingRequisitions.trend.percentage > 0 ? 
+                        `${dashboardData.stats.pendingRequisitions.trend.direction === 'up' ? '+' : '-'}${dashboardData.stats.pendingRequisitions.trend.percentage}%` : 
+                        'No change'
+                      }
+                    </span>
                   </div>
                 </div>
                 <h2 className="text-lg font-semibold text-gray-700 mb-1">Pending Requisitions</h2>
-                <span className="text-3xl font-bold text-gray-900 mb-3 block">18</span>
+                <span className="text-3xl font-bold text-gray-900 mb-3 block">
+                  {dashboardData.stats.pendingRequisitions.count}
+                </span>
                 <div className="text-sm text-gray-600 mb-4">
-                  -3 requisitions since last week
+                  {dashboardData.stats.pendingRequisitions.trend.direction === 'up' ? 'Increased' : 
+                   dashboardData.stats.pendingRequisitions.trend.direction === 'down' ? 'Decreased' : 'No change'} from last year
                 </div>
                 <Link 
-                  to="/ApprovedRequestList" 
+                  to="/ViewForRequest" 
                   className="inline-flex items-center justify-center w-full bg-orange-500 hover:bg-orange-600 text-white font-medium py-2 px-4 rounded-lg transition-colors duration-200"
                 >
                   View Requisitions
@@ -186,7 +370,7 @@ export default function PO_BuHome() {
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
                   >
                     {availableYears.map(year => (
-                      <option key={year} value={year}>{year}</option>
+                      <option key={year.value} value={year.value}>{year.label}</option>
                     ))}
                   </select>
                 </div>
@@ -245,7 +429,7 @@ export default function PO_BuHome() {
                 <div className="flex items-center space-x-2 text-sm text-gray-600">
                   <span>Showing data for:</span>
                   <span className="font-medium text-blue-600">
-                    {selectedYear} {selectedMonth !== 'all' ? `- ${availableMonths.find(m => m.value === selectedMonth)?.label}` : ''}
+                    {selectedYear === 'all' ? 'All Data' : selectedYear} {selectedMonth !== 'all' ? `- ${availableMonths.find(m => m.value === selectedMonth)?.label}` : ''}
                     {dateRange.startDate && dateRange.endDate ? ` (${dateRange.startDate} to ${dateRange.endDate})` : ''}
                   </span>
                 </div>
