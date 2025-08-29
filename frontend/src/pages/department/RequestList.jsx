@@ -36,32 +36,41 @@ const RequestList = ({ isAuthenticated, handleSignOut, username, userId, departm
 
   const filteredRequests = requests.filter((request) => {
     return (
-      request.sendTo?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      request.contactPerson?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      request.faculty?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       request.department?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      request.purpose?.toLowerCase().includes(searchTerm.toLowerCase())
+      request.purpose?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      request.requestId?.toLowerCase().includes(searchTerm.toLowerCase())
     );
   });
 
   useEffect(() => {
-    // 🚨 For now, just mock data instead of axios
-    setRequests([
-      {
-        _id: "1",
-        requestId: "REQ-001",
-        sendTo: "John Doe",
-        department: "IT Department",
-        purpose: "Purchase new laptops",
-        status: "Pending",
-        contactPerson: "Jane Smith",
-        telephone: "123-456-7890",
-        items: [
-          { name: "Laptop", cost: "₱40,000", qtyRequired: 10, qtyAvailable: 2 },
-          { name: "Mouse", cost: "₱500", qtyRequired: 20, qtyAvailable: 15 },
-        ],
-        attachments: ["quotation.pdf", "specs.docx"]
-      }
-    ]);
+    fetchRequests();
   }, []);
+
+  // Add automatic refresh every 30 seconds
+  useEffect(() => {
+    const interval = setInterval(() => {
+      fetchRequests();
+    }, 30000);
+
+    return () => clearInterval(interval);
+  }, []);
+
+  const fetchRequests = async () => {
+    try {
+      setLoading(true);
+      const response = await axios.get("http://localhost:8000/procReqest/viewRequests");
+      console.log("Fetched requests:", response.data);
+      setRequests(response.data);
+    } catch (error) {
+      console.error("Error fetching requests:", error);
+      // Keep an empty array if request fails
+      setRequests([]);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const getStatusColor = (status) => {
     switch (status) {
@@ -162,12 +171,12 @@ const RequestList = ({ isAuthenticated, handleSignOut, username, userId, departm
                 currentItems.map((request, index) => (
                   <tr key={request._id} className="hover:bg-gray-50">
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{indexOfFirstItem + index + 1}</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm">{request.sendTo}</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm">{request.department}</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm">{request.purpose}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm">{request.contactPerson || request.faculty || 'N/A'}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm">{request.department || 'N/A'}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm">{request.purpose || 'Normal'}</td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm">
                       <span className={`px-2 py-1 text-xs rounded-md ${getStatusColor(request.status)}`}>
-                        {request.status}
+                        {request.status || 'Pending'}
                       </span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm">

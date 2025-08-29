@@ -1,5 +1,5 @@
 const router = require('express').Router();
-const {create,viewBudget,previewBudget,getBudgetByDepartment,updateBudget,deleterBudget} = require('../controllers/budget');
+const {create,viewBudget,previewBudget,getBudgetByDepartment,getBudgetByDepartmentName,updateBudget,deleterBudget} = require('../controllers/budget');
 
 
 // Add item create route
@@ -9,7 +9,7 @@ router.post("/create", create, (req, res) => {
   });
   router.get('/viewBudget', viewBudget);
   router.get("/previewBudget/:id",   previewBudget);
-  router.get('/budget/:department', getBudgetByDepartment);
+  router.get('/:department', getBudgetByDepartmentName);
   router.put("/updateBudget/:id", updateBudget);
   router.delete("/deleterBudget/:id", deleterBudget);
   router.get("/getBudgetByDepartment/:id", getBudgetByDepartment);

@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { Link, useNavigate } from "react-router-dom";
-import { AddItemCard }from "./AddItemCard.jsx";
-import { TrashIcon, PlusIcon } from "@heroicons/react/24/outline";
-import Breadcrumb from "../../components/Breadcrumb";
-import { ToastContainer, toast } from "react-toastify";
-import "react-toastify/dist/ReactToastify.css";
+import { AddItemCard } from "./AddItemCard";
 import { useAuth } from "../../context/AuthContext";
+import Breadcrumb from "../../components/Breadcrumb";
+import { PlusIcon, TrashIcon } from "@heroicons/react/24/outline";
+import { toast, ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 const ReqForm = ({ forms }) => {
   const navigate = useNavigate();
@@ -30,20 +30,25 @@ const ReqForm = ({ forms }) => {
   const [requestCreated, setRequestCreated] = useState(false);
   const [validationErrors, setValidationErrors] = useState({});
 
+  // Budget loading states
+  const [budgetLoading, setBudgetLoading] = useState(false);
+  const [budgetError, setBudgetError] = useState(null);
+  const [departmentChangeTimeout, setDepartmentChangeTimeout] = useState(null);
+
   // Generate request ID in the required format
   const generateRequestId = async () => {
     try {
-      // You might want to fetch the last request number from your backend
-      // For now, I'll show a placeholder - replace this with actual API call
-      const response = await axios.get("http://localhost:8000/procReqest/getLastRequestNumber");
-      const lastNumber = response.data.lastNumber || 0;
-      const newNumber = String(lastNumber + 1).padStart(3, '0');
-      return `REQ-${newNumber}`;
+      const response = await axios.post("http://localhost:8000/procReqest/generateRequestId");
+      const generatedId = response.data.requestId;
+      setRequestId(generatedId);
+      return generatedId;
     } catch (error) {
       console.error("Error generating request ID:", error);
       // Fallback: generate based on timestamp
       const timestamp = Date.now().toString().slice(-3);
-      return `REQ-${timestamp}`;
+      const fallbackId = `REQ-${timestamp}`;
+      setRequestId(fallbackId);
+      return fallbackId;
     }
   };
 
@@ -66,27 +71,108 @@ const ReqForm = ({ forms }) => {
 
   // Fetch budget data when department changes
   useEffect(() => {
-    if (department && loggedInUser?.id) {
+    if (department) {
       fetchBudgetData(department);
     }
-  }, [department, loggedInUser?.id]);
+  }, [department]);
 
+  // Cleanup timeout on component unmount
+  useEffect(() => {
+    return () => {
+      if (departmentChangeTimeout) {
+        clearTimeout(departmentChangeTimeout);
+      }
+    };
+  }, [departmentChangeTimeout]);
+
+  // Improved fetchBudgetData function with better error handling
   const fetchBudgetData = async (selectedDepartment) => {
-    try {
-      const response = await axios.get(
-        `http://localhost:8000/budget/getBudgetByDepartment/${loggedInUser.id}?department=${selectedDepartment}`
-      );
-      const { budgetAllocation, usedAmount, availableBalance } = response.data;
-      setBudgetAllocation(budgetAllocation);
-      setUsedAmount(usedAmount);
-      setBalanceAvailable(availableBalance);
-    } catch (error) {
-      console.error("Error fetching budget data:", error);
-      // Reset budget fields if error
+    if (!selectedDepartment || selectedDepartment.trim() === '') {
+      console.log("No department selected, clearing budget fields");
       setBudgetAllocation("");
       setUsedAmount("");
       setBalanceAvailable("");
+      setBudgetError(null);
+      return;
     }
+
+    try {
+      setBudgetLoading(true);
+      setBudgetError(null);
+      console.log("Fetching budget for department:", selectedDepartment);
+      
+      // Make sure to trim and encode the department name properly
+      const encodedDepartment = encodeURIComponent(selectedDepartment.trim());
+      const response = await axios.get(
+        `http://localhost:8000/budget/${encodedDepartment}`,
+        {
+          timeout: 10000, // 10 second timeout
+          headers: {
+            'Content-Type': 'application/json'
+          }
+        }
+      );
+      
+      console.log("Budget data received:", response.data);
+      const { budgetAllocation, usedAmount, availableBalance } = response.data;
+      
+      // Ensure we have valid numbers
+      setBudgetAllocation(budgetAllocation != null ? budgetAllocation : 0);
+      setUsedAmount(usedAmount != null ? usedAmount : 0);
+      setBalanceAvailable(availableBalance != null ? availableBalance : 0);
+      
+      console.log("Budget fields updated successfully");
+      
+    } catch (error) {
+      console.error("Error fetching budget data:", error);
+      console.error("Error details:", error.response?.data);
+      console.error("Error status:", error.response?.status);
+      
+      // Reset budget fields on error
+      setBudgetAllocation("");
+    setUsedAmount("");
+    setBalanceAvailable("");
+    
+    // Set appropriate error message
+    if (error.response?.status === 404) {
+      setBudgetError(`No budget found for ${selectedDepartment} department. Please contact admin to set up budget.`);
+      console.log("No budget found for department:", selectedDepartment);
+    } else if (error.code === 'ECONNABORTED') {
+      setBudgetError("Request timeout. Please try again.");
+    } else if (error.response?.status >= 500) {
+      setBudgetError("Server error. Please try again later.");
+    } else {
+      setBudgetError("Failed to load budget information. Please try again.");
+    }
+  } finally {
+    setBudgetLoading(false);
+  }
+};
+
+  // Improved department change handler with debouncing
+  const handleDepartmentChange = (e) => {
+    const selectedDepartment = e.target.value;
+    setDepartment(selectedDepartment);
+    
+    // Clear any existing timeout
+    if (departmentChangeTimeout) {
+      clearTimeout(departmentChangeTimeout);
+    }
+    
+    // Debounce the budget fetch to avoid multiple rapid requests
+    const newTimeout = setTimeout(() => {
+      if (selectedDepartment) {
+        fetchBudgetData(selectedDepartment);
+      } else {
+        // Clear budget fields if no department selected
+        setBudgetAllocation("");
+        setUsedAmount("");
+        setBalanceAvailable("");
+        setBudgetError(null);
+      }
+    }, 300); // 300ms debounce
+    
+    setDepartmentChangeTimeout(newTimeout);
   };
 
   const handleAddItemsClick = () => {
@@ -160,6 +246,31 @@ const ReqForm = ({ forms }) => {
     }
   };
 
+  // Budget validation function
+  const validateBudgetBeforeSubmit = () => {
+    if (!balanceAvailable || Object.keys(items).length === 0) {
+      return true; // Skip validation if no budget info or no items
+    }
+    
+    // Calculate total estimated cost of all items
+    const totalEstimatedCost = Object.values(items).reduce((total, item) => {
+      const cost = parseFloat(item.cost) || 0;
+      const qty = parseInt(item.qtyRequired) || 0;
+      return total + (cost * qty);
+    }, 0);
+    
+    const currentBalance = parseFloat(balanceAvailable) || 0;
+    
+    if (totalEstimatedCost > currentBalance) {
+      toast.error(
+        `Insufficient budget! Estimated cost (₱${totalEstimatedCost.toLocaleString()}) exceeds available balance (₱${currentBalance.toLocaleString()})`
+      );
+      return false;
+    }
+    
+    return true;
+  };
+
   const clearForm = async () => {
     // Generate new request ID and date
     const newRequestId = await generateRequestId();
@@ -177,6 +288,7 @@ const ReqForm = ({ forms }) => {
     setSpecifications({});
     setValidationErrors({});
     setRequestCreated(false);
+    setBudgetError(null);
 
     // Keep department and budget info if user has department
     if (loggedInUser && loggedInUser.department) {
@@ -212,6 +324,11 @@ const ReqForm = ({ forms }) => {
 
     if (Object.keys(items).length === 0) errors.items = "At least one item is required";
 
+    // Add budget validation
+    if (!validateBudgetBeforeSubmit()) {
+      errors.budget = "Insufficient budget for requested items";
+    }
+
     if (Object.keys(errors).length > 0) {
       setValidationErrors(errors);
       toast.error("Please fill in all required fields");
@@ -234,6 +351,10 @@ const ReqForm = ({ forms }) => {
       specifications,
     };
 
+    console.log("Data being sent to backend:", data);
+    console.log("Items being sent:", items);
+    console.log("Items count:", Object.keys(items).length);
+
     try {
       setLoading(true);
       const response = await axios.post(
@@ -253,16 +374,6 @@ const ReqForm = ({ forms }) => {
       setLoading(false);
     }
   };
-
-  // Show AddItemCard modal
-  // if (showAddItemCard) {
-  //   return (
-  //     <AddItemCard
-  //       handleAddItemsClick={handleItemAdded}
-  //       onCancel={() => setShowAddItemCard(false)}
-  //     />
-  //   );
-  // }
 
   return (
     <div className="min-h-screen bg-gray-50 p-6">
@@ -322,7 +433,7 @@ const ReqForm = ({ forms }) => {
                     </label>
                     <select
                       value={department}
-                      onChange={(e) => setDepartment(e.target.value)}
+                      onChange={handleDepartmentChange}
                       className={`block w-full px-3 py-2 border rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 ${validationErrors.department
                         ? "border-red-300 focus:ring-red-500 focus:border-red-500"
                         : "border-gray-300"
@@ -392,6 +503,30 @@ const ReqForm = ({ forms }) => {
                 <p className="mb-4 text-sm text-gray-600">
                   Budget information is automatically loaded based on selected department.
                 </p>
+                
+                {/* Show loading indicator */}
+                {budgetLoading && (
+                  <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-md">
+                    <p className="text-blue-700 text-sm">Loading budget information...</p>
+                  </div>
+                )}
+                
+                {/* Show error message */}
+                {budgetError && (
+                  <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-md">
+                    <p className="text-red-700 text-sm">{budgetError}</p>
+                  </div>
+                )}
+                
+                {/* Show success message when budget is loaded */}
+                {!budgetLoading && !budgetError && budgetAllocation && (
+                  <div className="mb-4 p-3 bg-green-50 border border-green-200 rounded-md">
+                    <p className="text-green-700 text-sm">
+                      Budget information loaded successfully for {department} department.
+                    </p>
+                  </div>
+                )}
+                
                 <div className="grid grid-cols-1 gap-6 sm:grid-cols-3">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -475,7 +610,7 @@ const ReqForm = ({ forms }) => {
                     <tbody className="divide-y divide-gray-200">
                       {Object.keys(items).length === 0 ? (
                         <tr>
-                          <td colSpan="6" className="px-6 py-8 text-center text-gray-500">
+                          <td colSpan="7" className="px-6 py-8 text-center text-gray-500">
                             No items added yet. Click "Add Items" to get started.
                           </td>
                         </tr>

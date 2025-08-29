@@ -1,116 +1,217 @@
-
-const budget = require('../Models/budget')
 const Budget = require('../Models/budget');
 const User = require("../Models/user");
 
-
-
-// request from the frontend
-exports.create = async (req,res) =>{
-    const {department,budgetAllocation,availableBalance,usedAmount} = req.body;
-// response will send to frontend
-const newBudget= new Budget({department,budgetAllocation,availableBalance,usedAmount} )
-//save the data in the database
-try {
-    console.log('New Budget:', newBudget);
-    await newBudget.save();
+// Create new budget
+exports.create = async (req, res) => {
+    const { department, budgetAllocation, availableBalance, usedAmount } = req.body;
     
-    res.json({ budget: newBudget.toObject() });
-    console.log(' save to the database')
-} catch (error) {
-    console.error('Error saving user:', error);
-    res.status(500).json({ error: 'Internal Server Error' });
-}
+    try {
+        // Check if budget already exists for this department
+        const existingBudget = await Budget.findOne({ department });
+        if (existingBudget) {
+            return res.status(400).json({ 
+                error: 'Budget already exists for this department',
+                message: `A budget for ${department} department already exists` 
+            });
+        }
+
+        const newBudget = new Budget({
+            department,
+            budgetAllocation,
+            availableBalance,
+            usedAmount
+        });
+
+        console.log('New Budget:', newBudget);
+        await newBudget.save();
+        
+        res.json({ budget: newBudget.toObject() });
+        console.log('Budget saved to the database');
+    } catch (error) {
+        console.error('Error saving budget:', error);
+        res.status(500).json({ error: 'Internal Server Error' });
+    }
 };
 
+// Get all budgets
+exports.viewBudget = async (req, res) => {
+    try {
+        const budgets = await Budget.find();
+        res.json(budgets);
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: 'Failed to fetch budgets' });
+    }
+};
 
-// get the all the supplyers
-exports.viewBudget = async (req,res) =>{
-  Budget.find().then((Budgets)=>{
-     res.json(Budgets)
-    }).catch((err)=>{
-     console.log(err);
-    })
- 
- };
-
-
-// view details of perticular user
-exports.previewBudget = async (req,res) =>{
+// View details of particular budget
+exports.previewBudget = async (req, res) => {
     const budgetId = req.params.id;
 
     try {
         const budget = await Budget.findById(budgetId);
         if (!budget) {
-            
-            return res.status(404).json({ status: "budjet not found" });
+            return res.status(404).json({ status: "Budget not found" });
         }
         
-
         res.status(200).json(budget); 
     } catch (err) {
         console.error(err.message);
         res.status(500).json({ status: "Error with getting budget", error: err.message });
     }
- 
- };
+};
 
- exports.getBudgetByDepartment = async (req, res) => {
-  const userId = req.params.id;
+// Get budget by user ID (using user's department)
+exports.getBudgetByDepartment = async (req, res) => {
+    const userId = req.params.id;
 
-  try {
-    // Fetch the logged-in user to get their department
-    const user = await User.findById(userId); // Corrected from findOne to findById
-    if (!user) {
-      return res.status(404).json({ status: "User not found" });
+    try {
+        // Fetch the logged-in user to get their department
+        const user = await User.findById(userId);
+        if (!user) {
+            return res.status(404).json({ status: "User not found" });
+        }
+
+        const budget = await Budget.findOne({ department: user.department });
+        if (!budget) {
+            return res.status(404).json({ 
+                status: "No budget found for this department",
+                department: user.department 
+            });
+        }
+
+        const { budgetAllocation, usedAmount, availableBalance } = budget;
+        res.status(200).json({ budgetAllocation, usedAmount, availableBalance });
+    } catch (error) {
+        console.error("Error fetching budget:", error);
+        res.status(500).json({ message: "Server error", error: error.message });
     }
+};
 
-    const budgets = await Budget.find({ department: user.department });
-    if (!budgets || budgets.length === 0) {
-      return res.status(404).json({ status: "No budgets found for this department" });
+// Get budget by department name directly (IMPROVED VERSION)
+exports.getBudgetByDepartmentName = async (req, res) => {
+    const departmentName = req.params.department;
+
+    try {
+        console.log("=== BUDGET ENDPOINT CALLED ===");
+        console.log("Searching for budget with department:", departmentName);
+        
+        // Validate department name
+        if (!departmentName || departmentName.trim() === '') {
+            return res.status(400).json({ 
+                status: "Invalid department name",
+                message: "Department name is required"
+            });
+        }
+
+        // Trim whitespace and convert to consistent case for comparison
+        const cleanDepartmentName = departmentName.trim();
+        
+        // First, let's see all budgets in the database for debugging
+        const allBudgets = await Budget.find();
+        console.log("All budgets in database:", allBudgets.map(b => ({ 
+            id: b._id, 
+            department: b.department,
+            budgetAllocation: b.budgetAllocation,
+            availableBalance: b.availableBalance,
+            usedAmount: b.usedAmount
+        })));
+        
+        // Try exact match first
+        let budget = await Budget.findOne({ department: cleanDepartmentName });
+        
+        // If no exact match, try case-insensitive search
+        if (!budget) {
+            budget = await Budget.findOne({ 
+                department: { $regex: new RegExp(`^${cleanDepartmentName}$`, 'i') } 
+            });
+        }
+        
+        console.log("Found budget for department", cleanDepartmentName, ":", budget);
+        
+        if (!budget) {
+            console.log("No budget found, returning 404");
+            return res.status(404).json({ 
+                status: "No budget found for this department",
+                message: `No budget found for department: ${cleanDepartmentName}`,
+                searchedFor: cleanDepartmentName,
+                availableDepartments: allBudgets.map(b => b.department)
+            });
+        }
+
+        const { budgetAllocation, usedAmount, availableBalance } = budget;
+        console.log("Returning budget data:", { budgetAllocation, usedAmount, availableBalance });
+
+        res.status(200).json({ 
+            budgetAllocation: budgetAllocation || 0, 
+            usedAmount: usedAmount || 0, 
+            availableBalance: availableBalance || 0,
+            department: budget.department
+        });
+    } catch (error) {
+        console.error("Error fetching budget:", error);
+        res.status(500).json({ 
+            message: "Server error", 
+            error: error.message,
+            department: departmentName
+        });
     }
-
-    const { budgetAllocation, usedAmount, availableBalance } = budgets[0]; // Assuming one budget per department
-
-    res.status(200).json({ budgetAllocation, usedAmount, availableBalance });
-  } catch (error) {
-    console.error("Error fetching budget:", error);
-    res.status(500).json({ message: "Server error", error: error.message });
-  }
 };
 
 // Update budget details
 exports.updateBudget = async (req, res) => {
     let budgetId = req.params.id;
-
     const { department, budgetAllocation, availableBalance, usedAmount } = req.body;
 
-    const updatedBudget = {
-        department,
-        budgetAllocation,
-        availableBalance,
-        usedAmount,
-    };
-
     try {
+        // Check if another budget exists for this department (excluding current one)
+        if (department) {
+            const existingBudget = await Budget.findOne({ 
+                department, 
+                _id: { $ne: budgetId } 
+            });
+            if (existingBudget) {
+                return res.status(400).json({ 
+                    error: 'Budget already exists for this department',
+                    message: `Another budget for ${department} department already exists` 
+                });
+            }
+        }
+
+        const updatedBudget = {
+            department,
+            budgetAllocation,
+            availableBalance,
+            usedAmount,
+        };
+
         const budget = await Budget.findByIdAndUpdate(budgetId, updatedBudget, { new: true });
-        res.status(200).json({ status: "budget updated", budget: budget });
+        
+        if (!budget) {
+            return res.status(404).json({ status: "Budget not found" });
+        }
+        
+        res.status(200).json({ status: "Budget updated", budget: budget });
     } catch (err) {
         console.error(err);
         res.status(500).json({ status: "Error with updating budget", error: err.message });
     }
 };
 
-
-//delete user
-exports.deleterBudget = async (req,res)=>{
+// Delete budget
+exports.deleterBudget = async (req, res) => {
     let budgetId = req.params.id;
+    
     try {
-        // Use await here to wait for the deletion to complete
-        await budget.findByIdAndDelete(budgetId);
-        res.status(200).send({ status: "budget deleted" });
-      } catch (err) {
-        // Use status 500 for server errors
-        res.status(500).send({ status: "Error with delete budget", error: err.message });
-      }
+        const deletedBudget = await Budget.findByIdAndDelete(budgetId);
+        
+        if (!deletedBudget) {
+            return res.status(404).json({ status: "Budget not found" });
+        }
+        
+        res.status(200).json({ status: "Budget deleted successfully" });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ status: "Error with delete budget", error: err.message });
+    }
 };

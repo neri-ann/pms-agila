@@ -33,16 +33,8 @@ exports.generateRequestId = async (req, res) => {
     console.log("Generated unique requestId:", newRequestId);
     console.log("Based on max existing number:", maxNumber);
 
-    // Creating an instance of the model
-    const newRequestInstance = new procReqest({
-      requestId: newRequestId,
-    });
-
-    // Saving the instance to the database
-    const savedRequest = await newRequestInstance.save();
-
-    // Respond with the generated ID and the saved document
-    res.json({ requestId: savedRequest.requestId, savedRequest });
+    // Just return the generated ID without creating database entry
+    res.json({ requestId: newRequestId });
   } catch (error) {
     console.error("Error in generateRequestId:", error);
     res.status(500).json({ error: error.message });
@@ -62,60 +54,45 @@ exports.createRequest = async (req, res) => {
     balanceAvailable,
     purpose,
     sendTo,
-    //items,
-    //files
+    items,
+    files
   } = req.body;
 
+  console.log("Backend received data:", req.body);
+  console.log("Items received:", items);
+  console.log("Items type:", typeof items);
+
   try {
-    // Find the existing document with the provided requestId
-    const existingRequest = await procReqest.findOne({ requestId });
+    // Convert items object to array format expected by MongoDB
+    const itemsArray = items && typeof items === 'object' ? Object.values(items) : [];
+    const filesArray = files && typeof files === 'object' ? Object.values(files) : [];
+    
+    console.log("Converted items array:", itemsArray);
+    console.log("Items array length:", itemsArray.length);
+    
+    // Create a new request (no need to check for existing since generateRequestId doesn't create DB entry)
+    const newprocReqest = new procReqest({
+      requestId,
+      faculty,
+      department,
+      date,
+      contactNo,
+      contactPerson,
+      budgetAllocation,
+      usedAmount,
+      balanceAvailable,
+      purpose,
+      sendTo,
+      items: itemsArray,
+      files: filesArray
+    });
 
-    if (existingRequest) {
-      // Update the existing document with additional fields
-      existingRequest.faculty = faculty;
-      existingRequest.department = department;
-      existingRequest.date = date;
-      existingRequest.contactNo = contactNo;
-      existingRequest.contactPerson = contactPerson;
-      existingRequest.budgetAllocation = budgetAllocation;
-      existingRequest.usedAmount = usedAmount;
-      existingRequest.balanceAvailable = balanceAvailable;
-      existingRequest.purpose = purpose;
-      existingRequest.sendTo = sendTo;
-      // existingRequest.items = items;
-      // existingRequest.files = files;
-      // existingRequest.items = items;
-      // existingRequest.files = files;
+    // Save the new document to the database
+    const createdRequest = await newprocReqest.save();
+    console.log("Request created successfully:", createdRequest);
 
-      // Save the updated document to the database
-      const updatedRequest = await existingRequest.save();
-      console.log(updatedRequest);
-      // Send the updated document as a response
-      res.json(updatedRequest);
-    } else {
-      // If no document is found, create a new one
-      const newprocReqest = new procReqest({
-        requestId,
-        faculty,
-        department,
-        date,
-        contactNo,
-        contactPerson,
-        budgetAllocation,
-        usedAmount,
-        balanceAvailable,
-        purpose,
-        sendTo,
-        // items,
-        // files
-      });
-
-      // Save the new document to the database
-      const createdRequest = await newprocReqest.save();
-
-      // Send the created document as a response
-      res.json(createdRequest);
-    }
+    // Send the created document as a response
+    res.json(createdRequest);
   } catch (error) {
     console.error("Error in createRequest:", error);
     // Handle errors and send an appropriate response
