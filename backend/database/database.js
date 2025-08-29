@@ -27,7 +27,7 @@ async function seedInitialUsers() {
       password: process.env.PROC_PASSWORD || 'proc123',
       role: process.env.PROC_ROLE || 'procurement Officer',
       department: process.env.PROC_DEPARTMENT || 'DCE',
-      employeeNumber: process.env.PROC_EMP_NO || 'A003',
+      employeeNumber: process.env.PROC_EMP_NO || 'A002',
     };
 
     // Helper to ensure an individual user exists (not batch)
