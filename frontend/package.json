@@ -41,6 +41,7 @@
     "react-script": "^2.0.5",
     "react-scripts": "^5.0.1",
     "react-scroll": "^1.9.0",
+    "react-select": "^5.10.2",
     "react-toastify": "^10.0.5",
     "stream-browserify": "^3.0.0",
     "stream-http": "^3.2.0",
@@ -89,8 +90,6 @@
   "resolutions": {
     "@floating-ui/react-dom": "2.1.0",
     "@floating-ui/react": "^0.26.16"
-  }
+  },
+  "proxy": "http://localhost:8000"
 }
-
-
-

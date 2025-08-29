@@ -26,13 +26,16 @@ try {
 
 // get the all the supplyers
 exports.viewSupplyers = async (req,res) =>{
-    Supplyer.find().then((Supplyers)=>{
-     res.json(Supplyers)
-    }).catch((err)=>{
-     console.log(err);
-    })
- 
- };
+        // Only return non-deleted (active) suppliers
+        Supplyer.find({ $or: [ { isDeleted: false }, { isDeleted: { $exists: false } } ] })
+            .then((Supplyers) => {
+                res.json(Supplyers);
+            })
+            .catch((err) => {
+                console.log(err);
+                res.status(500).json({ error: 'Failed to fetch suppliers' });
+            });
+};
 
 
 // view details of perticular user
@@ -88,13 +91,19 @@ exports.updateSupplyer = async (req,res)=>{
 
 //delete user
 exports.deleterSupplyer = async (req,res)=>{
-    let supplyerId = req.params.id;
-    try {
-        // Use await here to wait for the deletion to complete
-        await supplyer.findByIdAndDelete(supplyerId);
-        res.status(200).send({ status: "User deleted" });
-      } catch (err) {
-        // Use status 500 for server errors
-        res.status(500).send({ status: "Error with delete user", error: err.message });
-      }
+        let supplyerId = req.params.id;
+        try {
+                // Soft delete: set isDeleted to true and stamp isDeletedAt
+                const deleted = await supplyer.findByIdAndUpdate(
+                    supplyerId,
+                    { isDeleted: true, isDeletedAt: new Date() },
+                    { new: true }
+                );
+        if (!deleted) {
+          return res.status(404).send({ status: "Supplier not found" });
+        }
+        res.status(200).send({ status: "Supplier soft deleted" });
+    } catch (err) {
+        res.status(500).send({ status: "Error with soft delete supplier", error: err.message });
+    }
 };

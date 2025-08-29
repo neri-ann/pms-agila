@@ -22,7 +22,7 @@ const budgetSchema = new Schema({
 
   }, 
   
-});
+}, { timestamps: true });
 
 
 

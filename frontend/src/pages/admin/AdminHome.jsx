@@ -1,4 +1,5 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useMemo } from "react";
+// No react-select, using custom dropdown for months
 import { Link, useParams } from "react-router-dom";
 import { FiUsers, FiFileText, FiDollarSign, FiTrendingUp, FiTrendingDown, FiShoppingBag, FiCalendar, FiFilter } from 'react-icons/fi';
 
@@ -8,75 +9,189 @@ import UserTypeNavbar from "../../components/UserTypeNavbar.jsx";
 function AdminHome() {
   const { id } = useParams();
 
-  // State for date filters
-  const [selectedYear, setSelectedYear] = useState('2024');
-  const [selectedMonth, setSelectedMonth] = useState('all');
+  // Date filter state
+  const today = new Date();
+  const defaultStart = useMemo(() => new Date(today.getFullYear(), 0, 1), [today]);
+  const defaultEnd = useMemo(() => today, [today]);
   const [dateRange, setDateRange] = useState({
-    startDate: '',
-    endDate: ''
+    startDate: defaultStart.toISOString().slice(0, 10),
+    endDate: defaultEnd.toISOString().slice(0, 10)
   });
+  const [selectedYear, setSelectedYear] = useState('all');
+  // Multi-select months (custom dropdown)
+  const [selectedMonths, setSelectedMonths] = useState(['all']);
+  const [showMonthDropdown, setShowMonthDropdown] = useState(false);
+  const [pendingMonths, setPendingMonths] = useState(['all']);
 
-  // Sample data for visual charts
-  const budgetData = [
-    { month: 'Jan', budget: 45000, spent: 38000 },
-    { month: 'Feb', budget: 52000, spent: 47000 },
-    { month: 'Mar', budget: 48000, spent: 41000 },
-    { month: 'Apr', budget: 55000, spent: 52000 },
-    { month: 'May', budget: 62000, spent: 58000 },
-    { month: 'Jun', budget: 58000, spent: 51000 },
+  // State for dashboard data
+  const [dashboardData, setDashboardData] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  // Dynamically generate available years and months based on dateRange
+  const getYearRange = (start, end) => {
+    const years = [];
+    const startYear = start.getFullYear();
+    const endYear = end.getFullYear();
+    for (let y = startYear; y <= endYear; y++) years.push(y);
+    return years;
+  };
+  const availableYears = useMemo(() => {
+    const s = new Date(dateRange.startDate);
+    const e = new Date(dateRange.endDate);
+    return ['all', ...getYearRange(s, e)];
+  }, [dateRange]);
+  const monthNames = [
+    'January', 'February', 'March', 'April', 'May', 'June',
+    'July', 'August', 'September', 'October', 'November', 'December'
   ];
+  const formatAmount = (val) => {
+    const n = Number(val) || 0;
+    const abs = Math.abs(n);
+    if (abs < 1000) return `$${n.toLocaleString()}`;
+    if (abs < 1_000_000) {
+      // Use one decimal for small K to avoid rounding to 0K/1K too aggressively
+      const dec = abs < 10_000 ? 1 : 0;
+      return `$${(n / 1000).toFixed(dec)}K`;
+    }
+    return `$${(n / 1_000_000).toFixed(1)}M`;
+  };
+  // Only show months in selected date range
+  const availableMonths = useMemo(() => {
+    const start = new Date(dateRange.startDate);
+    const end = new Date(dateRange.endDate);
+    let months = [];
+    let temp = new Date(start.getFullYear(), start.getMonth(), 1);
+    while (temp <= end) {
+      months.push({
+        value: String(temp.getMonth() + 1).padStart(2, '0'),
+        label: monthNames[temp.getMonth()]
+      });
+      temp.setMonth(temp.getMonth() + 1);
+    }
+    return months.filter((v, i, arr) => arr.findIndex(m => m.value === v.value) === i);
+  }, [dateRange]);
 
-  const vendorData = [
-    { name: 'Active', value: 34, color: '#3B82F6', percentage: 63 },
-    { name: 'Pending', value: 12, color: '#F59E0B', percentage: 22 },
-    { name: 'Inactive', value: 8, color: '#EF4444', percentage: 15 },
-  ];
-
-  const requestData = [18, 22, 15, 28, 32, 25];
-  const maxRequests = Math.max(...requestData);
-
-  // Available years and months for filters
-  const availableYears = ['2024', '2023', '2022', '2021'];
-  const availableMonths = [
-    { value: 'all', label: 'All Months' },
-    { value: '01', label: 'January' },
-    { value: '02', label: 'February' },
-    { value: '03', label: 'March' },
-    { value: '04', label: 'April' },
-    { value: '05', label: 'May' },
-    { value: '06', label: 'June' },
-    { value: '07', label: 'July' },
-    { value: '08', label: 'August' },
-    { value: '09', label: 'September' },
-    { value: '10', label: 'October' },
-    { value: '11', label: 'November' },
-    { value: '12', label: 'December' }
-  ];
+  // Fetch dashboard data from backend with filters
+  useEffect(() => {
+    setLoading(true);
+    setError(null);
+    const params = new URLSearchParams();
+    if (dateRange.startDate) params.append('startDate', dateRange.startDate);
+    if (dateRange.endDate) params.append('endDate', dateRange.endDate);
+    // Only send year if not 'all' and is a valid number
+    if (selectedYear && selectedYear !== 'all' && !isNaN(Number(selectedYear))) {
+      params.append('year', String(Number(selectedYear)));
+    }
+    // Normalize months to raw string values, avoid objects and NaN
+    const rawMonths = Array.isArray(selectedMonths) ? selectedMonths : [];
+    const monthVals = rawMonths
+      .map(m => (m && typeof m === 'object' ? m.value : m))
+      .filter(Boolean);
+    if (!(monthVals.length === 1 && monthVals[0] === 'all')) {
+      const monthNums = monthVals.map(v => String(Number(v))).filter(v => v !== 'NaN');
+      if (monthNums.length > 0) params.append('month', monthNums.join(','));
+    }
+    fetch(`/api/admin/stats?${params.toString()}`)
+      .then((res) => {
+        if (!res.ok) throw new Error("Failed to fetch dashboard data");
+        return res.json();
+      })
+      .then((data) => {
+        setDashboardData(data);
+        setLoading(false);
+      })
+      .catch((err) => {
+        setError(err.message);
+        setLoading(false);
+      });
+  }, [dateRange, selectedYear, selectedMonths]);
 
   // Handle filter changes
   const handleYearChange = (e) => {
     setSelectedYear(e.target.value);
-    // Here you would typically filter your data based on the selected year
+    // Reset months to simple string values to avoid NaN/objects in query
+    setSelectedMonths(['all']);
+    setPendingMonths(['all']);
   };
 
-  const handleMonthChange = (e) => {
-    setSelectedMonth(e.target.value);
-    // Here you would typically filter your data based on the selected month
+  // Custom month dropdown logic
+  // Use pendingMonths for UI, only setSelectedMonths on confirm
+  const handleMonthCheckbox = (value) => {
+    if (value === 'all') {
+      if (pendingMonths.includes('all')) {
+        // Uncheck 'All Months' (no selection, so fallback to all months unchecked)
+        setPendingMonths([]);
+      } else {
+        // Check 'All Months'
+        setPendingMonths(['all']);
+      }
+    } else {
+      let newSelected = pendingMonths.filter(m => m !== 'all');
+      if (newSelected.includes(value)) {
+        newSelected = newSelected.filter(m => m !== value);
+      } else {
+        newSelected.push(value);
+      }
+      // If nothing is selected, fallback to 'all'
+      if (newSelected.length === 0) {
+        setPendingMonths(['all']);
+      } else {
+        setPendingMonths(newSelected);
+      }
+    }
+  };
+
+  const handleMonthConfirm = () => {
+    setSelectedMonths(pendingMonths);
+    setShowMonthDropdown(false);
   };
 
   const handleDateRangeChange = (field, value) => {
-    setDateRange(prev => ({
-      ...prev,
-      [field]: value
-    }));
-    // Here you would typically filter your data based on the date range
+    let newRange = { ...dateRange, [field]: value };
+    // Enforce start < end
+    if (field === 'startDate' && value > dateRange.endDate) {
+      newRange.endDate = value;
+    }
+    if (field === 'endDate' && value < dateRange.startDate) {
+      newRange.startDate = value;
+    }
+    setDateRange(newRange);
+    setSelectedYear('all');
+    setSelectedMonths(['all']);
   };
 
   const resetFilters = () => {
-    setSelectedYear('2024');
-    setSelectedMonth('all');
-    setDateRange({ startDate: '', endDate: '' });
+    setDateRange({
+      startDate: defaultStart.toISOString().slice(0, 10),
+      endDate: defaultEnd.toISOString().slice(0, 10)
+    });
+    setSelectedYear('all');
+    setSelectedMonths(['all']);
   };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <span className="text-lg text-gray-600">Loading dashboard...</span>
+      </div>
+    );
+  }
+  if (error) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <span className="text-lg text-red-600">{error}</span>
+      </div>
+    );
+  }
+
+  // Destructure dashboard data
+  const { totalUsers, totalUsersChange, newUsersThisMonth, newUsersLastWeek, activeVendors, activeVendorsChange, newVendorsThisMonth, newVendorsLastWeek, budgetRequests, budgetRequestsChange, requestsSinceLastWeek, budgetData, vendorStatus, monthlyRequests, vendorTotal } = dashboardData || {};
+  const vendorData = vendorStatus || [];
+  const requestData = monthlyRequests || [];
+  const maxRequests = requestData.length > 0 ? Math.max(...requestData) : 1;
+  // For Monthly Requests Chart
+  const monthsShort = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
   return (
     <div id="Home">
@@ -101,15 +216,20 @@ function AdminHome() {
                 <div className="bg-blue-500 p-3 rounded-full">
                   <FiUsers className="text-white text-2xl" />
                 </div>
-                <div className="flex items-center space-x-1 text-green-600">
-                  <FiTrendingUp className="text-lg" />
-                  <span className="text-sm font-semibold">+12%</span>
+                <div className="flex items-center space-x-1">
+                  {totalUsersChange > 0 ? (
+                    <span className="text-sm font-semibold text-green-600 flex items-center"><FiTrendingUp className="mr-1" />+{totalUsersChange}%</span>
+                  ) : totalUsersChange < 0 ? (
+                    <span className="text-sm font-semibold text-red-600 flex items-center"><FiTrendingDown className="mr-1" />{totalUsersChange}%</span>
+                  ) : (
+                    <span className="text-sm font-semibold text-gray-500 flex items-center">0%</span>
+                  )}
                 </div>
               </div>
               <h2 className="text-lg font-semibold text-gray-700 mb-1">Total Users</h2>
-              <span className="text-3xl font-bold text-gray-900 mb-3 block">128</span>
+              <span className="text-3xl font-bold text-gray-900 mb-3 block">{totalUsers}</span>
               <div className="text-sm text-gray-600 mb-4">
-                +15 new users this month
+                +{newUsersLastWeek} new users this week
               </div>
               <Link 
                 to="/userList" 
@@ -125,15 +245,20 @@ function AdminHome() {
                 <div className="bg-green-500 p-3 rounded-full">
                   <FiShoppingBag className="text-white text-2xl" />
                 </div>
-                <div className="flex items-center space-x-1 text-green-600">
-                  <FiTrendingUp className="text-lg" />
-                  <span className="text-sm font-semibold">+8%</span>
+                <div className="flex items-center space-x-1">
+                  {activeVendorsChange > 0 ? (
+                    <span className="text-sm font-semibold text-green-600 flex items-center"><FiTrendingUp className="mr-1" />+{activeVendorsChange}%</span>
+                  ) : activeVendorsChange < 0 ? (
+                    <span className="text-sm font-semibold text-red-600 flex items-center"><FiTrendingDown className="mr-1" />{activeVendorsChange}%</span>
+                  ) : (
+                    <span className="text-sm font-semibold text-gray-500 flex items-center">0%</span>
+                  )}
                 </div>
               </div>
               <h2 className="text-lg font-semibold text-gray-700 mb-1">Active Vendors</h2>
-              <span className="text-3xl font-bold text-gray-900 mb-3 block">34</span>
+              <span className="text-3xl font-bold text-gray-900 mb-3 block">{activeVendors}</span>
               <div className="text-sm text-gray-600 mb-4">
-                +3 new vendors approved
+                +{newVendorsLastWeek} new vendors approved
               </div>
               <Link 
                 to="/allvendors" 
@@ -149,15 +274,20 @@ function AdminHome() {
                 <div className="bg-orange-500 p-3 rounded-full">
                   <FiDollarSign className="text-white text-2xl" />
                 </div>
-                <div className="flex items-center space-x-1 text-red-600">
-                  <FiTrendingDown className="text-lg" />
-                  <span className="text-sm font-semibold">-5%</span>
+                <div className="flex items-center space-x-1">
+                  {budgetRequestsChange > 0 ? (
+                    <span className="text-sm font-semibold text-green-600 flex items-center"><FiTrendingUp className="mr-1" />+{budgetRequestsChange}%</span>
+                  ) : budgetRequestsChange < 0 ? (
+                    <span className="text-sm font-semibold text-red-600 flex items-center"><FiTrendingDown className="mr-1" />{budgetRequestsChange}%</span>
+                  ) : (
+                    <span className="text-sm font-semibold text-gray-500 flex items-center">0%</span>
+                  )}
                 </div>
               </div>
               <h2 className="text-lg font-semibold text-gray-700 mb-1">Budget Requests</h2>
-              <span className="text-3xl font-bold text-gray-900 mb-3 block">12</span>
+              <span className="text-3xl font-bold text-gray-900 mb-3 block">{budgetRequests}</span>
               <div className="text-sm text-gray-600 mb-4">
-                -2 requests since last week
+                {requestsSinceLastWeek} requests since last week
               </div>
               <Link 
                 to="/ManageBudget" 
@@ -189,7 +319,8 @@ function AdminHome() {
                   onChange={handleYearChange}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
                 >
-                  {availableYears.map(year => (
+                  <option value="all">All Years</option>
+                  {availableYears.filter(y => y !== 'all').map(year => (
                     <option key={year} value={year}>{year}</option>
                   ))}
                 </select>
@@ -197,18 +328,54 @@ function AdminHome() {
 
               {/* Month Filter */}
               <div className="space-y-2">
-                <label className="block text-sm font-medium text-gray-700">
-                  Month
-                </label>
-                <select
-                  value={selectedMonth}
-                  onChange={handleMonthChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
-                >
-                  {availableMonths.map(month => (
-                    <option key={month.value} value={month.value}>{month.label}</option>
-                  ))}
-                </select>
+                <label className="block text-sm font-medium text-gray-700">Month</label>
+                <div className="relative">
+                  <button
+                    type="button"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-white text-left focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                    onClick={() => {
+                      setPendingMonths(selectedMonths);
+                      setShowMonthDropdown(v => !v);
+                    }}
+                  >
+                    {selectedMonths.length === 1 && selectedMonths[0] === 'all'
+                      ? 'All Months'
+                      : availableMonths.filter(m => selectedMonths.includes(m.value)).map(m => m.label).join(', ') || 'Select Month(s)'}
+                  </button>
+                  {showMonthDropdown && (
+                    <div className="absolute z-10 mt-1 w-full bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-y-auto">
+                      <div className="px-3 py-2 hover:bg-gray-100 cursor-pointer flex items-center">
+                        <input
+                          type="checkbox"
+                          id="all-months"
+                          checked={pendingMonths.includes('all')}
+                          onChange={() => handleMonthCheckbox('all')}
+                        />
+                        <label htmlFor="all-months" className="ml-2">All Months</label>
+                      </div>
+                      {availableMonths.map(m => (
+                        <div key={m.value} className="px-3 py-2 hover:bg-gray-100 cursor-pointer flex items-center">
+                          <input
+                            type="checkbox"
+                            id={`month-${m.value}`}
+                            checked={pendingMonths.includes(m.value)}
+                            onChange={() => handleMonthCheckbox(m.value)}
+                          />
+                          <label htmlFor={`month-${m.value}`} className="ml-2">{m.label}</label>
+                        </div>
+                      ))}
+                      <div className="px-3 py-2 flex justify-end border-t">
+                        <button
+                          type="button"
+                          className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-1 rounded"
+                          onClick={handleMonthConfirm}
+                        >
+                          Confirm
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
               </div>
 
               {/* Start Date */}
@@ -219,6 +386,7 @@ function AdminHome() {
                 <input
                   type="date"
                   value={dateRange.startDate}
+                  max={dateRange.endDate}
                   onChange={(e) => handleDateRangeChange('startDate', e.target.value)}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
                 />
@@ -232,6 +400,7 @@ function AdminHome() {
                 <input
                   type="date"
                   value={dateRange.endDate}
+                  min={dateRange.startDate}
                   onChange={(e) => handleDateRangeChange('endDate', e.target.value)}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
                 />
@@ -249,7 +418,7 @@ function AdminHome() {
               <div className="flex items-center space-x-2 text-sm text-gray-600">
                 <span>Showing data for:</span>
                 <span className="font-medium text-blue-600">
-                  {selectedYear} {selectedMonth !== 'all' ? `- ${availableMonths.find(m => m.value === selectedMonth)?.label}` : ''}
+                  {selectedYear} {selectedMonths.length === 1 && selectedMonths[0] === 'all' ? '' : `- ${availableMonths.filter(m => selectedMonths.includes(m.value)).map(m => m.label).join(', ')}`}
                   {dateRange.startDate && dateRange.endDate ? ` (${dateRange.startDate} to ${dateRange.endDate})` : ''}
                 </span>
               </div>
@@ -259,47 +428,58 @@ function AdminHome() {
           {/* Visual Charts Section */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 py-8">
             {/* Budget vs Spending Chart */}
-            <div className="bg-white rounded-2xl shadow-lg p-6">
+            <div className="bg-white rounded-2xl shadow-lg p-6 max-h-96 overflow-y-auto">
               <h3 className="text-xl font-bold text-NeutralDGrey mb-6">Budget vs Spending</h3>
               <div className="space-y-4">
                 {budgetData.map((item, index) => {
-                  const budgetPercent = (item.budget / 62000) * 100;
-                  const spentPercent = (item.spent / 62000) * 100;
+                  const allocation = item.allocation || 0;
+                  const used = item.used || 0;
+                  const available = item.available || 0;
+                  const total = Math.max(1, allocation + used + available);
+                  const allocationPercent = (allocation / total) * 100;
+                  const usedPercent = (used / total) * 100;
+                  const availablePercent = (available / total) * 100;
                   return (
                     <div key={index} className="space-y-2">
                       <div className="flex justify-between text-sm text-gray-600">
                         <span>{item.month}</span>
-                        <span>Budget: ${(item.budget / 1000).toFixed(0)}K | Spent: ${(item.spent / 1000).toFixed(0)}K</span>
+                        <span>
+                          Allocation: {formatAmount(allocation)} | Used: {formatAmount(used)} | Available: {formatAmount(available)}
+                        </span>
                       </div>
-                      <div className="flex space-x-2">
-                        <div className="flex-1 bg-gray-200 rounded-full h-4">
-                          <div 
-                            className="bg-blue-500 h-4 rounded-full flex items-center justify-center text-xs text-white"
-                            style={{ width: `${budgetPercent}%` }}
-                          ></div>
-                        </div>
-                        <div className="flex-1 bg-gray-200 rounded-full h-4">
-                          <div 
-                            className="bg-green-500 h-4 rounded-full"
-                            style={{ width: `${spentPercent}%` }}
-                          ></div>
-                        </div>
+                      <div className="w-full bg-gray-200 rounded-full h-4 overflow-hidden flex">
+                        <div
+                          className="bg-indigo-500 h-4"
+                          style={{ width: `${allocationPercent}%` }}
+                          title={`Allocation: ${allocation.toLocaleString()}`}
+                        />
+                        <div
+                          className="bg-emerald-500 h-4"
+                          style={{ width: `${usedPercent}%` }}
+                          title={`Used: ${used.toLocaleString()}`}
+                        />
+                        <div
+                          className="bg-sky-500 h-4"
+                          style={{ width: `${availablePercent}%` }}
+                          title={`Available: ${available.toLocaleString()}`}
+                        />
                       </div>
                     </div>
                   );
                 })}
-                <div className="flex justify-center space-x-6 mt-4 text-sm">
-                  <span className="flex items-center"><span className="w-4 h-4 bg-blue-500 rounded mr-2"></span>Budget</span>
-                  <span className="flex items-center"><span className="w-4 h-4 bg-green-500 rounded mr-2"></span>Spent</span>
+                <div className="flex justify-center flex-wrap gap-6 mt-4 text-sm">
+                  <span className="flex items-center"><span className="w-4 h-4 bg-indigo-500 rounded mr-2"></span>Allocation</span>
+                  <span className="flex items-center"><span className="w-4 h-4 bg-emerald-500 rounded mr-2"></span>Used</span>
+                  <span className="flex items-center"><span className="w-4 h-4 bg-sky-500 rounded mr-2"></span>Available</span>
                 </div>
               </div>
             </div>
 
             {/* Vendor Status Chart */}
-            <div className="bg-white rounded-2xl shadow-lg p-6">
+            <div className="bg-white rounded-2xl shadow-lg p-6 max-h-96 overflow-y-auto">
               <h3 className="text-xl font-bold text-NeutralDGrey mb-6">Vendor Status Distribution</h3>
               <div className="flex flex-col items-center">
-                {/* Pie Chart */}
+                {/* Pie Chart (Active/Inactive only) */}
                 <div className="relative w-48 h-48 mb-6">
                   <svg className="w-full h-full transform -rotate-90" viewBox="0 0 42 42">
                     <circle
@@ -310,7 +490,7 @@ function AdminHome() {
                       stroke="#E5E7EB"
                       strokeWidth="3"
                     />
-                    {/* Active - 63% */}
+                    {/* Active */}
                     <circle
                       cx="21"
                       cy="21"
@@ -318,21 +498,10 @@ function AdminHome() {
                       fill="transparent"
                       stroke="#3B82F6"
                       strokeWidth="3"
-                      strokeDasharray="63 37"
+                      strokeDasharray={`${vendorData[0]?.percentage || 0} ${100 - (vendorData[0]?.percentage || 0)}`}
                       strokeDashoffset="0"
                     />
-                    {/* Pending - 22% */}
-                    <circle
-                      cx="21"
-                      cy="21"
-                      r="15.915"
-                      fill="transparent"
-                      stroke="#F59E0B"
-                      strokeWidth="3"
-                      strokeDasharray="22 78"
-                      strokeDashoffset="-63"
-                    />
-                    {/* Inactive - 15% */}
+                    {/* Inactive */}
                     <circle
                       cx="21"
                       cy="21"
@@ -340,13 +509,13 @@ function AdminHome() {
                       fill="transparent"
                       stroke="#EF4444"
                       strokeWidth="3"
-                      strokeDasharray="15 85"
-                      strokeDashoffset="-85"
+                      strokeDasharray={`${vendorData[1]?.percentage || 0} ${100 - (vendorData[1]?.percentage || 0)}`}
+                      strokeDashoffset={`-${vendorData[0]?.percentage || 0}`}
                     />
                   </svg>
                   {/* Center Label */}
                   <div className="absolute inset-0 flex flex-col items-center justify-center">
-                    <span className="text-2xl font-bold text-NeutralDGrey">54</span>
+                    <span className="text-2xl font-bold text-NeutralDGrey">{vendorTotal}</span>
                     <span className="text-sm text-gray-600">Total</span>
                   </div>
                 </div>
@@ -378,7 +547,6 @@ function AdminHome() {
               <div className="flex items-end justify-between h-40 space-x-2">
                 {requestData.map((requests, index) => {
                   const height = (requests / maxRequests) * 100;
-                  const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'];
                   return (
                     <div key={index} className="flex-1 flex flex-col items-center">
                       <div className="w-full bg-gray-200 rounded-t relative" style={{ height: '120px' }}>
@@ -389,7 +557,7 @@ function AdminHome() {
                           <span className="text-white text-xs font-semibold mb-1">{requests}</span>
                         </div>
                       </div>
-                      <span className="text-xs text-gray-600 mt-2">{months[index]}</span>
+                      <span className="text-xs text-gray-600 mt-2">{monthsShort[index]}</span>
                     </div>
                   );
                 })}

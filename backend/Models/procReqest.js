@@ -62,7 +62,7 @@ const procRequestSchema = new Schema({
   items: [itemSchema],  // Array of items within ProcurementRequest schema
   files: [fileSchema],  // Array of files within ProcurementRequest schema
   specifications: [specificationSchema]
-});
+}, { timestamps: true });
 
 
 const procReqest = mongoose.model('procRequest', procRequestSchema);

@@ -61,12 +61,12 @@ export default function VendorDetails() {
 
   // Fetch users data from your API endpoint
   useEffect(() => {
-    console.log("Suppliers:", vendors);
     setLoading(true);
     axios
-      .get("http://localhost:8000/supplyer/view-supplyers") // Update the API endpoint
+      .get("http://localhost:8000/supplyer/view-supplyers")
       .then((response) => {
-        setVendors(response.data);
+        // Only show non-deleted vendors (should already be filtered by backend, but double check)
+        setVendors(response.data.filter(v => v.isDeleted === false || v.isDeleted === undefined));
         setLoading(false);
       })
       .catch((error) => {

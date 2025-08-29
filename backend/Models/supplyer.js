@@ -50,9 +50,17 @@ const supplyerSchema = new Schema({
   },
   classOfAssets :{
     type: String,
-
   },
-});
+  isDeleted: {
+    type: Boolean,
+    default: false,
+  },
+  // Timestamp for soft deletion
+  isDeletedAt: {
+    type: Date,
+    default: null,
+  },
+}, { timestamps: true });
 
 
 

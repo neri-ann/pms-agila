@@ -17,6 +17,6 @@ const ItemSchema = new mongoose.Schema({
   AssetsSubClass: {
     type: String,
   },
-});
+}, { timestamps: true });
 
 module.exports = mongoose.model('Item', ItemSchema);

@@ -48,7 +48,8 @@ export default function PO_VendorsList() {
     axios
       .get("http://localhost:8000/supplyer/view-supplyers")
       .then((response) => {
-        setVendors(response.data);
+        // Only show non-deleted vendors (should already be filtered by backend, but double check)
+        setVendors(response.data.filter(v => v.isDeleted === false || v.isDeleted === undefined));
         setLoading(false);
       })
       .catch((error) => {

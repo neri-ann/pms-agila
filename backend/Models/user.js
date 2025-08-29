@@ -38,7 +38,7 @@ const userSchema = new Schema({
     default: 'admin',
     enum: ['admin', 'department','procurement Officer','TECofficer','approver','Finance officers']
   }
-});
+}, { timestamps: true });
 
 userSchema.plugin(passportLocalMongoose);
 userSchema.pre('save', async function(next){

@@ -20,6 +20,7 @@ const procProjectRouter = require('./routes/procProject');
 const pdfRoutes = require('./routes/pdfprocrequest');
 const approvalRoute =require('./routes/approvalReqest');
 const sendMailRoute =require('./routes/sendMail');
+const adminStatsRoutes = require('./routes/adminStats');
 const PORT = process.env.PORT || 8000;
 const env = require('dotenv')
 const pdfRoute = require('./routes/pdfRoutes');
@@ -51,6 +52,7 @@ app.use(cors());
 
 //this is user route
 app.use('/user', userRouter);
+app.use('/api/admin', adminStatsRoutes);
 app.use(errorHandler);
 // this is supplyer route
 app.use('/supplyer',supplyerRouter);
