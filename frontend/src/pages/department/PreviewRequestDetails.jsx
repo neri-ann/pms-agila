@@ -109,15 +109,15 @@ export default function PreviewRequestDetails({ open, setOpen, request }) {
                                   <div className="flex-shrink-0">
                                     {file.mimeType?.includes('image') ? (
                                       <svg className="h-8 w-8 text-blue-600" fill="currentColor" viewBox="0 0 24 24">
-                                        <path d="M21 19V5c0-1.1-.9-2-2-2H5c0-1.1-.9-2-2-2v16c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z"/>
+                                        <path d="M21 19V5c0-1.1-.9-2-2-2H5c0-1.1-.9-2-2-2v16c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z" />
                                       </svg>
                                     ) : file.mimeType?.includes('pdf') ? (
                                       <svg className="h-8 w-8 text-red-600" fill="currentColor" viewBox="0 0 24 24">
-                                        <path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z"/>
+                                        <path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z" />
                                       </svg>
                                     ) : (
                                       <svg className="h-8 w-8 text-gray-600" fill="currentColor" viewBox="0 0 24 24">
-                                        <path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z"/>
+                                        <path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z" />
                                       </svg>
                                     )}
                                   </div>
@@ -132,9 +132,9 @@ export default function PreviewRequestDetails({ open, setOpen, request }) {
                                 </div>
                                 <div className="flex items-center space-x-2">
                                   {file.filepath && (
-                                    <a 
-                                      href={file.filepath} 
-                                      target="_blank" 
+                                    <a
+                                      href={file.filepath}
+                                      target="_blank"
                                       rel="noopener noreferrer"
                                       className="inline-flex items-center px-3 py-1 border border-transparent text-sm font-medium rounded-md text-blue-700 bg-blue-100 hover:bg-blue-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
                                     >
@@ -162,15 +162,15 @@ export default function PreviewRequestDetails({ open, setOpen, request }) {
                                   <div className="flex-shrink-0">
                                     {spec.mimeType?.includes('image') ? (
                                       <svg className="h-8 w-8 text-blue-600" fill="currentColor" viewBox="0 0 24 24">
-                                        <path d="M21 19V5c0-1.1-.9-2-2-2H5c0-1.1-.9-2-2-2v16c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z"/>
+                                        <path d="M21 19V5c0-1.1-.9-2-2-2H5c0-1.1-.9-2-2-2v16c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z" />
                                       </svg>
                                     ) : spec.mimeType?.includes('pdf') ? (
                                       <svg className="h-8 w-8 text-blue-600" fill="currentColor" viewBox="0 0 24 24">
-                                        <path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z"/>
+                                        <path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z" />
                                       </svg>
                                     ) : (
                                       <svg className="h-8 w-8 text-blue-600" fill="currentColor" viewBox="0 0 24 24">
-                                        <path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z"/>
+                                        <path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z" />
                                       </svg>
                                     )}
                                   </div>
@@ -185,9 +185,9 @@ export default function PreviewRequestDetails({ open, setOpen, request }) {
                                 </div>
                                 <div className="flex items-center space-x-2">
                                   {spec.filepath && (
-                                    <a 
-                                      href={spec.filepath} 
-                                      target="_blank" 
+                                    <a
+                                      href={spec.filepath}
+                                      target="_blank"
                                       rel="noopener noreferrer"
                                       className="inline-flex items-center px-3 py-1 border border-transparent text-sm font-medium rounded-md text-blue-700 bg-blue-100 hover:bg-blue-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
                                     >
@@ -205,7 +205,12 @@ export default function PreviewRequestDetails({ open, setOpen, request }) {
                       )}
                     </div>
                   ) : (
-                    <p className="text-gray-500">No attachments</p>
+                    <div className="text-center py-8 text-gray-500">
+                      <svg className="mx-auto h-12 w-12 text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                      </svg>
+                      <p>No attachments found</p>
+                    </div>
                   )}
                 </div>
 
