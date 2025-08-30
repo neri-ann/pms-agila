@@ -4,13 +4,16 @@ const Schema = mongoose.Schema;
 const fileSchema = new Schema({
     filename: {type: String,},
     file: {type: String,},
-    filepath:{type: String,},
-    
-  });
+    filepath:{type: String,}, // Now stores Google Drive view link
+    googleDriveId: {type: String,}, // Google Drive file ID
+    mimeType: {type: String,}, // File MIME type
+});
   const specificationSchema = new Schema({
     filename: {type: String,},
     file: {type: String,},
-    filepath:{type: String,},
+    filepath:{type: String,}, // Now stores Google Drive view link
+    googleDriveId: {type: String,}, // Google Drive file ID
+    mimeType: {type: String,}, // File MIME type
 });
   const itemSchema = new Schema({
     itemId: {

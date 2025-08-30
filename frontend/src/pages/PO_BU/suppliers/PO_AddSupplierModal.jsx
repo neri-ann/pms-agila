@@ -1,9 +1,9 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import axios from "axios";
 import { XMarkIcon } from "@heroicons/react/24/outline";
 import { toast } from "react-toastify";
 
-export default function UpdateSupplierModal({ isOpen, onClose, onSupplierUpdated, supplierId }) {
+export default function PO_AddSupplierModal({ isOpen, onClose, onSupplierAdded }) {
   const [username, setUsername] = useState("");
   const [supplierName, setSupplierName] = useState("");
   const [addressStreet, setAddressStreet] = useState("");
@@ -16,60 +16,13 @@ export default function UpdateSupplierModal({ isOpen, onClose, onSupplierUpdated
   const [classOfAssets, setClassOfAssets] = useState("");
   const [loading, setLoading] = useState(false);
   const [validationErrors, setValidationErrors] = useState({});
+  
   const types = [
     { value: "SoleImporter", label: "Sole Importer" },
     { value: "SoleDistributor", label: "Sole Distributor" },
     { value: "LocalAgent", label: "Local Agent" },
     { value: "Contractors", label: "Contractors" },
   ];
-
-  useEffect(() => {
-    if (!isOpen || !supplierId) return;
-    setLoading(true);
-    axios
-      .get(`http://localhost:8000/supplyer/preview-supplyer/${supplierId}`)
-      .then((response) => {
-        const data = response.data;
-        setUsername(data.username || "");
-        setSupplierName(data.supplierName || "");
-
-        // Address: split if needed
-        if (data.address) {
-          const [street = "", city = "", province = ""] = data.address.split(",").map(s => s.trim());
-          setAddressStreet(street);
-          setAddressCity(city);
-          setAddressProvince(province);
-        } else {
-          setAddressStreet("");
-          setAddressCity("");
-          setAddressProvince("");
-        }
-
-        // Contact Number: use first if array
-        if (Array.isArray(data.contactNumber)) {
-          setContactNumbers1(data.contactNumber[0] || "");
-        } else {
-          setContactNumbers1(data.contactNumber || "");
-        }
-
-        // Email: use first if array
-        if (Array.isArray(data.email)) {
-          setEmails1(data.email[0] || "");
-        } else {
-          setEmails1(data.email || "");
-        }
-
-        setContactOfficer(data.contactOfficer || "");
-        setTypesOFBusiness(data.typeofBusiness || "");
-        setClassOfAssets(data.classOfAssets || "");
-        setLoading(false);
-      })
-      .catch((error) => {
-        setLoading(false);
-        toast.error("An error occurred. Please check the console.");
-        console.error(error);
-      });
-  }, [isOpen, supplierId]);
 
   const validateFields = () => {
     let errors = {};
@@ -115,19 +68,35 @@ export default function UpdateSupplierModal({ isOpen, onClose, onSupplierUpdated
     return isValid;
   };
 
-  const handleUpdateVendors = (e) => {
+  const resetForm = () => {
+    setUsername("");
+    setSupplierName("");
+    setAddressStreet("");
+    setAddressCity("");
+    setAddressProvince("");
+    setContactOfficer("");
+    setContactNumbers1("");
+    setEmails1("");
+    setTypesOFBusiness("");
+    setClassOfAssets("");
+    setValidationErrors({});
+  };
+
+  const handleAddSupplier = (e) => {
     e.preventDefault();
     if (!validateFields()) return;
 
-    const UpdateSupplyer = {
+    // Generate supplier ID
+    const supplierId = `SUP${Date.now()}`;
+
+    const newSupplier = {
       username,
       supplierName,
-      addressStreet,
-      addressCity,
-      addressProvince,
+      supplierId,
+      address: `${addressStreet}, ${addressCity}, ${addressProvince}`.replace(/^,\s*|,\s*$/g, '').replace(/,\s*,/g, ','),
       contactOfficer,
-      contactNumbers1,
-      emails1,
+      contactNumber: [contactNumbers1],
+      email: [emails1],
       typeofBusiness,
       classOfAssets,
     };
@@ -135,16 +104,17 @@ export default function UpdateSupplierModal({ isOpen, onClose, onSupplierUpdated
     setLoading(true);
 
     axios
-      .put(`http://localhost:8000/supplyer/update/${supplierId}`, UpdateSupplyer)
+      .post("http://localhost:8000/supplyer/create", newSupplier)
       .then(() => {
-        // toast.success("Supplier is updated successfully");
+        toast.success("Supplier was successfully added!");
         setLoading(false);
-        onSupplierUpdated?.();
+        resetForm();
+        onSupplierAdded?.();
         onClose();
       })
       .catch((error) => {
         setLoading(false);
-        toast.error(`Error updating supplier account: ${error.message}`);
+        toast.error(`Error adding supplier: ${error.response?.data?.message || error.message}`);
         console.error(error);
       });
   };
@@ -155,7 +125,7 @@ export default function UpdateSupplierModal({ isOpen, onClose, onSupplierUpdated
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-gray-500 bg-opacity-75">
       <div className="relative bg-white rounded-lg shadow-xl w-full max-w-5xl max-h-[90vh] flex flex-col overflow-hidden">
         <div className="bg-white px-6 py-4 border-b border-gray-200 flex items-center justify-between">
-          <h3 className="text-lg font-medium text-gray-900">Edit Supplier Details</h3>
+          <h3 className="text-lg font-medium text-gray-900">Add New Supplier</h3>
           <button
             onClick={onClose}
             className="text-gray-400 hover:text-gray-600 transition-colors"
@@ -164,7 +134,7 @@ export default function UpdateSupplierModal({ isOpen, onClose, onSupplierUpdated
           </button>
         </div>
         <form
-          onSubmit={handleUpdateVendors}
+          onSubmit={handleAddSupplier}
           className="flex flex-col flex-1 min-h-0"
         >
           <div className="flex-1 overflow-y-auto px-6 py-6">
@@ -274,7 +244,7 @@ export default function UpdateSupplierModal({ isOpen, onClose, onSupplierUpdated
                       type="text"
                       value={contactOfficer}
                       onChange={(e) => setContactOfficer(e.target.value)}
-                      placeholder="Enter contact offficer"
+                      placeholder="Enter contact officer"
                       className={`w-full px-3 py-2 border rounded-md shadow-sm ${validationErrors.contactOfficer
                         ? "border-red-500 bg-red-50"
                         : "border-gray-300"
@@ -403,7 +373,7 @@ export default function UpdateSupplierModal({ isOpen, onClose, onSupplierUpdated
               disabled={loading}
               className="px-6 py-2.5 text-sm font-medium text-white bg-[#961C1E] border border-transparent rounded-lg hover:bg-[#7A1517] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#961C1E] disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
             >
-              {loading ? "Saving..." : "Save"}
+              {loading ? "Adding..." : "Add Supplier"}
             </button>
           </div>
         </form>

@@ -15,9 +15,18 @@ const guidancedocSchema = new Schema({
   file: {
     type: String,
     required: [true,"please provide a file"]
+  },
+  googleDriveId: {
+    type: String, // Google Drive file ID
+  },
+  webViewLink: {
+    type: String, // Google Drive view link
+  },
+  uploadDate: {
+    type: Date,
+    default: Date.now
   }
-  
-});
+}, { timestamps: true });
 
 
 

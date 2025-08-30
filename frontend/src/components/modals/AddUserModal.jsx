@@ -23,7 +23,7 @@ export default function AddUserModal({ isOpen, onClose, onUserAdded }) {
     "approver",
     "TECofficer",
   ];
-  const departments = ["DEIE", "DCEE", "DMME ", "DCE", "DMNNE", "DIS", "NONE"];
+  const departments = ["DEIE", "DCEE", "DMME", "DCE", "DMNNE", "DIS", "NONE"];
 
   // Reset form when modal opens/closes
   React.useEffect(() => {

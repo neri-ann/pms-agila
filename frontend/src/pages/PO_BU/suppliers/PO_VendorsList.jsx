@@ -10,8 +10,8 @@ import { PencilIcon, UserPlusIcon } from "@heroicons/react/24/solid";
 import Breadcrumb from "../../../components/Breadcrumb.jsx";
 import UserTypeNavbar from "../../../components/UserTypeNavbar.jsx";
 import DefaultPagination from "../../../components/DefaultPagination.js";
-import PO_AddSupplierModal from "./PO_AddSupplier.jsx";
-import PO_UpdateSupplierModal from "./PO_UpdateSupplier.jsx";
+import PO_AddSupplierModal from "./PO_AddSupplierModal.jsx";
+import PO_UpdateSupplierModal from "./PO_UpdateSupplierModal.jsx";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
@@ -61,7 +61,6 @@ export default function PO_VendorsList() {
   // After adding
   const handleSupplierAdded = () => {
     fetchVendors();
-    toast.success("Supplier was successfully added!");
     setIsAddSupplierOpen(false);
   };
 

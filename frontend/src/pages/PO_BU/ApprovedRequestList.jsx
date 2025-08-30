@@ -2,15 +2,19 @@ import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { Link } from "react-router-dom";
 import { MdPreview } from "react-icons/md";
+import { EyeIcon } from "@heroicons/react/24/outline";
 import UserTypeNavbar from "../../components/UserTypeNavbar";
 import Breadcrumb from "../../components/Breadcrumb";
 import DefaultPagination from "../../components/DefaultPagination";
+import PreviewRequestDetails from "../department/PreviewRequestDetails";
 
 export default function ApprovedRequestList() {
   const [loading, setLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [requests, setRequests] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
+  const [selectedRequest, setSelectedRequest] = useState(null);
+  const [isPreviewOpen, setIsPreviewOpen] = useState(false);
   const itemsPerPage = 5;
 
   useEffect(() => {
@@ -46,6 +50,11 @@ export default function ApprovedRequestList() {
 
   const handlePageChange = (pageNumber) => {
     setCurrentPage(pageNumber);
+  };
+
+  const handlePreviewRequest = (request) => {
+    setSelectedRequest(request);
+    setIsPreviewOpen(true);
   };
 
   return (
@@ -157,11 +166,22 @@ export default function ApprovedRequestList() {
                     </span>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                    <Link to={`/ViewApprovedForm/${request.requestId}`}>
-                      <button className="p-2 text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded-md transition-colors">
-                        <MdPreview className="text-2xl" />
+                    <div className="flex items-center space-x-2">
+                      {/* Preview Details Modal */}
+                      <button 
+                        onClick={() => handlePreviewRequest(request)}
+                        className="p-2 text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded-md transition-colors"
+                        title="View Details"
+                      >
+                        <EyeIcon className="h-5 w-5" />
                       </button>
-                    </Link>
+                      {/* PDF View */}
+                      <Link to={`/ViewApprovedForm/${request.requestId}`}>
+                        <button className="p-2 text-green-600 hover:text-green-800 hover:bg-green-50 rounded-md transition-colors" title="View PDF">
+                          <MdPreview className="text-xl" />
+                        </button>
+                      </Link>
+                    </div>
                   </td>
                 </tr>
               ))}
@@ -187,6 +207,13 @@ export default function ApprovedRequestList() {
           </div>
         </div>
       </div>
+
+      {/* Preview Modal */}
+      <PreviewRequestDetails 
+        open={isPreviewOpen}
+        setOpen={setIsPreviewOpen}
+        request={selectedRequest}
+      />
     </div>
   );
 }

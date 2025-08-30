@@ -118,48 +118,71 @@ const ReqForm = ({ forms }) => {
     localStorage.setItem("formData", JSON.stringify(formData));
   };
 
-  const handleFileUpload = async (requestId, files) => {
-    files = document.getElementById("formFileMultiple").files;
-    const formData = new FormData();
-    Array.from(files).forEach((file) => {
-      formData.append("file", file);
-    });
+  const handleFileUpload = async (requestId) => {
+    const fileInput = document.getElementById("formFileMultiple");
+    if (!fileInput || fileInput.files.length === 0) {
+      console.log("No files selected");
+      return;
+    }
+
+    const files = fileInput.files;
+    console.log(`Uploading ${files.length} files for request ${requestId}`);
+
     try {
-      const response = await axios.post(
-        `http://localhost:8000/procReqest/uploadFile/${requestId}`,
-        formData,
-        {
-          headers: {
-            "Content-Type": "multipart/form-data",
-          },
-        }
-      );
-      console.log("File uploaded successfully:", response.data);
+      // Upload each file individually since backend expects single file uploads
+      for (let i = 0; i < files.length; i++) {
+        const formData = new FormData();
+        formData.append("file", files[i]);
+        
+        const response = await axios.post(
+          `http://localhost:8000/procReqest/uploadFile/${requestId}`,
+          formData,
+          {
+            headers: {
+              "Content-Type": "multipart/form-data",
+            },
+          }
+        );
+        console.log(`File ${i + 1} uploaded successfully:`, response.data);
+      }
+      console.log("All files uploaded successfully");
     } catch (error) {
-      console.error("Error uploading file:", error);
+      console.error("Error uploading files:", error);
+      throw error; // Re-throw to handle in calling function
     }
   };
 
-  const handleSpecificationUpload = async (requestId, specifications) => {
-    specifications = document.getElementById("formFileMultiple1").files;
-    const formData = new FormData();
-    Array.from(specifications).forEach((specification) => {
-      formData.append("specification", specification);
-    });
+  const handleSpecificationUpload = async (requestId) => {
+    const specInput = document.getElementById("formFileMultiple1");
+    if (!specInput || specInput.files.length === 0) {
+      console.log("No specification files selected");
+      return;
+    }
+
+    const specifications = specInput.files;
+    console.log(`Uploading ${specifications.length} specification files for request ${requestId}`);
 
     try {
-      const response = await axios.post(
-        `http://localhost:8000/procReqest/uploadSpecification/${requestId}`,
-        formData,
-        {
-          headers: {
-            "Content-Type": "multipart/form-data",
-          },
-        }
-      );
-      console.log("Specification uploaded successfully:", response.data);
+      // Upload each specification file individually
+      for (let i = 0; i < specifications.length; i++) {
+        const formData = new FormData();
+        formData.append("specification", specifications[i]);
+
+        const response = await axios.post(
+          `http://localhost:8000/procReqest/uploadSpecification/${requestId}`,
+          formData,
+          {
+            headers: {
+              "Content-Type": "multipart/form-data",
+            },
+          }
+        );
+        console.log(`Specification file ${i + 1} uploaded successfully:`, response.data);
+      }
+      console.log("All specification files uploaded successfully");
     } catch (error) {
-      console.error("Error uploading specification:", error);
+      console.error("Error uploading specification files:", error);
+      throw error; // Re-throw to handle in calling function
     }
   };
 
@@ -202,8 +225,25 @@ const ReqForm = ({ forms }) => {
         data
       );
       console.log("Request created successfully:", response.data);
+
+      // Upload files after request creation if files are selected
+      const fileInput = document.getElementById("formFileMultiple");
+      if (fileInput && fileInput.files.length > 0) {
+        console.log("Uploading files...");
+        await handleFileUpload(requestId);
+        toast.success("Request created and files uploaded successfully!");
+      } else {
+        toast.success("Request created successfully!");
+      }
+
+      // Upload specifications after request creation if specifications are selected
+      const specificationInput = document.getElementById("formFileMultiple1");
+      if (specificationInput && specificationInput.files.length > 0) {
+        console.log("Uploading specifications...");
+        await handleSpecificationUpload(requestId);
+      }
+
       setRequestCreated(true);
-      toast.success("Request created successfully!");
     } catch (error) {
       console.error("Error creating request:", error);
       toast.error("Error creating request");
@@ -547,20 +587,22 @@ const ReqForm = ({ forms }) => {
                   <div>
                     <h3 className="text-lg font-medium text-gray-900 mb-4">Attachments</h3>
                     <div className="space-y-4">
-                      {purpose === "Urgent" && (
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-2">
-                            Justification Document (Required for Urgent)
-                          </label>
-                          <input
-                            type="file"
-                            id="formFileMultiple"
-                            onClick={handleFileUpload}
-                            multiple
-                            className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-medium file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
-                          />
-                        </div>
-                      )}
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          Attach Files
+                          {purpose === "Urgent" && (
+                            <span className="text-red-600 ml-1">
+                              (Justification Document Required for Urgent)
+                            </span>
+                          )}
+                        </label>
+                        <input
+                          type="file"
+                          id="formFileMultiple"
+                          multiple
+                          className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-medium file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+                        />
+                      </div>
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-2">
                           Attach Specifications
@@ -568,7 +610,6 @@ const ReqForm = ({ forms }) => {
                         <input
                           type="file"
                           id="formFileMultiple1"
-                          onClick={handleSpecificationUpload}
                           multiple
                           className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-medium file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
                         />

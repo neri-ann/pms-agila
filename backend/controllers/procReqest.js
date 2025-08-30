@@ -2,7 +2,8 @@ const procReqest = require("../Models/procReqest");
 const User = require("../Models/user");
 const path = require("path");
 const Budget = require('../Models/budget');
-// const fs = require('fs').promises;
+const fs = require('fs');
+const googleDriveService = require('../services/googleDriveService');
 
 const { PDFDocument, rgb } = require("pdf-lib");
 // const fs = require('fs').promises;
@@ -105,8 +106,19 @@ exports.viewAllRequests = async (req, res) => {
     // Fetch all requests from the database
     const allRequests = await procReqest.find();
 
-    // Send the list of requests as a response
-    res.json(allRequests);
+    // Enhanced response with files and specifications summary for each request
+    const enhancedRequests = allRequests.map(request => ({
+      ...request.toObject(),
+      filesSummary: {
+        totalFiles: (request.files || []).length,
+        totalSpecifications: (request.specifications || []).length,
+        files: request.files || [],
+        specifications: request.specifications || []
+      }
+    }));
+
+    // Send the enhanced list of requests as a response
+    res.json(enhancedRequests);
   } catch (error) {
     console.error("Error fetching all requests:", error);
     // Handle errors and send an appropriate response
@@ -127,8 +139,19 @@ exports.viewRequestsByDepartment = async (req, res) => {
     const requests = await procReqest.find({ department: user.department });
     // console.log(requests);
     
-    // Send the filtered list of requests as a response
-    res.json(requests);
+    // Enhanced response with files and specifications summary for each request
+    const enhancedRequests = requests.map(request => ({
+      ...request.toObject(),
+      filesSummary: {
+        totalFiles: (request.files || []).length,
+        totalSpecifications: (request.specifications || []).length,
+        files: request.files || [],
+        specifications: request.specifications || []
+      }
+    }));
+    
+    // Send the enhanced filtered list of requests as a response
+    res.json(enhancedRequests);
   } catch (error) {
     console.error("Error fetching requests by department:", error);
     // Handle errors and send an appropriate response
@@ -147,10 +170,70 @@ exports.viewRequestById = async (req, res) => {
       return res.status(404).json({ error: "Request not found" });
     }
 
-    // Send the request as a response
-    res.json(request);
+    // Enhanced response with both files and specifications clearly separated
+    const response = {
+      ...request.toObject(),
+      filesSummary: {
+        totalFiles: (request.files || []).length,
+        totalSpecifications: (request.specifications || []).length,
+        files: request.files || [],
+        specifications: request.specifications || []
+      }
+    };
+
+    // Send the enhanced request as a response
+    res.json(response);
   } catch (error) {
     console.error("Error fetching request by ID:", error);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+};
+
+// View files and specifications for a specific request (for modal display)
+exports.viewRequestFilesAndSpecs = async (req, res) => {
+  try {
+    const { requestId } = req.params;
+
+    // Find the request by ID, but only select files and specifications
+    const request = await procReqest.findOne({ requestId }).select('requestId files specifications');
+
+    if (!request) {
+      return res.status(404).json({ error: "Request not found" });
+    }
+
+    // Prepare detailed response for modal display
+    const response = {
+      requestId: request.requestId,
+      files: {
+        count: (request.files || []).length,
+        items: (request.files || []).map((file, index) => ({
+          id: file._id,
+          index: index + 1,
+          filename: file.filename,
+          googleDriveId: file.googleDriveId,
+          filepath: file.filepath,
+          mimeType: file.mimeType,
+          type: 'file'
+        }))
+      },
+      specifications: {
+        count: (request.specifications || []).length,
+        items: (request.specifications || []).map((spec, index) => ({
+          id: spec._id,
+          index: index + 1,
+          filename: spec.filename,
+          googleDriveId: spec.googleDriveId,
+          filepath: spec.filepath,
+          mimeType: spec.mimeType,
+          type: 'specification'
+        }))
+      },
+      totalAttachments: (request.files || []).length + (request.specifications || []).length
+    };
+
+    res.json(response);
+  } catch (error) {
+    console.error("Error fetching request files and specifications:", error);
     res.status(500).json({ error: "Internal Server Error" });
   }
 };
@@ -232,28 +315,167 @@ exports.deleteProcItem = async (req, res) => {
 
 exports.uploadFile = async (req, res) => {
   try {
+    // Check if file was uploaded
+    if (!req.file) {
+      return res.status(400).json({ error: "No file uploaded" });
+    }
+
+    console.log(`📁 Processing file upload: ${req.file.originalname} for request ${req.params.requestId}`);
+
+    // Determine MIME type based on file extension
+    const fileExtension = path.extname(req.file.originalname).toLowerCase();
+    let mimeType = 'application/octet-stream';
+    
+    switch (fileExtension) {
+      case '.pdf':
+        mimeType = 'application/pdf';
+        break;
+      case '.doc':
+        mimeType = 'application/msword';
+        break;
+      case '.docx':
+        mimeType = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
+        break;
+      case '.jpg':
+      case '.jpeg':
+        mimeType = 'image/jpeg';
+        break;
+      case '.png':
+        mimeType = 'image/png';
+        break;
+      case '.txt':
+        mimeType = 'text/plain';
+        break;
+      case '.xls':
+        mimeType = 'application/vnd.ms-excel';
+        break;
+      case '.xlsx':
+        mimeType = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
+        break;
+    }
+
+    // Upload file to Google Drive using the service
+    const driveResponse = await googleDriveService.uploadFile(
+      req.file.path,
+      req.file.originalname,
+      mimeType
+    );
+
     const fileData = {
-      filepath: req.file.path, // Store the full path to the file
+      filepath: driveResponse.webViewLink, // Store Google Drive view link
       filename: req.file.originalname,
-      // Add other file-related information as needed
+      googleDriveId: driveResponse.id, // Store Google Drive file ID
+      mimeType: mimeType,
+      size: driveResponse.size,
+      uploadDate: new Date()
     };
 
+    // Update the procurement request with the file data
     const updatedRequest = await procReqest.findOneAndUpdate(
       { requestId: req.params.requestId },
       { $push: { files: fileData } },
       { new: true }
     );
 
-    res.json(updatedRequest);
+    if (!updatedRequest) {
+      // If request not found, try to delete the uploaded file from Google Drive
+      try {
+        await googleDriveService.deleteFile(driveResponse.id);
+      } catch (deleteError) {
+        console.error('Failed to cleanup uploaded file from Google Drive:', deleteError);
+      }
+      return res.status(404).json({ error: "Request not found" });
+    }
+
+    // Clean up local file after successful upload to Google Drive
+    if (fs.existsSync(req.file.path)) {
+      fs.unlinkSync(req.file.path);
+    }
+
+    console.log(`✅ File uploaded successfully to Google Drive and database updated for request ${req.params.requestId}`);
+
+    res.json({
+      message: "File uploaded successfully",
+      file: fileData,
+      request: updatedRequest
+    });
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    console.error("❌ Error uploading file:", error);
+    
+    // Clean up local file if there was an error
+    if (req.file && fs.existsSync(req.file.path)) {
+      fs.unlinkSync(req.file.path);
+    }
+    
+    // Provide more specific error messages
+    if (error.message.includes('Refresh token invalid')) {
+      return res.status(401).json({ 
+        error: "Google Drive authentication failed. Please contact administrator to reauthorize.", 
+        details: error.message 
+      });
+    }
+    
+    res.status(500).json({ 
+      error: "Failed to upload file", 
+      details: process.env.NODE_ENV === 'development' ? error.message : 'Internal server error'
+    });
   }
 };
 exports.uploadSpecification = async (req, res) => {
   try {
+    // Check if file was uploaded
+    if (!req.file) {
+      return res.status(400).json({ error: "No specification file uploaded" });
+    }
+
+    console.log(`📋 Processing specification upload: ${req.file.originalname} for request ${req.params.requestId}`);
+
+    // Determine MIME type based on file extension
+    const fileExtension = path.extname(req.file.originalname).toLowerCase();
+    let mimeType = 'application/octet-stream';
+    
+    switch (fileExtension) {
+      case '.pdf':
+        mimeType = 'application/pdf';
+        break;
+      case '.doc':
+        mimeType = 'application/msword';
+        break;
+      case '.docx':
+        mimeType = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
+        break;
+      case '.jpg':
+      case '.jpeg':
+        mimeType = 'image/jpeg';
+        break;
+      case '.png':
+        mimeType = 'image/png';
+        break;
+      case '.txt':
+        mimeType = 'text/plain';
+        break;
+      case '.xls':
+        mimeType = 'application/vnd.ms-excel';
+        break;
+      case '.xlsx':
+        mimeType = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
+        break;
+    }
+
+    // Upload specification file to Google Drive using the service
+    const driveResponse = await googleDriveService.uploadFile(
+      req.file.path,
+      `SPEC_${req.file.originalname}`, // Prefix with SPEC_ for easy identification
+      mimeType
+    );
+
     const specificationData = {
-      filepath: req.file.path, // Store the full path to the file
+      filepath: driveResponse.webViewLink, // Store Google Drive view link
       filename: req.file.originalname,
+      googleDriveId: driveResponse.id, // Store Google Drive file ID
+      mimeType: mimeType,
+      size: driveResponse.size,
+      uploadDate: new Date()
     };
 
     // Update the document in the database with the specifications
@@ -263,10 +485,48 @@ exports.uploadSpecification = async (req, res) => {
       { new: true }
     );
 
-    res.json(updatedRequest);
+    if (!updatedRequest) {
+      // If request not found, try to delete the uploaded file from Google Drive
+      try {
+        await googleDriveService.deleteFile(driveResponse.id);
+      } catch (deleteError) {
+        console.error('Failed to cleanup uploaded specification from Google Drive:', deleteError);
+      }
+      return res.status(404).json({ error: "Request not found" });
+    }
+
+    // Clean up local file after successful upload to Google Drive
+    if (fs.existsSync(req.file.path)) {
+      fs.unlinkSync(req.file.path);
+    }
+
+    console.log(`✅ Specification uploaded successfully to Google Drive and database updated for request ${req.params.requestId}`);
+
+    res.json({
+      message: "Specification uploaded successfully",
+      specification: specificationData,
+      request: updatedRequest
+    });
   } catch (error) {
-    console.error("Error uploading specification:", error);
-    res.status(500).json({ error: "Failed to upload specification" });
+    console.error("❌ Error uploading specification:", error);
+    
+    // Clean up local file if there was an error
+    if (req.file && fs.existsSync(req.file.path)) {
+      fs.unlinkSync(req.file.path);
+    }
+    
+    // Provide more specific error messages
+    if (error.message.includes('Refresh token invalid')) {
+      return res.status(401).json({ 
+        error: "Google Drive authentication failed. Please contact administrator to reauthorize.", 
+        details: error.message 
+      });
+    }
+    
+    res.status(500).json({ 
+      error: "Failed to upload specification", 
+      details: process.env.NODE_ENV === 'development' ? error.message : 'Internal server error'
+    });
   }
 };
 
@@ -275,30 +535,155 @@ exports.downloadFile = async (req, res) => {
     const requestId = req.params.requestId;
     const fileId = req.params.id;
 
+    console.log(`📥 Download request for file ${fileId} in request ${requestId}`);
+
     const request = await procReqest.findOne({ requestId });
 
     if (!request) {
-      return res.status(404).json({ status: "Request not found" });
+      return res.status(404).json({ error: "Request not found" });
     }
 
+    // Find the file by its MongoDB _id
     const file = request.files.find((file) => file._id.toString() === fileId);
 
     if (!file) {
       return res.status(404).json({ error: "File not found" });
     }
 
-    // Replace backslashes with forward slashes in the file path
-    const filepath = file.filepath.replace(/\\/g, "/");
+    // If it's a Google Drive file, redirect to the download link
+    if (file.googleDriveId) {
+      try {
+        // Get the file stream from Google Drive
+        const fileStream = await googleDriveService.downloadFile(file.googleDriveId);
+        
+        // Set appropriate headers
+        res.set({
+          'Content-Type': file.mimeType || 'application/octet-stream',
+          'Content-Disposition': `attachment; filename="${file.filename}"`,
+        });
 
-    // Check if the file exists
-    if (!fs.existsSync(filepath)) {
-      return res.status(404).json({ error: "File not found on the server" });
+        // Pipe the file stream to the response
+        fileStream.pipe(res);
+        
+        console.log(`✅ File download initiated: ${file.filename}`);
+      } catch (driveError) {
+        console.error(`❌ Failed to download from Google Drive:`, driveError);
+        
+        // Fallback: redirect to Google Drive view link if direct download fails
+        if (file.filepath) {
+          return res.redirect(file.filepath);
+        }
+        
+        return res.status(500).json({ 
+          error: "Failed to download file from Google Drive",
+          details: driveError.message 
+        });
+      }
+    } else {
+      // Legacy: handle local files (backward compatibility)
+      const filepath = file.filepath.replace(/\\/g, "/");
+
+      if (!fs.existsSync(filepath)) {
+        return res.status(404).json({ error: "File not found on the server" });
+      }
+
+      res.download(filepath, file.filename);
+    }
+  } catch (error) {
+    console.error("❌ Error in downloadFile:", error);
+    res.status(500).json({ error: error.message });
+  }
+};
+
+// Delete file from both database and Google Drive
+exports.deleteFile = async (req, res) => {
+  try {
+    const requestId = req.params.requestId;
+    const fileId = req.params.id;
+
+    console.log(`🗑️ Delete request for file ${fileId} in request ${requestId}`);
+
+    const request = await procReqest.findOne({ requestId });
+
+    if (!request) {
+      return res.status(404).json({ error: "Request not found" });
     }
 
-    // Send the file for download
-    res.download(filepath, file.filename);
+    // Find the file by its MongoDB _id
+    const fileIndex = request.files.findIndex((file) => file._id.toString() === fileId);
+
+    if (fileIndex === -1) {
+      return res.status(404).json({ error: "File not found" });
+    }
+
+    const file = request.files[fileIndex];
+
+    // Delete from Google Drive if it exists there
+    if (file.googleDriveId) {
+      try {
+        await googleDriveService.deleteFile(file.googleDriveId);
+        console.log(`✅ File deleted from Google Drive: ${file.filename}`);
+      } catch (driveError) {
+        console.error(`❌ Failed to delete from Google Drive:`, driveError);
+        // Continue with database deletion even if Google Drive deletion fails
+      }
+    }
+
+    // Remove from database
+    const updatedRequest = await procReqest.findOneAndUpdate(
+      { requestId },
+      { $pull: { files: { _id: fileId } } },
+      { new: true }
+    );
+
+    console.log(`✅ File deleted from database: ${file.filename}`);
+
+    res.json({
+      message: "File deleted successfully",
+      deletedFile: file,
+      request: updatedRequest
+    });
   } catch (error) {
+    console.error("❌ Error deleting file:", error);
     res.status(500).json({ error: error.message });
+  }
+};
+
+// Get Google Drive token status (for debugging)
+exports.getTokenStatus = async (req, res) => {
+  try {
+    const status = googleDriveService.getTokenStatus();
+    res.json({
+      googleDriveStatus: status,
+      timestamp: new Date(),
+      environment: {
+        hasClientId: !!process.env.GOOGLE_CLIENT_ID,
+        hasClientSecret: !!process.env.GOOGLE_CLIENT_SECRET,
+        hasRefreshToken: !!process.env.GOOGLE_REFRESH_TOKEN,
+        hasFolderId: !!process.env.GOOGLE_DRIVE_FOLDER_ID
+      }
+    });
+  } catch (error) {
+    console.error("❌ Error getting token status:", error);
+    res.status(500).json({ error: error.message });
+  }
+};
+
+// Initialize Google Drive service (for testing)
+exports.initializeGoogleDrive = async (req, res) => {
+  try {
+    await googleDriveService.initialize();
+    const status = googleDriveService.getTokenStatus();
+    res.json({
+      message: "Google Drive service initialized successfully",
+      status: status
+    });
+  } catch (error) {
+    console.error("❌ Error initializing Google Drive:", error);
+    res.status(500).json({ 
+      error: "Failed to initialize Google Drive service",
+      details: error.message 
+    });
   }
 };
 
@@ -482,7 +867,6 @@ exports.downloadPdf = async (req, res) => {
 //   }
 // };
 
-const fs = require("fs");
 const { promisify } = require("util");
 const Docxtemplater = require("docxtemplater");
 

@@ -85,8 +85,6 @@ import PO_UpdateItems from "./pages/PO_BU/items/PO_UpdateItems.jsx";
 import PO_DeleteItems from "./pages/PO_BU/items/PO_DeleteItems.jsx";
 import PO_PreviewItemDetails from "./pages/PO_BU/items/PO_PreviewItemDetails.jsx";
 import PO_VendorsList from "./pages/PO_BU/suppliers/PO_VendorsList.jsx";
-import PO_AddSupplier from "./pages/PO_BU/suppliers/PO_AddSupplier.jsx";
-import PO_UpdateSupplier from "./pages/PO_BU/suppliers/PO_UpdateSupplier.jsx";
 import PO_DeleteSupplier from "./pages/PO_BU/suppliers/PO_DeleteSupplier.jsx";
 import PO_PreviewSupplier from "./pages/PO_BU/suppliers/PO_PreviewSupplier.jsx";
 
@@ -330,8 +328,6 @@ const App = () => {
 
           {/* PO Supplier Management Routes */}
           <Route path="/PO_VendorsList" element={<PO_VendorsList />} />
-          <Route path="/PO_AddSupplier" element={<PO_AddSupplier />} />
-          <Route path="/PO_UpdateSupplier/:id" element={<PO_UpdateSupplier />} />
           <Route path="/PO_DeleteSupplier/:id" element={<PO_DeleteSupplier />} />
           <Route path="/PO_PreviewSupplier/:id" element={<PO_PreviewSupplier />} />
 

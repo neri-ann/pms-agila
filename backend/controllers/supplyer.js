@@ -62,6 +62,11 @@ exports.previewSupplyer = async (req,res) =>{
 //update user details
 exports.updateSupplyer = async (req,res)=>{
     let supplyerId = req.params.id;
+    
+    // Validate that supplyerId is provided and is a valid ObjectId format
+    if (!supplyerId || supplyerId === 'undefined' || supplyerId.length !== 24) {
+        return res.status(400).json({ status: "Invalid or missing supplier ID" });
+    }
 
     const { username,supplierName,supplierId,email, address,contactOfficer,contactNumber,faxNumber1,faxNumber2,typeofBusiness,classOfAssets} = req.body;
 
@@ -80,7 +85,10 @@ exports.updateSupplyer = async (req,res)=>{
     };
 
     try {
-        const updatedSupplyer = await supplyer.findByIdAndUpdate(supplyerId, updateSupplyer, { new: true });
+        const updatedSupplyer = await Supplyer.findByIdAndUpdate(supplyerId, updateSupplyer, { new: true });
+        if (!updatedSupplyer) {
+            return res.status(404).json({ status: "Supplier not found" });
+        }
         res.status(200).json({ status: "supplyer updated", supplyer: updatedSupplyer });
     } catch (err) {
         console.error(err);
