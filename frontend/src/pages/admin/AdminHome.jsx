@@ -285,7 +285,7 @@ function AdminHome() {
               </div>
               <Link 
                 to="/userList" 
-                className="inline-flex items-center justify-center w-full bg-blue-500 hover:bg-blue-600 text-white font-medium py-2 px-4 rounded-lg transition-colors duration-200"
+                className="inline-flex items-center justify-center w-full bg-blue-500 hover:bg-blue-600 text-white font-medium py-2 px-4 rounded-lg transition-colors duration-200 no-underline"
               >
                 Manage Users
               </Link>
@@ -314,7 +314,7 @@ function AdminHome() {
               </div>
               <Link 
                 to="/allvendors" 
-                className="inline-flex items-center justify-center w-full bg-green-500 hover:bg-green-600 text-white font-medium py-2 px-4 rounded-lg transition-colors duration-200"
+                className="inline-flex items-center justify-center w-full bg-green-500 hover:bg-green-600 text-white font-medium py-2 px-4 rounded-lg transition-colors duration-200 no-underline"
               >
                 Manage Vendors
               </Link>
@@ -343,7 +343,7 @@ function AdminHome() {
               </div>
               <Link 
                 to="/ManageBudget" 
-                className="inline-flex items-center justify-center w-full bg-orange-500 hover:bg-orange-600 text-white font-medium py-2 px-4 rounded-lg transition-colors duration-200"
+                className="inline-flex items-center justify-center w-full bg-orange-500 hover:bg-orange-600 text-white font-medium py-2 px-4 rounded-lg transition-colors duration-200 no-underline"
               >
                 View Budgets
               </Link>

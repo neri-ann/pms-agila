@@ -188,8 +188,8 @@ export default function PO_BuHome() {
                   {recentRequests} new in last 30 days
                 </div>
                 <Link 
-                  to="/ApprovedRequestList" 
-                  className="inline-flex items-center justify-center w-full bg-orange-500 hover:bg-orange-600 text-white font-medium py-2 px-4 rounded-lg transition-colors duration-200"
+                  to="/ViewForRequest" 
+                  className="inline-flex items-center justify-center w-full bg-orange-500 hover:bg-orange-600 text-white font-medium py-2 px-4 rounded-lg transition-colors duration-200 no-underline"
                 >
                   Review Requests
                 </Link>
@@ -214,8 +214,8 @@ export default function PO_BuHome() {
                   Avg processing: {Math.round(averageProcessingTime)} days
                 </div>
                 <Link 
-                  to="/ApprovedRequestList" 
-                  className="inline-flex items-center justify-center w-full bg-green-500 hover:bg-green-600 text-white font-medium py-2 px-4 rounded-lg transition-colors duration-200"
+                  to="/ViewForRequest" 
+                  className="inline-flex items-center justify-center w-full bg-green-500 hover:bg-green-600 text-white font-medium py-2 px-4 rounded-lg transition-colors duration-200 no-underline"
                 >
                   View Approved
                 </Link>
@@ -243,7 +243,7 @@ export default function PO_BuHome() {
                 </div>
                 <Link 
                   to="/PO_Items" 
-                  className="inline-flex items-center justify-center w-full bg-blue-500 hover:bg-blue-600 text-white font-medium py-2 px-4 rounded-lg transition-colors duration-200"
+                  className="inline-flex items-center justify-center w-full bg-blue-500 hover:bg-blue-600 text-white font-medium py-2 px-4 rounded-lg transition-colors duration-200 no-underline"
                 >
                   Manage Items
                 </Link>
@@ -267,7 +267,7 @@ export default function PO_BuHome() {
                 </div>
                 <Link 
                   to="/PO_VendorsList" 
-                  className="inline-flex items-center justify-center w-full bg-purple-500 hover:bg-purple-600 text-white font-medium py-2 px-4 rounded-lg transition-colors duration-200"
+                  className="inline-flex items-center justify-center w-full bg-purple-500 hover:bg-purple-600 text-white font-medium py-2 px-4 rounded-lg transition-colors duration-200 no-underline"
                 >
                   Manage Suppliers
                 </Link>

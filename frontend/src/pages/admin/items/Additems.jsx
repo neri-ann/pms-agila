@@ -258,12 +258,13 @@ export default function PO_AddItemsModal({ isOpen, onClose, onItemAdded }) {
                                     Quantity Available
                                 </label>
                                 <input
+                                    disabled
                                     type="number"
                                     value={quantityAvailable}
                                     onChange={(e) => setQuantityAvailable(e.target.value)}
                                     placeholder="Enter quantity available"
                                     min="0"
-                                    className={`w-full px-3 py-2 border rounded-md shadow-sm focus:ring-2 focus:ring-indigo-600 focus:border-indigo-600 transition-colors ${validationErrors.quantityAvailable
+                                    className={`w-full px-3 py-2 border rounded-md shadow-sm bg-gray-100 focus:ring-2 focus:ring-indigo-600 focus:border-indigo-600 transition-colors ${validationErrors.quantityAvailable
                                         ? "border-red-500 bg-red-50"
                                         : "border-gray-300"
                                         }`}
