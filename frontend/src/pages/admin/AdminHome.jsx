@@ -457,45 +457,45 @@ function AdminHome() {
               <h3 className="text-xl font-bold text-NeutralDGrey mb-6">Budget vs Spending</h3>
               <div className="space-y-4">
                 {budgetData.map((item, index) => {
-                  const allocation = item.allocation || 0;
-                  const used = item.used || 0;
-                  const available = item.available || 0;
-                  const total = Math.max(1, allocation + used + available);
-                  const allocationPercent = (allocation / total) * 100;
-                  const usedPercent = (used / total) * 100;
-                  const availablePercent = (available / total) * 100;
+                  const allocation = item.allocation || 0;  // Total allocated budget
+                  const used = item.used || 0;             // Amount spent (from approved requests)
+                  const available = item.available || 0;   // Remaining balance (allocation - used)
+                  
+                  // The total should be the allocation (not sum of all three)
+                  // used + available should equal allocation
+                  const total = Math.max(1, allocation);
+                  const usedPercent = allocation > 0 ? (used / allocation) * 100 : 0;
+                  const availablePercent = allocation > 0 ? (available / allocation) * 100 : 0;
+                  
                   return (
                     <div key={index} className="space-y-2">
                       <div className="flex justify-between text-sm text-gray-600">
                         <span>{item.month}</span>
                         <span>
-                          Allocation: {formatAmount(allocation)} | Used: {formatAmount(used)} | Available: {formatAmount(available)}
+                          Total: {formatAmount(allocation)} | Used: {formatAmount(used)} | Available: {formatAmount(available)}
                         </span>
                       </div>
                       <div className="w-full bg-gray-200 rounded-full h-4 overflow-hidden flex">
                         <div
-                          className="bg-indigo-500 h-4"
-                          style={{ width: `${allocationPercent}%` }}
-                          title={`Allocation: ${allocation.toLocaleString()}`}
-                        />
-                        <div
-                          className="bg-emerald-500 h-4"
+                          className="bg-red-500 h-4"
                           style={{ width: `${usedPercent}%` }}
-                          title={`Used: ${used.toLocaleString()}`}
+                          title={`Used: ${used.toLocaleString()} (${usedPercent.toFixed(1)}%)`}
                         />
                         <div
-                          className="bg-sky-500 h-4"
+                          className="bg-green-500 h-4"
                           style={{ width: `${availablePercent}%` }}
-                          title={`Available: ${available.toLocaleString()}`}
+                          title={`Available: ${available.toLocaleString()} (${availablePercent.toFixed(1)}%)`}
                         />
+                      </div>
+                      <div className="text-xs text-gray-500 text-center">
+                        {usedPercent.toFixed(1)}% spent | {availablePercent.toFixed(1)}% remaining
                       </div>
                     </div>
                   );
                 })}
                 <div className="flex justify-center flex-wrap gap-6 mt-4 text-sm">
-                  <span className="flex items-center"><span className="w-4 h-4 bg-indigo-500 rounded mr-2"></span>Allocation</span>
-                  <span className="flex items-center"><span className="w-4 h-4 bg-emerald-500 rounded mr-2"></span>Used</span>
-                  <span className="flex items-center"><span className="w-4 h-4 bg-sky-500 rounded mr-2"></span>Available</span>
+                  <span className="flex items-center"><span className="w-4 h-4 bg-red-500 rounded mr-2"></span>Used</span>
+                  <span className="flex items-center"><span className="w-4 h-4 bg-green-500 rounded mr-2"></span>Available</span>
                 </div>
               </div>
             </div>

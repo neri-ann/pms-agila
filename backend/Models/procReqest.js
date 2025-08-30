@@ -34,39 +34,95 @@ const fileSchema = new Schema({
 const procRequestSchema = new Schema({
   requestId: {
     type: String,
-    
     unique: true,
   },
   faculty: {type: String,},
   department: {type: String,},
-  date:{type: Date,},
+  budgetPeriod: {
+    type: String,
+    enum: ['ANNUAL', 'Q1', 'Q2', 'Q3', 'Q4'],
+    required: true
+  },
+  fiscalYear: {
+    type: Number,
+    required: true,
+    default: () => new Date().getFullYear()
+  },
+  budgetId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Budget',
+    required: true
+  },
+  date: {type: Date,},
   contactPerson: {type: String,},
   contactNo: {type: Number,},
-   budgetAllocation: {type: Number,},
-  usedAmount:{type: Number,},
-  balanceAvailable:{type: Number,},
-  purpose:{
+  usedAmount: {type: Number, default: 0},
+  purpose: {
     type: String,
     default: 'normal',
-    enum: [ '','normal', 'Fast Track','Urgent','Normal']
+    enum: ['', 'normal', 'Fast Track', 'Urgent', 'Normal']
   },
-  sendTo:{
+  sendTo: {
     type: String,
     default: 'dean',
-    enum: ['','dean', 'registrar','viceChancellor']
+    enum: ['', 'dean', 'registrar', 'viceChancellor']
   },
-  
   status: {
     type: String,
-    enum: ["Pending", "Approved", "Rejected","Bid Opening", "Invite Bids", "TEC Evaluation"],
+    enum: ["Pending", "Approved", "Rejected", "Bid Opening", "Invite Bids", "TEC Evaluation"],
     default: "Pending",
   },
- 
   items: [itemSchema],  // Array of items within ProcurementRequest schema
   files: [fileSchema],  // Array of files within ProcurementRequest schema
   specifications: [specificationSchema]
 }, { timestamps: true });
 
+// Pre-save middleware to calculate usedAmount from items
+procRequestSchema.pre('save', function(next) {
+  // Calculate total cost from items (quantity * cost for each item)
+  if (this.items && this.items.length > 0) {
+    this.usedAmount = this.items.reduce((total, item) => {
+      const itemCost = parseFloat(item.cost) || 0;
+      const itemQty = parseInt(item.qtyRequired) || 0;
+      return total + (itemCost * itemQty);
+    }, 0);
+  } else {
+    this.usedAmount = 0;
+  }
+  next();
+});
+
+// Post-save middleware to update Budget usedAmount when ProcRequest status changes
+procRequestSchema.post('save', async function(doc) {
+  if (doc.status === 'Approved' && doc.budgetId) {
+    try {
+      const Budget = require('./budget');
+      const budget = await Budget.findById(doc.budgetId);
+      if (budget) {
+        await budget.updateUsedAmount();
+        console.log(`Budget ${budget._id} updated after request ${doc.requestId} approval`);
+      }
+    } catch (error) {
+      console.error('Error updating budget usedAmount:', error);
+    }
+  }
+});
+
+// Post-findOneAndUpdate middleware to handle updates via findByIdAndUpdate (approval workflow)
+procRequestSchema.post('findOneAndUpdate', async function(doc) {
+  if (doc && doc.status === 'Approved' && doc.budgetId) {
+    try {
+      const Budget = require('./budget');
+      const budget = await Budget.findById(doc.budgetId);
+      if (budget) {
+        await budget.updateUsedAmount();
+        console.log(`Budget ${budget._id} updated after request ${doc.requestId} approval via findOneAndUpdate`);
+      }
+    } catch (error) {
+      console.error('Error updating budget usedAmount via findOneAndUpdate:', error);
+    }
+  }
+});
 
 const procReqest = mongoose.model('procRequest', procRequestSchema);
 

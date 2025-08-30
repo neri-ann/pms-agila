@@ -110,28 +110,38 @@ export default function ViewApprovalDetails({ open, setOpen, request }) {
                         {/* Requested Items */}
                         <div className="mb-4 border-b pb-8">
                            <h3 className="text-xl font-semibold mb-4">Requested Items</h3>
-                           <div className="overflow-x-auto">
-                              <table className="w-full border border-gray-200 rounded-md">
-                                 <thead className="bg-gray-100">
-                                    <tr>
-                                       <th className="px-4 py-2 text-left text-sm">Item Name</th>
-                                       <th className="px-4 py-2 text-left text-sm">Cost (Approx.)</th>
-                                       <th className="px-4 py-2 text-left text-sm">Qty Required</th>
-                                       <th className="px-4 py-2 text-left text-sm">Qty Available</th>
-                                    </tr>
-                                 </thead>
-                                 <tbody>
-                                    {request.items?.map((item, i) => (
-                                       <tr key={i} className="border-t hover:bg-gray-50">
-                                          <td className="px-4 py-2">{item.name}</td>
-                                          <td className="px-4 py-2">{item.cost}</td>
-                                          <td className="px-4 py-2">{item.qtyRequired}</td>
-                                          <td className="px-4 py-2">{item.qtyAvailable}</td>
+                           {request.items && request.items.length > 0 ? (
+                              <div className="overflow-x-auto">
+                                 <table className="w-full border border-gray-200 rounded-md">
+                                    <thead className="bg-gray-100">
+                                       <tr>
+                                          <th className="px-4 py-2 text-left text-sm font-medium text-gray-700">Item Name</th>
+                                          <th className="px-4 py-2 text-left text-sm font-medium text-gray-700">Cost (Approx.)</th>
+                                          <th className="px-4 py-2 text-left text-sm font-medium text-gray-700">Qty Required</th>
+                                          <th className="px-4 py-2 text-left text-sm font-medium text-gray-700">Qty Available</th>
                                        </tr>
-                                    ))}
-                                 </tbody>
-                              </table>
-                           </div>
+                                    </thead>
+                                    <tbody>
+                                       {request.items.map((item, i) => (
+                                          <tr key={i} className="border-t hover:bg-gray-50">
+                                             <td className="px-4 py-2 font-medium text-gray-900">{item.name || item.itemName || 'N/A'}</td>
+                                             <td className="px-4 py-2 text-gray-700">{item.cost || item.price || 'N/A'}</td>
+                                             <td className="px-4 py-2 text-gray-700">{item.qtyRequired || item.quantity || 'N/A'}</td>
+                                             <td className="px-4 py-2 text-gray-700">{item.qtyAvailable || item.available || 'N/A'}</td>
+                                          </tr>
+                                       ))}
+                                    </tbody>
+                                 </table>
+                              </div>
+                           ) : (
+                              <div className="text-center py-8 text-gray-500 bg-gray-50 rounded-md border">
+                                 <svg className="mx-auto h-12 w-12 text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                                 </svg>
+                                 <p>No items found in this request</p>
+                                 <p className="text-xs text-gray-400 mt-1">Items data might be stored in a different format</p>
+                              </div>
+                           )}
                         </div>
 
                         {/* Purpose */}
@@ -142,15 +152,150 @@ export default function ViewApprovalDetails({ open, setOpen, request }) {
 
                         {/* Attachments */}
                         <div className="mb-4 border-b pb-2">
-                           <h3 className="text-xl font-semibold mb-4">Attachments</h3>
-                           {request.attachments && request.attachments.length > 0 ? (
-                              <ul className="list-disc list-inside">
-                                 {request.attachments.map((file, i) => (
-                                    <li key={i} className="text-blue-600">{file}</li>
-                                 ))}
-                              </ul>
+                           <h3 className="text-xl font-semibold mb-2">Attachments</h3>
+                           {((request.files && request.files.length > 0) || (request.specifications && request.specifications.length > 0) || (request.attachments && request.attachments.length > 0)) ? (
+                              <div className="space-y-4">
+                                 {/* Regular Files Section */}
+                                 {request.files && request.files.length > 0 && (
+                                    <div>
+                                       <h4 className="text-lg font-medium mb-2 text-gray-700">Files ({request.files.length})</h4>
+                                       <div className="space-y-2">
+                                          {request.files.map((file, i) => (
+                                             <div key={`file-${i}`} className="flex items-center justify-between p-3 bg-gray-50 rounded-md border">
+                                                <div className="flex items-center space-x-3">
+                                                   <div className="flex-shrink-0">
+                                                      {file.mimeType?.includes('image') ? (
+                                                         <svg className="h-8 w-8 text-blue-600" fill="currentColor" viewBox="0 0 24 24">
+                                                            <path d="M21 19V5c0-1.1-.9-2-2-2H5c0-1.1-.9-2-2-2v16c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z"/>
+                                                         </svg>
+                                                      ) : file.mimeType?.includes('pdf') ? (
+                                                         <svg className="h-8 w-8 text-red-600" fill="currentColor" viewBox="0 0 24 24">
+                                                            <path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z"/>
+                                                         </svg>
+                                                      ) : (
+                                                         <svg className="h-8 w-8 text-gray-600" fill="currentColor" viewBox="0 0 24 24">
+                                                            <path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z"/>
+                                                         </svg>
+                                                      )}
+                                                   </div>
+                                                   <div className="min-w-0 flex-1">
+                                                      <p className="text-sm font-medium text-gray-900 truncate">
+                                                         {file.filename}
+                                                      </p>
+                                                      <p className="text-sm text-gray-500">
+                                                         {file.mimeType || 'Unknown type'} • File
+                                                      </p>
+                                                   </div>
+                                                </div>
+                                                <div className="flex items-center space-x-2">
+                                                   {file.filepath && (
+                                                      <a 
+                                                         href={file.filepath} 
+                                                         target="_blank" 
+                                                         rel="noopener noreferrer"
+                                                         className="inline-flex items-center px-3 py-1 border border-transparent text-sm font-medium rounded-md text-blue-700 bg-blue-100 hover:bg-blue-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                                                      >
+                                                         <svg className="h-4 w-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                                                         </svg>
+                                                         View
+                                                      </a>
+                                                   )}
+                                                </div>
+                                             </div>
+                                          ))}
+                                       </div>
+                                    </div>
+                                 )}
+
+                                 {/* Specifications Section */}
+                                 {request.specifications && request.specifications.length > 0 && (
+                                    <div>
+                                       <h4 className="text-lg font-medium mb-2 text-gray-700">Specifications ({request.specifications.length})</h4>
+                                       <div className="space-y-2">
+                                          {request.specifications.map((spec, i) => (
+                                             <div key={`spec-${i}`} className="flex items-center justify-between p-3 bg-blue-50 rounded-md border border-blue-200">
+                                                <div className="flex items-center space-x-3">
+                                                   <div className="flex-shrink-0">
+                                                      {spec.mimeType?.includes('image') ? (
+                                                         <svg className="h-8 w-8 text-blue-600" fill="currentColor" viewBox="0 0 24 24">
+                                                            <path d="M21 19V5c0-1.1-.9-2-2-2H5c0-1.1-.9-2-2-2v16c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z"/>
+                                                         </svg>
+                                                      ) : spec.mimeType?.includes('pdf') ? (
+                                                         <svg className="h-8 w-8 text-blue-600" fill="currentColor" viewBox="0 0 24 24">
+                                                            <path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z"/>
+                                                         </svg>
+                                                      ) : (
+                                                         <svg className="h-8 w-8 text-blue-600" fill="currentColor" viewBox="0 0 24 24">
+                                                            <path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z"/>
+                                                         </svg>
+                                                      )}
+                                                   </div>
+                                                   <div className="min-w-0 flex-1">
+                                                      <p className="text-sm font-medium text-gray-900 truncate">
+                                                         {spec.filename}
+                                                      </p>
+                                                      <p className="text-sm text-blue-600">
+                                                         {spec.mimeType || 'Unknown type'} • Specification
+                                                      </p>
+                                                   </div>
+                                                </div>
+                                                <div className="flex items-center space-x-2">
+                                                   {spec.filepath && (
+                                                      <a 
+                                                         href={spec.filepath} 
+                                                         target="_blank" 
+                                                         rel="noopener noreferrer"
+                                                         className="inline-flex items-center px-3 py-1 border border-transparent text-sm font-medium rounded-md text-blue-700 bg-blue-100 hover:bg-blue-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                                                      >
+                                                         <svg className="h-4 w-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                                                         </svg>
+                                                         View
+                                                      </a>
+                                                   )}
+                                                </div>
+                                             </div>
+                                          ))}
+                                       </div>
+                                    </div>
+                                 )}
+
+                                 {/* Legacy Attachments (fallback for old format) */}
+                                 {request.attachments && request.attachments.length > 0 && (
+                                    <div>
+                                       <h4 className="text-lg font-medium mb-2 text-gray-700">Legacy Attachments ({request.attachments.length})</h4>
+                                       <div className="space-y-2">
+                                          {request.attachments.map((file, i) => (
+                                             <div key={`legacy-${i}`} className="flex items-center p-3 bg-yellow-50 rounded-md border border-yellow-200">
+                                                <div className="flex items-center space-x-3">
+                                                   <div className="flex-shrink-0">
+                                                      <svg className="h-8 w-8 text-yellow-600" fill="currentColor" viewBox="0 0 24 24">
+                                                         <path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z"/>
+                                                      </svg>
+                                                   </div>
+                                                   <div className="min-w-0 flex-1">
+                                                      <p className="text-sm font-medium text-gray-900 truncate">
+                                                         {file}
+                                                      </p>
+                                                      <p className="text-sm text-yellow-600">
+                                                         Legacy Format
+                                                      </p>
+                                                   </div>
+                                                </div>
+                                             </div>
+                                          ))}
+                                       </div>
+                                    </div>
+                                 )}
+                              </div>
                            ) : (
-                              <p>NONE</p>
+                              <div className="text-center py-8 text-gray-500">
+                                 <svg className="mx-auto h-12 w-12 text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                 </svg>
+                                 <p>No attachments found</p>
+                              </div>
                            )}
                         </div>
 

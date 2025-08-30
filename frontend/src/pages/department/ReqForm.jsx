@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
-import { Link, useNavigate } from "react-router-dom";
 import { AddItemCard } from "./AddItemCard";
 import { useAuth } from "../../context/AuthContext";
 import Breadcrumb from "../../components/Breadcrumb";
@@ -9,31 +8,29 @@ import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
 const ReqForm = ({ forms }) => {
-  const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [showAddItemCard, setShowAddItemCard] = useState(false);
   const { loggedInUser } = useAuth();
   const [date, setDate] = useState("");
   const [requestId, setRequestId] = useState("");
   const [department, setDepartment] = useState("");
+  const [budgetPeriod, setBudgetPeriod] = useState("");
+  const [selectedBudgetId, setSelectedBudgetId] = useState("");
+  const [selectedBudget, setSelectedBudget] = useState(null);
+  const [activeBudgets, setActiveBudgets] = useState([]);
   const [faculty, setFaculty] = useState("");
   const [contactNo, setContactNo] = useState("");
   const [contactPerson, setContactPerson] = useState("");
-  const [budgetAllocation, setBudgetAllocation] = useState("");
-  const [usedAmount, setUsedAmount] = useState("");
-  const [balanceAvailable, setBalanceAvailable] = useState("");
   const [purpose, setPurpose] = useState("Normal");
   const [items, setItems] = useState({});
   const [files, setFiles] = useState({});
   const [specifications, setSpecifications] = useState({});
-  const departments = ["DEIE", "DCEE", "DMME", "DCE", "DMNNE", "DIS", "NONE"];
   const [requestCreated, setRequestCreated] = useState(false);
   const [validationErrors, setValidationErrors] = useState({});
 
   // Budget loading states
   const [budgetLoading, setBudgetLoading] = useState(false);
   const [budgetError, setBudgetError] = useState(null);
-  const [departmentChangeTimeout, setDepartmentChangeTimeout] = useState(null);
 
   // Generate request ID in the required format
   const generateRequestId = async () => {
@@ -62,6 +59,7 @@ const ReqForm = ({ forms }) => {
     };
 
     initializeForm();
+    fetchActiveBudgets(); // Fetch active budgets on component mount
 
     // Set department from logged in user
     if (loggedInUser && loggedInUser.department) {
@@ -69,110 +67,43 @@ const ReqForm = ({ forms }) => {
     }
   }, [loggedInUser]);
 
-  // Fetch budget data when department changes
-  useEffect(() => {
-    if (department) {
-      fetchBudgetData(department);
-    }
-  }, [department]);
-
-  // Cleanup timeout on component unmount
-  useEffect(() => {
-    return () => {
-      if (departmentChangeTimeout) {
-        clearTimeout(departmentChangeTimeout);
-      }
-    };
-  }, [departmentChangeTimeout]);
-
-  // Improved fetchBudgetData function with better error handling
-  const fetchBudgetData = async (selectedDepartment) => {
-    if (!selectedDepartment || selectedDepartment.trim() === '') {
-      console.log("No department selected, clearing budget fields");
-      setBudgetAllocation("");
-      setUsedAmount("");
-      setBalanceAvailable("");
-      setBudgetError(null);
-      return;
-    }
-
+  // Fetch active budgets for dropdown selection
+  const fetchActiveBudgets = async () => {
     try {
       setBudgetLoading(true);
+      console.log("Fetching active budgets...");
+      
+      const response = await axios.get("http://localhost:8000/budget/active/list");
+      const budgets = response.data?.budgets || [];
+      
+      console.log("Active budgets received:", budgets.length);
+      setActiveBudgets(budgets);
       setBudgetError(null);
-      console.log("Fetching budget for department:", selectedDepartment);
-      
-      // Make sure to trim and encode the department name properly
-      const encodedDepartment = encodeURIComponent(selectedDepartment.trim());
-      const response = await axios.get(
-        `http://localhost:8000/budget/${encodedDepartment}`,
-        {
-          timeout: 10000, // 10 second timeout
-          headers: {
-            'Content-Type': 'application/json'
-          }
-        }
-      );
-      
-      console.log("Budget data received:", response.data);
-      const { budgetAllocation, usedAmount, availableBalance } = response.data;
-      
-      // Ensure we have valid numbers
-      setBudgetAllocation(budgetAllocation != null ? budgetAllocation : 0);
-      setUsedAmount(usedAmount != null ? usedAmount : 0);
-      setBalanceAvailable(availableBalance != null ? availableBalance : 0);
-      
-      console.log("Budget fields updated successfully");
-      
     } catch (error) {
-      console.error("Error fetching budget data:", error);
-      console.error("Error details:", error.response?.data);
-      console.error("Error status:", error.response?.status);
-      
-      // Reset budget fields on error
-      setBudgetAllocation("");
-    setUsedAmount("");
-    setBalanceAvailable("");
-    
-    // Set appropriate error message
-    if (error.response?.status === 404) {
-      setBudgetError(`No budget found for ${selectedDepartment} department. Please contact admin to set up budget.`);
-      console.log("No budget found for department:", selectedDepartment);
-    } else if (error.code === 'ECONNABORTED') {
-      setBudgetError("Request timeout. Please try again.");
-    } else if (error.response?.status >= 500) {
-      setBudgetError("Server error. Please try again later.");
-    } else {
-      setBudgetError("Failed to load budget information. Please try again.");
+      console.error("Error fetching active budgets:", error);
+      setBudgetError("Failed to load active budgets. Please refresh the page.");
+      setActiveBudgets([]);
+    } finally {
+      setBudgetLoading(false);
     }
-  } finally {
-    setBudgetLoading(false);
-  }
-};
+  };
 
-  // Improved department change handler with debouncing
-  const handleDepartmentChange = (e) => {
-    const selectedDepartment = e.target.value;
-    setDepartment(selectedDepartment);
-    
-    // Clear any existing timeout
-    if (departmentChangeTimeout) {
-      clearTimeout(departmentChangeTimeout);
+  // Handle budget selection
+  const handleBudgetSelection = (budgetId) => {
+    const budget = activeBudgets.find(b => b._id === budgetId);
+    if (budget) {
+      setSelectedBudgetId(budgetId);
+      setSelectedBudget(budget);
+      setDepartment(budget.department);
+      setBudgetPeriod(budget.budgetPeriod);
+      
+      console.log("Selected budget:", budget);
+    } else {
+      setSelectedBudgetId("");
+      setSelectedBudget(null);
+      setDepartment("");
+      setBudgetPeriod("");
     }
-    
-    // Debounce the budget fetch to avoid multiple rapid requests
-    const newTimeout = setTimeout(() => {
-      if (selectedDepartment) {
-        fetchBudgetData(selectedDepartment);
-      } else {
-        // Clear budget fields if no department selected
-        setBudgetAllocation("");
-        setUsedAmount("");
-        setBalanceAvailable("");
-        setBudgetError(null);
-      }
-    }, 300); // 300ms debounce
-    
-    setDepartmentChangeTimeout(newTimeout);
   };
 
   const handleAddItemsClick = () => {
@@ -269,31 +200,6 @@ const ReqForm = ({ forms }) => {
     }
   };
 
-  // Budget validation function
-  const validateBudgetBeforeSubmit = () => {
-    if (!balanceAvailable || Object.keys(items).length === 0) {
-      return true; // Skip validation if no budget info or no items
-    }
-    
-    // Calculate total estimated cost of all items
-    const totalEstimatedCost = Object.values(items).reduce((total, item) => {
-      const cost = parseFloat(item.cost) || 0;
-      const qty = parseInt(item.qtyRequired) || 0;
-      return total + (cost * qty);
-    }, 0);
-    
-    const currentBalance = parseFloat(balanceAvailable) || 0;
-    
-    if (totalEstimatedCost > currentBalance) {
-      toast.error(
-        `Insufficient budget! Estimated cost (₱${totalEstimatedCost.toLocaleString()}) exceeds available balance (₱${currentBalance.toLocaleString()})`
-      );
-      return false;
-    }
-    
-    return true;
-  };
-
   const clearForm = async () => {
     // Generate new request ID and date
     const newRequestId = await generateRequestId();
@@ -313,15 +219,16 @@ const ReqForm = ({ forms }) => {
     setRequestCreated(false);
     setBudgetError(null);
 
-    // Keep department and budget info if user has department
+    // Reset budget selection
+    setSelectedBudgetId("");
+    setSelectedBudget(null);
+    setBudgetPeriod("");
+
+    // Keep department if user has department
     if (loggedInUser && loggedInUser.department) {
       setDepartment(loggedInUser.department);
-      fetchBudgetData(loggedInUser.department);
     } else {
       setDepartment("");
-      setBudgetAllocation("");
-      setUsedAmount("");
-      setBalanceAvailable("");
     }
 
     // Clear file inputs
@@ -337,7 +244,7 @@ const ReqForm = ({ forms }) => {
     // Validation logic
     const errors = {};
     if (!faculty) errors.faculty = "Faculty/Admin is required";
-    if (!department) errors.department = "Department is required";
+    if (!selectedBudgetId) errors.budget = "Budget selection is required";
     if (!contactPerson) errors.contactPerson = "Contact person is required";
     if (!contactNo) {
       errors.contactNo = "Contact number is required";
@@ -347,27 +254,39 @@ const ReqForm = ({ forms }) => {
 
     if (Object.keys(items).length === 0) errors.items = "At least one item is required";
 
-    // Add budget validation
-    if (!validateBudgetBeforeSubmit()) {
-      errors.budget = "Insufficient budget for requested items";
+    // Add budget validation - check if total cost exceeds available balance
+    if (selectedBudget) {
+      const totalCost = Object.values(items).reduce((sum, item) => {
+        return sum + (parseFloat(item.cost) || 0) * (parseInt(item.qtyRequired) || 0);
+      }, 0);
+      
+      if (totalCost > selectedBudget.availableBalance) {
+        errors.budget = `Total cost (₱${totalCost.toLocaleString()}) exceeds available balance (₱${selectedBudget.availableBalance.toLocaleString()})`;
+      }
     }
 
     if (Object.keys(errors).length > 0) {
       setValidationErrors(errors);
-      toast.error("Please fill in all required fields");
+      toast.error("Please fix validation errors before submitting");
       return;
     }
+
+    // Calculate total usedAmount for this request
+    const totalUsedAmount = Object.values(items).reduce((sum, item) => {
+      return sum + (parseFloat(item.cost) || 0) * (parseInt(item.qtyRequired) || 0);
+    }, 0);
 
     const data = {
       requestId,
       department,
+      budgetPeriod,
+      fiscalYear: selectedBudget?.fiscalYear || new Date().getFullYear(),
+      budgetId: selectedBudgetId,
       date,
       faculty,
       contactPerson,
       contactNo,
-      budgetAllocation,
-      usedAmount,
-      balanceAvailable,
+      usedAmount: totalUsedAmount,
       purpose,
       items,
       files,
@@ -468,28 +387,18 @@ const ReqForm = ({ forms }) => {
 
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Department/Branch *
+                      Department/Branch
                     </label>
-                    <select
-                      value={department}
-                      onChange={handleDepartmentChange}
-                      className={`block w-full px-3 py-2 border rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 ${validationErrors.department
-                        ? "border-red-300 focus:ring-red-500 focus:border-red-500"
-                        : "border-gray-300"
-                        }`}
-                    >
-                      <option value="">Select your department</option>
-                      {departments.map((type, index) => (
-                        <option key={index} value={type}>
-                          {type}
-                        </option>
-                      ))}
-                    </select>
-                    {validationErrors.department && (
-                      <p className="text-red-500 text-sm mt-1">
-                        {validationErrors.department}
-                      </p>
-                    )}
+                    <input
+                      type="text"
+                      value={selectedBudget ? selectedBudget.department : (department || '')}
+                      readOnly
+                      className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm bg-gray-50 text-gray-700"
+                      placeholder="Department will be auto-filled from budget selection"
+                    />
+                    <p className="text-xs text-gray-600 mt-1">
+                      📋 Auto-populated from selected budget
+                    </p>
                   </div>
 
                   <div>
@@ -536,79 +445,90 @@ const ReqForm = ({ forms }) => {
                 </div>
               </div>
 
-              {/* Budget Details Section */}
+              {/* Budget Selection Section */}
               <div className="bg-white border border-gray-200 rounded-lg p-6">
-                <h3 className="text-lg font-medium text-gray-900 mb-2">Annual Budget Details</h3>
+                <h3 className="text-lg font-medium text-gray-900 mb-2">Budget Selection *</h3>
                 <p className="mb-4 text-sm text-gray-600">
-                  Budget information is automatically loaded based on selected department.
+                  Select a budget from active budgets for your procurement request.
                 </p>
                 
-                {/* Show loading indicator */}
-                {budgetLoading && (
+                {budgetLoading ? (
                   <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-md">
-                    <p className="text-blue-700 text-sm">Loading budget information...</p>
+                    <p className="text-blue-700 text-sm">Loading active budgets...</p>
                   </div>
-                )}
-                
-                {/* Show error message */}
-                {budgetError && (
+                ) : budgetError ? (
                   <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-md">
                     <p className="text-red-700 text-sm">{budgetError}</p>
+                    <button 
+                      onClick={fetchActiveBudgets}
+                      className="mt-2 text-blue-600 hover:text-blue-800 underline text-sm"
+                    >
+                      Retry Loading Budgets
+                    </button>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Select Budget *
+                      </label>
+                      <select
+                        value={selectedBudgetId}
+                        onChange={(e) => handleBudgetSelection(e.target.value)}
+                        className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      >
+                        <option value="">Select a budget...</option>
+                        {activeBudgets.map((budget) => (
+                          <option key={budget._id} value={budget._id}>
+                            {budget.displayText}
+                          </option>
+                        ))}
+                      </select>
+                      {validationErrors.budget && (
+                        <p className="text-red-500 text-sm mt-1">
+                          {validationErrors.budget}
+                        </p>
+                      )}
+                    </div>
+                    
+                    {selectedBudget && (
+                      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3 mt-4 p-4 bg-gray-50 rounded-lg">
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">
+                            Budget Allocation
+                          </label>
+                          <p className="text-lg font-semibold text-green-600">
+                            ₱{selectedBudget.budgetAllocation?.toLocaleString()}
+                          </p>
+                        </div>
+                        
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">
+                            Used Amount
+                          </label>
+                          <p className="text-lg font-semibold text-red-600">
+                            ₱{selectedBudget.usedAmount?.toLocaleString()}
+                          </p>
+                        </div>
+                        
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">
+                            Available Balance
+                          </label>
+                          <p className="text-lg font-semibold text-blue-600">
+                            ₱{selectedBudget.availableBalance?.toLocaleString()}
+                          </p>
+                        </div>
+                        
+                        <div className="sm:col-span-3">
+                          <p className="text-sm text-gray-600 mt-2">
+                            💡 Department: {selectedBudget.department} | Period: {selectedBudget.budgetPeriod} | FY{selectedBudget.fiscalYear}
+                          </p>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 )}
-                
-                {/* Show success message when budget is loaded */}
-                {!budgetLoading && !budgetError && budgetAllocation && (
-                  <div className="mb-4 p-3 bg-green-50 border border-green-200 rounded-md">
-                    <p className="text-green-700 text-sm">
-                      Budget information loaded successfully for {department} department.
-                    </p>
-                  </div>
-                )}
-                
-                <div className="grid grid-cols-1 gap-6 sm:grid-cols-3">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Budget Allocation
-                    </label>
-                    <input
-                      type="number"
-                      value={budgetAllocation}
-                      className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm bg-gray-50"
-                      disabled
-                      readOnly
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Used Amount So Far
-                    </label>
-                    <input
-                      type="text"
-                      value={usedAmount}
-                      className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm bg-gray-50"
-                      disabled
-                      readOnly
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Balance Available
-                    </label>
-                    <input
-                      type="text"
-                      value={balanceAvailable}
-                      className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm bg-gray-50"
-                      disabled
-                      readOnly
-                    />
-                    <p className="mt-2 text-sm text-gray-600">
-                      Please check your available balance here before requesting purchasing items.
-                    </p>
-                  </div>
-                </div>
               </div>
 
               {/* Item Details Section */}

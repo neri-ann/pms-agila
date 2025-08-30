@@ -24,12 +24,18 @@ const budgetPeriodOptions = [
 const AddBudgetCard = ({ onSave, onCancel }) => {
   const [department, setDepartment] = useState("");
   const [budgetAllocation, setBudgetAllocation] = useState("");
+  const [availableBalance, setAvailableBalance] = useState("");
+  const [usedAmount, setUsedAmount] = useState("");
   const [fiscalYear, setFiscalYear] = useState(new Date().getFullYear());
   const [budgetPeriod, setBudgetPeriod] = useState("ANNUAL");
   const [description, setDescription] = useState("");
   const [loading, setLoading] = useState(false);
   const [validationErrors, setValidationErrors] = useState({});
   const [existingBudgets, setExistingBudgets] = useState([]);
+
+  // Generate fiscal year options (current year ± 2 years)
+  const currentYear = new Date().getFullYear();
+  const fiscalYearOptions = Array.from({ length: 5 }, (_, i) => currentYear - 2 + i);
 
   // Fetch existing budgets to check for duplicates
   useEffect(() => {
@@ -43,9 +49,23 @@ const AddBudgetCard = ({ onSave, onCancel }) => {
       });
   }, []);
 
+  // Auto-fill usedAmount when availableBalance or budgetAllocation changes
+  useEffect(() => {
+    const alloc = parseFloat(budgetAllocation);
+    const avail = parseFloat(availableBalance);
+    if (!isNaN(alloc) && !isNaN(avail)) {
+      const used = alloc - avail;
+      setUsedAmount(used >= 0 ? used.toString() : "");
+    } else {
+      setUsedAmount("");
+    }
+  }, [availableBalance, budgetAllocation]);
+
   const resetForm = () => {
     setDepartment("");
     setBudgetAllocation("");
+    setAvailableBalance("");
+    setUsedAmount("");
     setFiscalYear(new Date().getFullYear());
     setBudgetPeriod("ANNUAL");
     setDescription("");
@@ -57,6 +77,8 @@ const AddBudgetCard = ({ onSave, onCancel }) => {
     let isValid = true;
 
     const alloc = parseFloat(budgetAllocation);
+    const avail = parseFloat(availableBalance);
+    const used = parseFloat(usedAmount);
 
     if (!department) {
       errors.department = "Department is required. Please select a department from the dropdown.";
@@ -94,6 +116,32 @@ const AddBudgetCard = ({ onSave, onCancel }) => {
       errors.budgetPeriod = "Budget period is required. Please select a budget period.";
       isValid = false;
     }
+    
+    if (!availableBalance) {
+      errors.availableBalance = "Available balance is required. Enter the current remaining balance.";
+      isValid = false;
+    } else if (isNaN(avail) || avail < 0) {
+      errors.availableBalance = `Available balance must be a non-negative number (≥ 0). Current value: "${availableBalance}"`;
+      isValid = false;
+    }
+
+    if (!usedAmount && usedAmount !== 0) {
+      errors.usedAmount = "Used amount is required (auto-calculated from Budget - Available).";
+      isValid = false;
+    } else if (isNaN(used) || used < 0) {
+      errors.usedAmount = `Used amount must be a non-negative number (≥ 0). Current value: "${usedAmount}"`;
+      isValid = false;
+    }
+    
+    // Enhanced mathematical validation with detailed explanation
+    if (isValid && (Math.abs((avail + used) - alloc) > 0.01)) {
+      const calculatedSum = avail + used;
+      const difference = Math.abs(calculatedSum - alloc);
+      
+      errors.availableBalance = `Mathematical error: Available Balance (${avail}) + Used Amount (${used}) = ${calculatedSum.toFixed(2)}, but Budget Allocation is ${alloc}. Difference: ${difference.toFixed(2)}`;
+      errors.usedAmount = `Budget equation must balance: ${alloc} = ${avail} + ${used}. Current calculation: ${alloc} ≠ ${calculatedSum.toFixed(2)}`;
+      isValid = false;
+    }
 
     setValidationErrors(errors);
     return isValid;
@@ -111,9 +159,9 @@ const AddBudgetCard = ({ onSave, onCancel }) => {
     const budgetData = {
       department,
       budgetAllocation: parseFloat(budgetAllocation),
+      usedAmount: parseFloat(usedAmount) || 0,
       fiscalYear: parseInt(fiscalYear),
       budgetPeriod,
-      status: 'ACTIVE',
       description: description.trim() || `${budgetPeriod} budget for ${department} department - FY${fiscalYear}`,
     };
 
@@ -175,12 +223,15 @@ const AddBudgetCard = ({ onSave, onCancel }) => {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+      {/* Background overlay */}
       <div
         className="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity"
         onClick={onCancel}
       ></div>
 
+      {/* Modal panel */}
       <div className="relative bg-white rounded-lg shadow-xl transform transition-all w-full max-w-4xl max-h-[90vh] flex flex-col overflow-hidden">
+        {/* Header */}
         <div className="bg-white px-6 py-4 border-b border-gray-200 flex-shrink-0">
           <div className="flex items-center justify-between">
             <h3 className="text-xl font-semibold text-gray-900">Add Time-Based Budget</h3>
@@ -191,64 +242,13 @@ const AddBudgetCard = ({ onSave, onCancel }) => {
               <XMarkIcon className="h-6 w-6" />
             </button>
           </div>
+          <p className="text-sm text-gray-600 mt-1">Create budgets with fiscal year and period tracking for better budget management</p>
         </div>
 
         {/* Body */}
         <form onSubmit={handleSave} className="flex flex-col flex-1 min-h-0">
           <div className="flex-1 overflow-y-auto px-6 py-6">
-            <div className="grid grid-cols-1 gap-x-6 gap-y-6 sm:grid-cols-2">
-              {/* Fiscal Year */}
-              <div className="space-y-2">
-                <label className="block text-sm font-medium text-gray-700">
-                  Fiscal Year <span className="text-red-500">*</span>
-                </label>
-                <input
-                  type="number"
-                  value={fiscalYear}
-                  readOnly
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm bg-gray-100 text-gray-700 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
-                  placeholder="Current fiscal year (locked)"
-                />
-                <p className="text-xs text-gray-600 mt-1">
-                  🔒 Locked to current year. New budgets are created for the current fiscal year.
-                </p>
-                {validationErrors.fiscalYear && (
-                  <p className="text-red-500 text-xs mt-1 flex items-center">
-                    <span className="mr-1">⚠</span>
-                    {validationErrors.fiscalYear}
-                  </p>
-                )}
-              </div>
-
-              {/* Budget Period */}
-              <div className="space-y-2">
-                <label className="block text-sm font-medium text-gray-700">
-                  Budget Period <span className="text-red-500">*</span>
-                </label>
-                <select
-                  value={budgetPeriod}
-                  onChange={(e) => setBudgetPeriod(e.target.value)}
-                  className={`w-full px-3 py-2 border rounded-md shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors ${
-                    validationErrors.budgetPeriod
-                      ? "border-red-500 bg-red-50"
-                      : "border-gray-300"
-                  }`}
-                >
-                  <option value="">Select budget period</option>
-                  {budgetPeriodOptions.map((period) => (
-                    <option key={period.value} value={period.value}>
-                      {period.label}
-                    </option>
-                  ))}
-                </select>
-                {validationErrors.budgetPeriod && (
-                  <p className="text-red-500 text-xs mt-1 flex items-center">
-                    <span className="mr-1">⚠</span>
-                    {validationErrors.budgetPeriod}
-                  </p>
-                )}
-              </div>
-
+            <div className="grid grid-cols-1 gap-x-6 gap-y-6 sm:grid-cols-2 lg:grid-cols-3">
               {/* Department */}
               <div className="space-y-2">
                 <label className="block text-sm font-medium text-gray-700">
@@ -270,53 +270,70 @@ const AddBudgetCard = ({ onSave, onCancel }) => {
                     </option>
                   ))}
                 </select>
-                
-                {/* Show existing budget info for selected department */}
-                {getExistingBudgetInfo() && (
-                  <p className="text-xs text-gray-600 mt-1">
-                    {getExistingBudgetInfo()}
-                  </p>
-                )}
-                
                 {validationErrors.department && (
-                  <p className="text-red-500 text-xs mt-1 flex items-start">
-                    <span className="mr-1 mt-0.5">⚠</span>
-                    <span>{validationErrors.department}</span>
-                  </p>
+                  <p className="text-sm text-red-600">{validationErrors.department}</p>
                 )}
               </div>
 
-              {/* Description */}
-              <div className="space-y-2 sm:col-span-2">
+              {/* Fiscal Year */}
+              <div className="space-y-2">
                 <label className="block text-sm font-medium text-gray-700">
-                  Budget Description
+                  Fiscal Year <span className="text-red-500">*</span>
                 </label>
-                <textarea
-                  value={description}
-                  onChange={(e) => setDescription(e.target.value)}
-                  rows={3}
+                <select
+                  value={fiscalYear}
+                  onChange={(e) => setFiscalYear(parseInt(e.target.value))}
                   className={`w-full px-3 py-2 border rounded-md shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors ${
-                    validationErrors.description
+                    validationErrors.fiscalYear
                       ? "border-red-500 bg-red-50"
                       : "border-gray-300"
                   }`}
-                  placeholder="Enter a description for this budget allocation (optional)..."
-                />
-                {validationErrors.description && (
-                  <p className="text-red-500 text-xs mt-1 flex items-center">
-                    <span className="mr-1">⚠</span>
-                    {validationErrors.description}
-                  </p>
+                >
+                  {fiscalYearOptions.map((year) => (
+                    <option key={year} value={year}>
+                      {year} {year === currentYear && "(Current)"}
+                    </option>
+                  ))}
+                </select>
+                {validationErrors.fiscalYear && (
+                  <p className="text-sm text-red-600">{validationErrors.fiscalYear}</p>
+                )}
+              </div>
+
+              {/* Budget Period */}
+              <div className="space-y-2">
+                <label className="block text-sm font-medium text-gray-700">
+                  Budget Period <span className="text-red-500">*</span>
+                </label>
+                <select
+                  value={budgetPeriod}
+                  onChange={(e) => setBudgetPeriod(e.target.value)}
+                  className={`w-full px-3 py-2 border rounded-md shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors ${
+                    validationErrors.budgetPeriod
+                      ? "border-red-500 bg-red-50"
+                      : "border-gray-300"
+                  }`}
+                >
+                  {budgetPeriodOptions.map((period) => (
+                    <option key={period.value} value={period.value}>
+                      {period.label}
+                    </option>
+                  ))}
+                </select>
+                {validationErrors.budgetPeriod && (
+                  <p className="text-sm text-red-600">{validationErrors.budgetPeriod}</p>
                 )}
               </div>
 
               {/* Budget Allocation */}
               <div className="space-y-2">
                 <label className="block text-sm font-medium text-gray-700">
-                  Budget Allocation <span className="text-red-500">*</span>
+                  Budget Allocation (₱) <span className="text-red-500">*</span>
                 </label>
                 <input
                   type="number"
+                  step="0.01"
+                  min="0"
                   value={budgetAllocation}
                   onChange={(e) => setBudgetAllocation(e.target.value)}
                   className={`w-full px-3 py-2 border rounded-md shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors ${
@@ -324,50 +341,117 @@ const AddBudgetCard = ({ onSave, onCancel }) => {
                       ? "border-red-500 bg-red-50"
                       : "border-gray-300"
                   }`}
-                  placeholder="Enter budget allocation here..."
-                  min="0"
-                  step="any"
+                  placeholder="Enter total budget amount"
                 />
                 {validationErrors.budgetAllocation && (
-                  <p className="text-red-500 text-xs mt-1 flex items-center">
-                    <span className="mr-1">⚠</span>
-                    {validationErrors.budgetAllocation}
-                  </p>
+                  <p className="text-sm text-red-600">{validationErrors.budgetAllocation}</p>
                 )}
               </div>
 
-              {/* Status (Read-only, locked to Active) */}
+              {/* Available Balance */}
               <div className="space-y-2">
                 <label className="block text-sm font-medium text-gray-700">
-                  Budget Status
+                  Available Balance (₱) <span className="text-red-500">*</span>
                 </label>
                 <input
-                  type="text"
-                  value="ACTIVE"
-                  readOnly
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm bg-gray-100 text-gray-700 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
-                  placeholder="Status (locked to Active)"
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  value={availableBalance}
+                  onChange={(e) => setAvailableBalance(e.target.value)}
+                  className={`w-full px-3 py-2 border rounded-md shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors ${
+                    validationErrors.availableBalance
+                      ? "border-red-500 bg-red-50"
+                      : "border-gray-300"
+                  }`}
+                  placeholder="Enter available balance"
                 />
-                <p className="text-xs text-gray-600 mt-1">
-                  🔒 Budget status is automatically set to Active upon creation.
+                {validationErrors.availableBalance && (
+                  <p className="text-sm text-red-600">{validationErrors.availableBalance}</p>
+                )}
+              </div>
+
+              {/* Used Amount */}
+              <div className="space-y-2">
+                <label className="block text-sm font-medium text-gray-700">
+                  Used Amount (₱) <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  value={usedAmount}
+                  onChange={(e) => setUsedAmount(e.target.value)}
+                  className={`w-full px-3 py-2 border rounded-md shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors bg-gray-50 ${
+                    validationErrors.usedAmount
+                      ? "border-red-500 bg-red-50"
+                      : "border-gray-300"
+                  }`}
+                  placeholder="Auto-calculated"
+                  readOnly
+                />
+                {validationErrors.usedAmount && (
+                  <p className="text-sm text-red-600">{validationErrors.usedAmount}</p>
+                )}
+                <p className="text-xs text-gray-500">
+                  Auto-calculated: Budget Allocation - Available Balance
                 </p>
               </div>
             </div>
+
+            {/* Description */}
+            <div className="mt-6 space-y-2">
+              <label className="block text-sm font-medium text-gray-700">
+                Description (Optional)
+              </label>
+              <textarea
+                rows={3}
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                placeholder={`Enter description or leave empty for auto-generated description...`}
+              />
+              <p className="text-xs text-gray-500">
+                Auto-generated if empty: "{budgetPeriod} budget for {department || '[Department]'} department - FY{fiscalYear}"
+              </p>
+            </div>
+
+            {/* Existing Budget Info */}
+            {getExistingBudgetInfo() && (
+              <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-md">
+                <h4 className="text-sm font-medium text-blue-900 mb-2">Existing Budget Information</h4>
+                <p className="text-sm text-blue-700">{getExistingBudgetInfo()}</p>
+              </div>
+            )}
+
+            {/* Budget Calculation Preview */}
+            {budgetAllocation && availableBalance && usedAmount && (
+              <div className="mt-6 p-4 bg-green-50 border border-green-200 rounded-md">
+                <h4 className="text-sm font-medium text-green-900 mb-2">Budget Calculation Preview</h4>
+                <div className="text-sm text-green-700">
+                  <p><strong>Budget Allocation:</strong> ₱{parseFloat(budgetAllocation).toLocaleString()}</p>
+                  <p><strong>Used Amount:</strong> ₱{parseFloat(usedAmount).toLocaleString()}</p>
+                  <p><strong>Available Balance:</strong> ₱{parseFloat(availableBalance).toLocaleString()}</p>
+                  <p><strong>Utilization:</strong> {((parseFloat(usedAmount) / parseFloat(budgetAllocation)) * 100).toFixed(1)}%</p>
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Footer */}
-          <div className="bg-gray-50 px-6 py-4 flex items-center justify-end space-x-3 border-t border-gray-200 flex-shrink-0">
+          <div className="flex-shrink-0 px-6 py-4 bg-gray-50 border-t border-gray-200 flex justify-end space-x-3">
             <button
               type="button"
               onClick={onCancel}
-              className="px-6 py-2.5 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 transition-colors"
+              className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors"
+              disabled={loading}
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={loading}
-              className="px-6 py-2.5 text-sm font-medium text-white bg-[#961C1E] border border-transparent rounded-lg hover:bg-[#7A1517] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#961C1E] disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
+              className="px-6 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-md hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
             >
               {loading ? (
                 <span className="flex items-center">
@@ -391,10 +475,10 @@ const AddBudgetCard = ({ onSave, onCancel }) => {
                       d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
                     ></path>
                   </svg>
-                  Saving...
+                  Creating Budget...
                 </span>
               ) : (
-                "Save"
+                "Create Budget"
               )}
             </button>
           </div>

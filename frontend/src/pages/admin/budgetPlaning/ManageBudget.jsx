@@ -17,10 +17,13 @@ import "react-toastify/dist/ReactToastify.css";
 
 const TABLE_HEAD = [
   "No",
-  "Department",
+  "Department", 
+  "Fiscal Year",
+  "Period",
   "Budget Allocation",
-  "Available Balance",
   "Used Amount",
+  "Available Balance",
+  "Status",
   "Actions",
 ];
 
@@ -32,21 +35,32 @@ export default function ManageBudget() {
   const [showAddBudgetCard, setShowAddBudgetCard] = useState(false);
   const [showUpdateBudget, setShowUpdateBudget] = useState(false);
   const [selectedBudgetId, setSelectedBudgetId] = useState(null);
+  const [selectedFiscalYear, setSelectedFiscalYear] = useState(new Date().getFullYear());
+  const [selectedDepartment, setSelectedDepartment] = useState("");
+  const [selectedBudgetPeriod, setSelectedBudgetPeriod] = useState("");
+  const [selectedStatus, setSelectedStatus] = useState("");
   const itemsPerPage = 5;
 
-  const filteredBudgets = budgets.filter(
-    (budget) =>
-      budget.department &&
+  const filteredBudgets = budgets.filter((budget) => {
+    const matchesSearch = budget.department &&
       typeof budget.department === "string" &&
-      budget.department.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+      budget.department.toLowerCase().includes(searchTerm.toLowerCase());
+    
+    const matchesFiscalYear = !selectedFiscalYear || budget.fiscalYear === selectedFiscalYear;
+    const matchesDepartment = !selectedDepartment || budget.department === selectedDepartment;
+    const matchesPeriod = !selectedBudgetPeriod || budget.budgetPeriod === selectedBudgetPeriod;
+    const matchesStatus = !selectedStatus || budget.status === selectedStatus;
+    
+    return matchesSearch && matchesFiscalYear && matchesDepartment && matchesPeriod && matchesStatus;
+  });
 
   const fetchBudgets = () => {
     setLoading(true);
     axios
       .get("http://localhost:8000/budget/viewBudget")
       .then((response) => {
-        setBudgets(response.data);
+        const budgetsData = response.data?.budgets || response.data || [];
+        setBudgets(budgetsData);
         setLoading(false);
       })
       .catch((error) => {
@@ -140,10 +154,11 @@ export default function ManageBudget() {
           </div>
         </div>
 
-        {/* Simple Search Section */}
-        <div className="p-6 border-b border-gray-200">
-          <div className="flex items-center space-x-4">
-            <div className="relative flex-1 max-w-md">
+        {/* Enhanced Search and Filter Section */}
+        <div className="p-6 border-b border-gray-200 bg-gray-50">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 items-end">
+            <div className="relative">
+              <label className="block text-xs font-medium text-gray-700 mb-1">Search Department</label>
               <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
               <input
                 className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
@@ -153,7 +168,85 @@ export default function ManageBudget() {
                 onChange={handleSearchChange}
               />
             </div>
+            
+            <div>
+              <label className="block text-xs font-medium text-gray-700 mb-1">Fiscal Year</label>
+              <select
+                value={selectedFiscalYear}
+                onChange={(e) => setSelectedFiscalYear(parseInt(e.target.value) || "")}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              >
+                <option value="">All Years</option>
+                {Array.from({ length: 5 }, (_, i) => new Date().getFullYear() - 2 + i).map(year => (
+                  <option key={year} value={year}>{year}</option>
+                ))}
+              </select>
+            </div>
+            
+            <div>
+              <label className="block text-xs font-medium text-gray-700 mb-1">Department</label>
+              <select
+                value={selectedDepartment}
+                onChange={(e) => setSelectedDepartment(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              >
+                <option value="">All Departments</option>
+                {["DEIE", "DCEE", "DMME", "DCE", "DMNNE", "DIS", "NONE"].map(dept => (
+                  <option key={dept} value={dept}>{dept}</option>
+                ))}
+              </select>
+            </div>
+            
+            <div>
+              <label className="block text-xs font-medium text-gray-700 mb-1">Budget Period</label>
+              <select
+                value={selectedBudgetPeriod}
+                onChange={(e) => setSelectedBudgetPeriod(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              >
+                <option value="">All Periods</option>
+                <option value="ANNUAL">Annual</option>
+                <option value="Q1">Q1</option>
+                <option value="Q2">Q2</option>
+                <option value="Q3">Q3</option>
+                <option value="Q4">Q4</option>
+              </select>
+            </div>
+            
+            <div>
+              <label className="block text-xs font-medium text-gray-700 mb-1">Status</label>
+              <select
+                value={selectedStatus}
+                onChange={(e) => setSelectedStatus(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              >
+                <option value="">All Status</option>
+                <option value="ACTIVE">Active</option>
+                <option value="EXPIRED">Expired</option>
+                <option value="SUSPENDED">Suspended</option>
+              </select>
+            </div>
           </div>
+          
+          {(selectedFiscalYear || selectedDepartment || selectedBudgetPeriod || selectedStatus || searchTerm) && (
+            <div className="mt-4 flex items-center justify-between">
+              <p className="text-sm text-gray-600">
+                Showing {filteredBudgets.length} of {budgets.length} budgets
+              </p>
+              <button
+                onClick={() => {
+                  setSelectedFiscalYear(new Date().getFullYear());
+                  setSelectedDepartment("");
+                  setSelectedBudgetPeriod("");
+                  setSelectedStatus("");
+                  setSearchTerm("");
+                }}
+                className="text-sm text-blue-600 hover:text-blue-800 underline"
+              >
+                Clear All Filters
+              </button>
+            </div>
+          )}
         </div>
 
         {/* Simple Table */}
@@ -191,16 +284,47 @@ export default function ManageBudget() {
                       {indexOfFirstItem + index + 1}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      {budget.department}
+                      <div className="font-medium">{budget.department}</div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      ₱{budget.budgetAllocation?.toLocaleString() || 'N/A'}
+                      <div className="font-medium">{budget.fiscalYear || 'N/A'}</div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      ₱{budget.availableBalance?.toLocaleString() || 'N/A'}
+                      <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                        budget.budgetPeriod === 'ANNUAL' ? 'bg-blue-100 text-blue-800' :
+                        budget.budgetPeriod === 'Q1' ? 'bg-green-100 text-green-800' :
+                        budget.budgetPeriod === 'Q2' ? 'bg-yellow-100 text-yellow-800' :
+                        budget.budgetPeriod === 'Q3' ? 'bg-orange-100 text-orange-800' :
+                        budget.budgetPeriod === 'Q4' ? 'bg-purple-100 text-purple-800' :
+                        'bg-gray-100 text-gray-800'
+                      }`}>
+                        {budget.budgetPeriod || 'N/A'}
+                      </span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      ₱{budget.usedAmount?.toLocaleString() || 'N/A'}
+                      <div className="font-semibold text-green-600">
+                        ₱{(parseFloat(budget.budgetAllocation) || 0).toLocaleString()}
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      <div className="font-medium text-red-600">
+                        ₱{(parseFloat(budget.usedAmount) || 0).toLocaleString()}
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      <div className="font-medium text-blue-600">
+                        ₱{(parseFloat(budget.availableBalance) || 0).toLocaleString()}
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                        budget.status === 'ACTIVE' ? 'bg-green-100 text-green-800' :
+                        budget.status === 'EXPIRED' ? 'bg-red-100 text-red-800' :
+                        budget.status === 'SUSPENDED' ? 'bg-yellow-100 text-yellow-800' :
+                        'bg-gray-100 text-gray-800'
+                      }`}>
+                        {budget.status || 'ACTIVE'}
+                      </span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                       <div className="flex items-center space-x-2">
