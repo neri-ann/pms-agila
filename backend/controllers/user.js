@@ -244,6 +244,10 @@ exports.signIn = async (req, res) => {
             return res.status(401).json({ success: false, message: 'Invalid email or password' });
         }
 
+        // Verify that the selected role matches the user's actual role in database
+        if (user.role !== role) {
+            return res.status(401).json({ success: false, message: 'Invalid role selected. Please select your correct role.' });
+        }
 
         let department = null;
         // Check if the role is 'department'

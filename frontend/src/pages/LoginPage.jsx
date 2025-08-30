@@ -13,6 +13,7 @@ const LoginPage = () => {
   });
 
   const [errors, setErrors] = useState({});
+  const [isLoading, setIsLoading] = useState(false);
 
   const navigate = useNavigate();
   const { handleSignIn } = useAuth();
@@ -37,11 +38,19 @@ const LoginPage = () => {
   };
 
   const handleSignInClick = async () => {
+    // Prevent multiple simultaneous login attempts
+    if (isLoading) {
+      return;
+    }
+
     const validationErrors = validateFields();
     if (Object.keys(validationErrors).length > 0) {
       setErrors(validationErrors);
       return;
     }
+
+    setIsLoading(true);
+    setErrors({}); // Clear any existing errors
 
     try {
       const response = await axios.post("http://localhost:8000/user/signIn", {
@@ -83,12 +92,16 @@ const LoginPage = () => {
       }
     } catch (error) {
       console.error("Sign in failed:", error);
-      if (error.response) {
+      if (error.response && error.response.data && error.response.data.message) {
+        toast.error(error.response.data.message);
+      } else if (error.response) {
         console.log("Axios response:", error.response.data);
         toast.error("Sign in failed. Please try again.");
       } else {
         toast.error("Network error. Please try again.");
       }
+    } finally {
+      setIsLoading(false); // Always reset loading state
     }
   };
 
@@ -111,7 +124,13 @@ const LoginPage = () => {
         </div>
 
         <div className="mt-4 sm:mx-auto sm:w-full sm:max-w-2xl">
-          <form className="space-y-6" onSubmit={(e) => e.preventDefault()}>
+          <form 
+            className="space-y-6" 
+            onSubmit={(e) => {
+              e.preventDefault();
+              handleSignInClick();
+            }}
+          >
             <div>
               <label
                 htmlFor="role"
@@ -131,10 +150,11 @@ const LoginPage = () => {
                 >
                   <option value="role">Select your role</option>
                   <option value="admin">Admin</option>
-                  <option value="procurmentofficer">Procurement Officer</option>
-                  {/* <option value="financeofficers">Finance Officers</option>
-                  <option value="department">User Department</option>
-                  <option value="approver">Approver</option> */}
+                  <option value="procurement Officer">Procurement Officer</option>
+                  {/* <option value="department">User Department</option>
+                  <option value="TECofficer">TEC Officer</option>
+                  <option value="approver">Approver</option>
+                  <option value="Finance officers">Finance Officers</option> */}
                 </select>
                 {errors.role && (
                   <p className="text-red-500 text-sm">{errors.role}</p>
@@ -205,11 +225,15 @@ const LoginPage = () => {
 
             <div>
               <button
-                type="button"
-                onClick={handleSignInClick}
-                className="flex w-full justify-center mt-12 rounded-md bg-[#961C1E] px-3 py-3 text-lg font-semibold leading-6 text-white shadow-sm hover:bg-[#761C1D] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-black"
+                type="submit"
+                disabled={isLoading}
+                className={`flex w-full justify-center mt-12 rounded-md px-3 py-3 text-lg font-semibold leading-6 text-white shadow-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-black ${
+                  isLoading 
+                    ? 'bg-gray-400 cursor-not-allowed' 
+                    : 'bg-[#961C1E] hover:bg-[#761C1D]'
+                }`}
               >
-                Login
+                {isLoading ? 'Logging in...' : 'Login'}
               </button>
             </div>
           </form>
