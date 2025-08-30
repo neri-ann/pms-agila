@@ -21,7 +21,8 @@ export const useExport = () => {
       });
 
       const queryString = searchParams.toString();
-      const url = `${endpoint}/${format}${queryString ? `?${queryString}` : ''}`;
+      const baseURL = 'http://localhost:8000';
+      const url = `${baseURL}${endpoint}/${format}${queryString ? `?${queryString}` : ''}`;
 
       const response = await axios.get(url, {
         responseType: 'blob', // Important for file downloads

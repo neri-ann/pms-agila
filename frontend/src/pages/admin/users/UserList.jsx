@@ -12,6 +12,7 @@ import UserTypeNavbar from "../../../components/UserTypeNavbar.jsx";
 import DefaultPagination from "../../../components/DefaultPagination.js";
 import AddUserModal from "./AddUserModal.jsx";
 import EditUserModal from "./EditUserDetails.jsx";
+import ExportButtons from "../../../components/ExportButtons.jsx";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
@@ -120,6 +121,16 @@ export default function UserList() {
             </div>
             <div className="flex items-center space-x-3">
               <span className="text-sm text-gray-500">Total: {users.length} users</span>
+              <ExportButtons 
+                endpoint="/export/admin/users" 
+                type="table"
+                className="flex items-center space-x-2"
+                queryParams={{
+                  search: searchTerm,
+                  page: currentPage,
+                  limit: itemsPerPage
+                }}
+              />
               <button
                 onClick={() => setIsAddModalOpen(true)}
                 className="flex items-center space-x-2 bg-[#961C1E] hover:bg-[#761C1D] text-white px-4 py-2 rounded-md transition-colors duration-200"

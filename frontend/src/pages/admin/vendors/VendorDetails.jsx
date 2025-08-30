@@ -11,6 +11,7 @@ import Breadcrumb from "../../../components/Breadcrumb.jsx";
 import UserTypeNavbar from "../../../components/UserTypeNavbar.jsx";
 import DefaultPagination from "../../../components/DefaultPagination.js";
 import AddSupplierModal from "./AddSupplier.jsx";
+import ExportButtons from "../../../components/ExportButtons.jsx";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import UpdateSupplierModal from "./UpdateSupplier";
@@ -145,6 +146,14 @@ export default function VendorDetails() {
             </div>
             <div className="flex items-center space-x-3">
               <span className="text-sm text-gray-500">Total: {vendors.length} suppliers</span>
+              <ExportButtons 
+                endpoint="/export/admin/vendors" 
+                type="table"
+                className="flex items-center space-x-2"
+                queryParams={{
+                  search: searchTerm
+                }}
+              />
               <button
                 onClick={() => setIsAddSupplierOpen(true)}
                 className="flex items-center space-x-2 bg-[#961C1E] hover:bg-[#761C1D] text-white px-4 py-2 rounded-md transition-colors duration-200"

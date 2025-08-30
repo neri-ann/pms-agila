@@ -22,6 +22,7 @@ const approvalRoute =require('./routes/approvalReqest');
 const sendMailRoute =require('./routes/sendMail');
 const adminStatsRoutes = require('./routes/adminStats');
 const poStatsRoutes = require('./routes/poStats');
+const exportRoutes = require('./routes/exportRoutes');
 const PORT = process.env.PORT || 8000;
 const env = require('dotenv')
 const pdfRoute = require('./routes/pdfRoutes');
@@ -73,6 +74,7 @@ app.use('/approvalReqest',approvalRoute);
 app.use('/send',sendMailRoute)
 app.use('/bids', bidsRouter);
 app.use('/budget', budgetRouter);
+app.use('/export', exportRoutes);
 
 app.listen(PORT, () => {
     console.log(`The server is listening on port: ${PORT}`);

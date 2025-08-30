@@ -1,3 +1,5 @@
+# Napakaganda mo naman, Nerie Ann
+
 # Procument-Managemant-System
 
 The Web Procurement Management System (PMS) provides an extensive feature set with the goal of improving and optimizing the procurement procedure at the University of Ruhuna's Faculty of 
@@ -46,11 +48,4 @@ Engineering. Basically, the PMS lets users effectively create, monitor, and hand
 ![5](https://github.com/Piumikavindya/Procument-Managemant-System/assets/118907095/034a33f0-3d1d-412f-9c1f-d313892a5325)
 
 ![6](https://github.com/Piumikavindya/Procument-Managemant-System/assets/118907095/d8ec5c25-707e-479c-aa9a-4f39a67ec6d3)
-
-
-
-
-
-
-
 
