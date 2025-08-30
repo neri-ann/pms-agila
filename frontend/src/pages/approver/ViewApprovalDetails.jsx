@@ -119,15 +119,17 @@ export default function ViewApprovalDetails({ open, setOpen, request }) {
                                           <th className="px-4 py-2 text-left text-sm font-medium text-gray-700">Cost (Approx.)</th>
                                           <th className="px-4 py-2 text-left text-sm font-medium text-gray-700">Qty Required</th>
                                           <th className="px-4 py-2 text-left text-sm font-medium text-gray-700">Qty Available</th>
+                                          <th className="px-4 py-2 text-left text-sm font-medium text-gray-700">Estimated Total Cost</th>
                                        </tr>
                                     </thead>
                                     <tbody>
                                        {request.items.map((item, i) => (
                                           <tr key={i} className="border-t hover:bg-gray-50">
                                              <td className="px-4 py-2 font-medium text-gray-900">{item.name || item.itemName || 'N/A'}</td>
-                                             <td className="px-4 py-2 text-gray-700">{item.cost || item.price || 'N/A'}</td>
+                                             <td className="px-4 py-2 text-gray-700">₱ {item.cost || item.price || 'N/A'}</td>
                                              <td className="px-4 py-2 text-gray-700">{item.qtyRequired || item.quantity || 'N/A'}</td>
                                              <td className="px-4 py-2 text-gray-700">{item.qtyAvailable || item.available || 'N/A'}</td>
+                                             <td className="px-4 py-2 text-gray-700">₱ {(parseFloat(item.cost || item.price || 0) * parseInt(item.qtyRequired || item.quantity || 0)).toFixed(2)}</td>
                                           </tr>
                                        ))}
                                     </tbody>

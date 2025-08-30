@@ -71,15 +71,17 @@ export default function PreviewRequestDetails({ open, setOpen, request }) {
                           <th className="px-4 py-2 text-left text-sm">Cost (Approx.)</th>
                           <th className="px-4 py-2 text-left text-sm">Qty Required</th>
                           <th className="px-4 py-2 text-left text-sm">Qty Available</th>
+                          <th className="px-4 py-2 text-left text-sm">Estimated Total Cost</th>
                         </tr>
                       </thead>
                       <tbody>
                         {request.items?.map((item, i) => (
                           <tr key={i} className="border-t hover:bg-gray-50">
                             <td className="px-4 py-2">{item.itemName}</td>
-                            <td className="px-4 py-2">{item.cost}</td>
+                            <td className="px-4 py-2">₱ {item.cost}</td>
                             <td className="px-4 py-2">{item.qtyRequired}</td>
                             <td className="px-4 py-2">{item.qtyAvailable}</td>
+                            <td className="px-4 py-2">₱ {(parseFloat(item.cost || 0) * parseInt(item.qtyRequired || 0)).toFixed(2)}</td>
                           </tr>
                         ))}
                       </tbody>

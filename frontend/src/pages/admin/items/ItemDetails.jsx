@@ -8,14 +8,18 @@ import UserTypeNavbar from "../../../components/UserTypeNavbar.jsx";
 import DefaultPagination from "../../../components/DefaultPagination.js";
 import AddItemsModal from "./Additems.jsx";
 import UpdateItemsModal from "./updateItems.jsx";
+import PreviewItemModal from "./PreviewItemModal.jsx";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
 const TABLE_HEAD = [
   "No",
   "Assets Class",
-  "Assets Sub Class",
+  "Assets Sub Class", 
   "Items Name",
+  "Description",
+  "Cost",
+  "Qty Available",
   "Actions",
 ];
 
@@ -60,12 +64,17 @@ export default function ItemDetails() {
   const itemsPerPage = 5;
   const [showAddModal, setShowAddModal] = useState(false);
   const [showUpdateModal, setShowUpdateModal] = useState(false); // 2. Modal state
+  const [showPreviewModal, setShowPreviewModal] = useState(false);
   const [selectedItemId, setSelectedItemId] = useState(null);
+  const [selectedItem, setSelectedItem] = useState(null);
 
   const filteredVendors = items.filter((item) =>
     item.itemName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     item.AssetsClass?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    item.AssetsSubClass?.toLowerCase().includes(searchTerm.toLowerCase())
+    item.AssetsSubClass?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    item.itemDescription?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    item.cost?.toString().includes(searchTerm.toLowerCase()) ||
+    item.quantityAvailable?.toString().includes(searchTerm.toLowerCase())
   );
 
   // Fetch items function
@@ -108,6 +117,11 @@ export default function ItemDetails() {
   const handleItemUpdated = () => {
     fetchItems();
     setShowUpdateModal(false);
+  };
+
+  const handlePreviewItem = (item) => {
+    setSelectedItem(item);
+    setShowPreviewModal(true);
   };
 
   return (
@@ -153,7 +167,7 @@ export default function ItemDetails() {
               <input
                 className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 type="search"
-                placeholder="Search by item name, class, or subclass..."
+                placeholder="Search by item name, class, subclass, description, cost..."
                 value={searchTerm}
                 onChange={(e) => {
                   setSearchTerm(e.target.value);
@@ -216,13 +230,36 @@ export default function ItemDetails() {
                       <div className="text-xs text-gray-500">ITM-{String(indexOfFirstItem + index + 1).padStart(3, '0')}</div>
                     </td>
 
+                    <td className="px-6 py-4">
+                      <div className="text-sm text-gray-900 max-w-xs truncate" title={item.itemDescription}>
+                        {item.itemDescription || 'N/A'}
+                      </div>
+                    </td>
+
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="text-sm font-semibold text-green-600">
+                        ₱{(parseFloat(item.cost) || 0).toLocaleString()}
+                      </div>
+                    </td>
+
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="text-sm font-medium text-blue-600">
+                        {item.calculatedQuantityAvailable || item.quantityAvailable || 0}
+                      </div>
+                      <div className="text-xs text-gray-500">
+                        {item.calculatedQuantityAvailable ? 'From approved requests' : 'Default/Manual'}
+                      </div>
+                    </td>
+
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                       <div className="flex items-center space-x-2">
-                        <Link to={`/previewItemDetails/${item._id}`}>
-                          <button className="p-2 text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded-md transition-colors">
-                            <EyeIcon className="h-4 w-4" />
-                          </button>
-                        </Link>
+                        <button 
+                          className="p-2 text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded-md transition-colors"
+                          onClick={() => handlePreviewItem(item)}
+                          title="View Details"
+                        >
+                          <EyeIcon className="h-4 w-4" />
+                        </button>
                         <button
                           className="p-2 text-green-600 hover:text-green-800 hover:bg-green-50 rounded-md transition-colors"
                           onClick={() => {
@@ -274,6 +311,15 @@ export default function ItemDetails() {
         onItemUpdated={handleItemUpdated}
         id={selectedItemId}
       />
+
+      {/* Preview Modal */}
+      {showPreviewModal && selectedItem && (
+        <PreviewItemModal 
+          isOpen={showPreviewModal}
+          onClose={() => setShowPreviewModal(false)}
+          item={selectedItem}
+        />
+      )}
 
       {/* Toast notifications */}
       <ToastContainer

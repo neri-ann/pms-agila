@@ -14,6 +14,9 @@ export default function PO_AddItemsModal({ isOpen, onClose, onItemAdded }) {
     const [AssetsClass, setAssetsClass] = useState("");
     const [AssetsSubClass, setAssetsSubClass] = useState("");
     const [itemName, setItemName] = useState("");
+    const [itemDescription, setItemDescription] = useState("");
+    const [cost, setCost] = useState("");
+    const [quantityAvailable, setQuantityAvailable] = useState("0");
     const [loading, setLoading] = useState(false);
     const [validationErrors, setValidationErrors] = useState({});
 
@@ -28,6 +31,9 @@ export default function PO_AddItemsModal({ isOpen, onClose, onItemAdded }) {
         setAssetsClass("");
         setAssetsSubClass("");
         setItemName("");
+        setItemDescription("");
+        setCost("");
+        setQuantityAvailable("0");
         setValidationErrors({});
     };
 
@@ -36,16 +42,28 @@ export default function PO_AddItemsModal({ isOpen, onClose, onItemAdded }) {
         let errors = {};
         let isValid = true;
 
+        if (!itemName.trim()) {
+            errors.itemName = "Item name is required";
+            isValid = false;
+        }
         if (!AssetsClass) {
             errors.AssetsClass = "Assets class is required";
             isValid = false;
         }
-        if (!AssetsSubClass) {
+        if (!AssetsSubClass.trim()) {
             errors.AssetsSubClass = "Assets sub class is required";
             isValid = false;
         }
-        if (!itemName) {
-            errors.itemName = "Item name is required";
+        if (!itemDescription.trim()) {
+            errors.itemDescription = "Item description is required";
+            isValid = false;
+        }
+        if (!cost || isNaN(cost) || parseFloat(cost) < 0) {
+            errors.cost = "Valid cost is required";
+            isValid = false;
+        }
+        if (isNaN(quantityAvailable) || parseInt(quantityAvailable) < 0) {
+            errors.quantityAvailable = "Quantity available must be 0 or greater";
             isValid = false;
         }
 
@@ -59,9 +77,12 @@ export default function PO_AddItemsModal({ isOpen, onClose, onItemAdded }) {
         if (!validateFields()) return;
 
         const newItem = {
+            itemName: itemName.trim(),
             AssetsClass,
-            AssetsSubClass,
-            itemName,
+            AssetsSubClass: AssetsSubClass.trim(),
+            itemDescription: itemDescription.trim(),
+            cost: parseFloat(cost),
+            quantityAvailable: parseInt(quantityAvailable),
         };
         setLoading(true);
         axios
@@ -118,7 +139,7 @@ export default function PO_AddItemsModal({ isOpen, onClose, onItemAdded }) {
                                     type="text"
                                     value={itemName}
                                     onChange={(e) => setItemName(e.target.value)}
-                                    placeholder="Enter item name"
+                                    placeholder="Enter unique item name"
                                     className={`w-full px-3 py-2 border rounded-md shadow-sm focus:ring-2 focus:ring-indigo-600 focus:border-indigo-600 transition-colors ${validationErrors.itemName
                                         ? "border-red-500 bg-red-50"
                                         : "border-gray-300"
@@ -181,6 +202,81 @@ export default function PO_AddItemsModal({ isOpen, onClose, onItemAdded }) {
                                         {validationErrors.AssetsSubClass}
                                     </p>
                                 )}
+                            </div>
+
+                            {/* Item Description */}
+                            <div className="space-y-2 sm:col-span-2">
+                                <label className="block text-sm font-medium text-gray-700">
+                                    Item Description <span className="text-red-500">*</span>
+                                </label>
+                                <textarea
+                                    value={itemDescription}
+                                    onChange={(e) => setItemDescription(e.target.value)}
+                                    placeholder="Enter item description"
+                                    rows={3}
+                                    className={`w-full px-3 py-2 border rounded-md shadow-sm focus:ring-2 focus:ring-indigo-600 focus:border-indigo-600 transition-colors ${validationErrors.itemDescription
+                                        ? "border-red-500 bg-red-50"
+                                        : "border-gray-300"
+                                        }`}
+                                />
+                                {validationErrors.itemDescription && (
+                                    <p className="text-red-500 text-xs mt-1 flex items-center">
+                                        <span className="mr-1">⚠ </span>
+                                        {validationErrors.itemDescription}
+                                    </p>
+                                )}
+                            </div>
+
+                            {/* Cost */}
+                            <div className="space-y-2">
+                                <label className="block text-sm font-medium text-gray-700">
+                                    Cost (₱) <span className="text-red-500">*</span>
+                                </label>
+                                <input
+                                    type="number"
+                                    value={cost}
+                                    onChange={(e) => setCost(e.target.value)}
+                                    placeholder="Enter item cost"
+                                    min="0"
+                                    step="0.01"
+                                    className={`w-full px-3 py-2 border rounded-md shadow-sm focus:ring-2 focus:ring-indigo-600 focus:border-indigo-600 transition-colors ${validationErrors.cost
+                                        ? "border-red-500 bg-red-50"
+                                        : "border-gray-300"
+                                        }`}
+                                />
+                                {validationErrors.cost && (
+                                    <p className="text-red-500 text-xs mt-1 flex items-center">
+                                        <span className="mr-1">⚠ </span>
+                                        {validationErrors.cost}
+                                    </p>
+                                )}
+                            </div>
+
+                            {/* Quantity Available */}
+                            <div className="space-y-2">
+                                <label className="block text-sm font-medium text-gray-700">
+                                    Quantity Available
+                                </label>
+                                <input
+                                    type="number"
+                                    value={quantityAvailable}
+                                    onChange={(e) => setQuantityAvailable(e.target.value)}
+                                    placeholder="Enter quantity available"
+                                    min="0"
+                                    className={`w-full px-3 py-2 border rounded-md shadow-sm focus:ring-2 focus:ring-indigo-600 focus:border-indigo-600 transition-colors ${validationErrors.quantityAvailable
+                                        ? "border-red-500 bg-red-50"
+                                        : "border-gray-300"
+                                        }`}
+                                />
+                                {validationErrors.quantityAvailable && (
+                                    <p className="text-red-500 text-xs mt-1 flex items-center">
+                                        <span className="mr-1">⚠ </span>
+                                        {validationErrors.quantityAvailable}
+                                    </p>
+                                )}
+                                <p className="text-xs text-gray-500">
+                                    This will be automatically calculated from approved requests
+                                </p>
                             </div>
                         </div>
                     </div>

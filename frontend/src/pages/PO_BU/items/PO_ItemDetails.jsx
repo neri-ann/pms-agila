@@ -8,14 +8,18 @@ import UserTypeNavbar from "../../../components/UserTypeNavbar.jsx";
 import DefaultPagination from "../../../components/DefaultPagination.js";
 import PO_AddItemsModal from "./PO_AddItems.jsx";
 import PO_UpdateItemsModal from "./PO_UpdateItems.jsx";
+import PO_PreviewItemModal from "./PO_PreviewItemModal.jsx";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
 const TABLE_HEAD = [
   "No",
   "Assets Class",
-  "Assets Sub Class",
+  "Assets Sub Class", 
   "Items Name",
+  "Description",
+  "Cost",
+  "Qty Available",
   "Actions",
 ];
 
@@ -27,7 +31,9 @@ export default function PO_ItemDetails() {
   const itemsPerPage = 5;
   const [showAddModal, setShowAddModal] = useState(false);
   const [showUpdateModal, setShowUpdateModal] = useState(false);
+  const [showPreviewModal, setShowPreviewModal] = useState(false);
   const [selectedItemId, setSelectedItemId] = useState(null);
+  const [selectedItem, setSelectedItem] = useState(null);
 
   const filteredVendors = items.filter((item) =>
     item.itemName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -75,6 +81,11 @@ export default function PO_ItemDetails() {
   const handleItemUpdated = () => {
     fetchItems();
     setShowUpdateModal(false);
+  };
+
+  const handlePreviewItem = (item) => {
+    setSelectedItem(item);
+    setShowPreviewModal(true);
   };
 
   return (
@@ -183,13 +194,31 @@ export default function PO_ItemDetails() {
                       <div className="text-xs text-gray-500">ITM-{String(indexOfFirstItem + index + 1).padStart(3, '0')}</div>
                     </td>
 
+                    <td className="px-6 py-4">
+                      <div className="text-sm text-gray-900 max-w-xs truncate" title={item.itemDescription}>
+                        {item.itemDescription || 'N/A'}
+                      </div>
+                    </td>
+
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      ₱ {item.cost ? parseFloat(item.cost).toFixed(2) : 'N/A'}
+                    </td>
+
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <span className="inline-flex px-2 py-1 text-xs font-medium bg-purple-100 text-purple-800 rounded-md">
+                        {item.calculatedQuantityAvailable !== undefined ? item.calculatedQuantityAvailable : (item.quantityAvailable || 0)}
+                      </span>
+                    </td>
+
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                       <div className="flex items-center space-x-2">
-                        <Link to={`/PO_PreviewItems/${item._id}`}>
-                          <button className="p-2 text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded-md transition-colors">
-                            <EyeIcon className="h-4 w-4" />
-                          </button>
-                        </Link>
+                        <button 
+                          className="p-2 text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded-md transition-colors"
+                          onClick={() => handlePreviewItem(item)}
+                          title="View Details"
+                        >
+                          <EyeIcon className="h-4 w-4" />
+                        </button>
                         <button
                           className="p-2 text-green-600 hover:text-green-800 hover:bg-green-50 rounded-md transition-colors"
                           onClick={() => {
@@ -241,6 +270,15 @@ export default function PO_ItemDetails() {
         onItemUpdated={handleItemUpdated}
         id={selectedItemId}
       />
+
+      {/* Preview Modal */}
+      {showPreviewModal && selectedItem && (
+        <PO_PreviewItemModal 
+          isOpen={showPreviewModal}
+          onClose={() => setShowPreviewModal(false)}
+          item={selectedItem}
+        />
+      )}
 
       {/* Toast notifications */}
       <ToastContainer

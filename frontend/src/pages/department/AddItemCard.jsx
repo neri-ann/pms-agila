@@ -1,46 +1,61 @@
 import React, { useState, useEffect } from "react";
 import { XMarkIcon } from "@heroicons/react/24/outline";
+import axios from "axios";
 
 export function AddItemCard({ isOpen, onClose, handleAddItemsClick }) {
-  const [itemName, setItemName] = useState("");
-  const [description, setDescription] = useState("");
-  const [cost, setCost] = useState("");
+  const [items, setItems] = useState([]); // Available items from database
+  const [selectedItemId, setSelectedItemId] = useState("");
+  const [selectedItem, setSelectedItem] = useState(null);
   const [qtyRequired, setQtyRequired] = useState("");
-  const [qtyAvailable, setQtyAvailable] = useState("");
   const [validationErrors, setValidationErrors] = useState({});
   const [loading, setLoading] = useState(false);
+  const [itemsLoading, setItemsLoading] = useState(false);
 
-  // Reset form whenever modal opens
+  // Fetch items when modal opens
   useEffect(() => {
-    if (isOpen) resetForm();
+    if (isOpen) {
+      resetForm();
+      fetchItems();
+    }
   }, [isOpen]);
 
+  const fetchItems = async () => {
+    setItemsLoading(true);
+    try {
+      const response = await axios.get("http://localhost:8000/item/view-item");
+      setItems(response.data);
+    } catch (error) {
+      console.error("Error fetching items:", error);
+    } finally {
+      setItemsLoading(false);
+    }
+  };
+
   const resetForm = () => {
-    setItemName("");
-    setCost("");
+    setSelectedItemId("");
+    setSelectedItem(null);
     setQtyRequired("");
-    setQtyAvailable("");
     setValidationErrors({});
     setLoading(false);
+  };
+
+  // Handle item selection
+  const handleItemSelection = (itemId) => {
+    setSelectedItemId(itemId);
+    const item = items.find(i => i._id === itemId);
+    setSelectedItem(item);
+    // Clear validation errors when item is selected
+    if (validationErrors.selectedItemId) {
+      setValidationErrors(prev => ({ ...prev, selectedItemId: null }));
+    }
   };
 
   const validateForm = () => {
     let errors = {};
     let isValid = true;
 
-    if (!itemName.trim()) {
-      errors.itemName = "Item name is required";
-      isValid = false;
-    }
-    // if (!description.trim()) {
-    //   errors.description = "Description is required";
-    //   isValid = false;
-    // }
-    if (!cost.trim()) {
-      errors.cost = "Cost is required";
-      isValid = false;
-    } else if (isNaN(cost) || parseFloat(cost) <= 0) {
-      errors.cost = "Cost must be a valid positive number";
+    if (!selectedItemId) {
+      errors.selectedItemId = "Please select an item";
       isValid = false;
     }
     if (!qtyRequired.trim()) {
@@ -48,13 +63,6 @@ export function AddItemCard({ isOpen, onClose, handleAddItemsClick }) {
       isValid = false;
     } else if (isNaN(qtyRequired) || parseInt(qtyRequired) <= 0) {
       errors.qtyRequired = "Quantity required must be positive";
-      isValid = false;
-    }
-    if (!qtyAvailable.trim()) {
-      errors.qtyAvailable = "Quantity available is required";
-      isValid = false;
-    } else if (isNaN(qtyAvailable) || parseInt(qtyAvailable) < 0) {
-      errors.qtyAvailable = "Quantity available must be 0 or greater";
       isValid = false;
     }
 
@@ -67,11 +75,12 @@ export function AddItemCard({ isOpen, onClose, handleAddItemsClick }) {
     if (!validateForm()) return;
 
     const newItem = {
-      itemName: itemName.trim(),
-      description: description.trim() || "N/A",
-      cost: parseFloat(cost),
+      itemName: selectedItem.itemName,
+      description: selectedItem.itemDescription,
+      cost: parseFloat(selectedItem.cost),
       qtyRequired: parseInt(qtyRequired),
-      qtyAvailable: parseInt(qtyAvailable),
+      qtyAvailable: selectedItem.calculatedQuantityAvailable || selectedItem.quantityAvailable || 0,
+      itemId: selectedItem._id, // Include the database ID for reference
     };
 
     setLoading(true);
@@ -109,121 +118,114 @@ export function AddItemCard({ isOpen, onClose, handleAddItemsClick }) {
         {/* Body */}
         <form onSubmit={handleSave} className="flex flex-col flex-1 min-h-0">
           <div className="flex-1 overflow-y-auto px-6 py-6">
-            <div className="grid grid-cols-1 gap-x-6 gap-y-6 sm:grid-cols-2">
-              {/* Item Name */}
-              <div className="space-y-2 sm:col-span-2">
+            <div className="grid grid-cols-1 gap-x-6 gap-y-6">
+              {/* Item Selection */}
+              <div className="space-y-2">
                 <label className="block text-sm font-medium text-gray-700">
-                  Item Name <span className="text-red-500">*</span>
+                  Select Item <span className="text-red-500">*</span>
                 </label>
-                <input
-                  type="text"
-                  value={itemName}
-                  onChange={(e) => setItemName(e.target.value)}
-                  placeholder="Enter item name"
-                  className={`w-full px-3 py-2 border rounded-md shadow-sm focus:ring-2 focus:ring-indigo-600 focus:border-indigo-600 transition-colors ${validationErrors.itemName ? "border-red-500 bg-red-50" : "border-gray-300"
-                    }`}
-                />
-                {validationErrors.itemName && (
+                {itemsLoading ? (
+                  <div className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-50 text-gray-500">
+                    Loading items...
+                  </div>
+                ) : (
+                  <select
+                    value={selectedItemId}
+                    onChange={(e) => handleItemSelection(e.target.value)}
+                    className={`w-full px-3 py-2 border rounded-md shadow-sm focus:ring-2 focus:ring-indigo-600 focus:border-indigo-600 transition-colors ${validationErrors.selectedItemId ? "border-red-500 bg-red-50" : "border-gray-300"
+                      }`}
+                  >
+                    <option value="">Select an item...</option>
+                    {items.map((item) => (
+                      <option key={item._id} value={item._id}>
+                        {item.itemName} - {item.AssetsClass} ({item.AssetsSubClass})
+                      </option>
+                    ))}
+                  </select>
+                )}
+                {validationErrors.selectedItemId && (
                   <p className="text-red-500 text-xs mt-1 flex items-center">
                     <span className="mr-1">⚠</span>
-                    {validationErrors.itemName}
+                    {validationErrors.selectedItemId}
                   </p>
                 )}
               </div>
 
-              {/* Item Description */}
-              <div className="space-y-2 sm:col-span-2">
-                <label className="block text-sm font-medium text-gray-700">
-                  Item Description
-                </label>
-                <textarea
-                  value={description}
-                  onChange={(e) => setDescription(e.target.value)}
-                  rows="3"
-                  placeholder="Enter item description"
-                  className={`w-full px-3 py-2 border rounded-md shadow-sm focus:ring-2 focus:ring-indigo-600 focus:border-indigo-600 transition-colors ${validationErrors.description
-                    ? "border-red-500 bg-red-50"
-                    : "border-gray-300"
-                    }`}
-                />
-                {validationErrors.description && (
-                  <p className="text-red-500 text-xs mt-1 flex items-center">
-                    <span className="mr-1">⚠</span>
-                    {validationErrors.description}
-                  </p>
-                )}
-              </div>
+              {/* Item Details Display (Auto-filled when item is selected) */}
+              {selectedItem && (
+                <div className="space-y-4 bg-gray-50 p-4 rounded-md">
+                  <h4 className="text-sm font-medium text-gray-700 border-b pb-2">Item Details (Auto-filled)</h4>
+                  
+                  <div className="grid grid-cols-2 gap-4 text-sm">
+                    <div>
+                      <label className="block text-xs font-medium text-gray-600 mb-1">Item Name</label>
+                      <p className="text-gray-900 font-medium">{selectedItem.itemName}</p>
+                    </div>
+                    
+                    <div>
+                      <label className="block text-xs font-medium text-gray-600 mb-1">Assets Class</label>
+                      <p className="text-gray-900">{selectedItem.AssetsClass}</p>
+                    </div>
+                    
+                    <div className="col-span-2">
+                      <label className="block text-xs font-medium text-gray-600 mb-1">Description</label>
+                      <p className="text-gray-900">{selectedItem.itemDescription}</p>
+                    </div>
+                    
+                    <div>
+                      <label className="block text-xs font-medium text-gray-600 mb-1">Cost per Unit</label>
+                      <p className="text-green-600 font-semibold">₱{parseFloat(selectedItem.cost || 0).toLocaleString()}</p>
+                    </div>
+                    
+                    <div>
+                      <label className="block text-xs font-medium text-gray-600 mb-1">Quantity Available</label>
+                      <p className="text-blue-600 font-semibold">
+                        {selectedItem.calculatedQuantityAvailable || selectedItem.quantityAvailable || 0}
+                      </p>
+                      <p className="text-xs text-gray-500">
+                        {selectedItem.calculatedQuantityAvailable ? 'From approved requests' : 'Default/Manual'}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
 
-              {/* Cost */}
-              <div className="space-y-2 sm:col-span-2">
+              {/* Quantity Required (User Input) */}
+              <div className="space-y-2">
                 <label className="block text-sm font-medium text-gray-700">
-                  Cost (₱) <span className="text-red-500">*</span>
+                  Quantity Required <span className="text-red-500">*</span>
                 </label>
                 <input
                   type="number"
-                  step="0.01"
-                  min="0"
-                  value={cost}
-                  onChange={(e) => setCost(e.target.value)}
-                  placeholder="0.00"
-                  className={`w-full px-3 py-2 border rounded-md shadow-sm focus:ring-2 focus:ring-indigo-600 focus:border-indigo-600 transition-colors ${validationErrors.cost
-                    ? "border-red-500 bg-red-50"
-                    : "border-gray-300"
+                  min="1"
+                  value={qtyRequired}
+                  onChange={(e) => setQtyRequired(e.target.value)}
+                  placeholder="Enter quantity needed"
+                  className={`w-full px-3 py-2 border rounded-md shadow-sm focus:ring-2 focus:ring-indigo-600 focus:border-indigo-600 transition-colors ${validationErrors.qtyRequired ? "border-red-500 bg-red-50" : "border-gray-300"
                     }`}
                 />
-                {validationErrors.cost && (
+                {validationErrors.qtyRequired && (
                   <p className="text-red-500 text-xs mt-1 flex items-center">
                     <span className="mr-1">⚠</span>
-                    {validationErrors.cost}
+                    {validationErrors.qtyRequired}
                   </p>
                 )}
               </div>
 
-              <div className="sm:col-span-2 grid grid-cols-2 gap-x-6 mt-2 mb-3">
-                {/* Quantity Required */}
-                <div className="space-y-2">
-                  <label className="block text-sm font-medium text-gray-700">
-                    Quantity Required <span className="text-red-500">*</span>
-                  </label>
-                  <input
-                    type="number"
-                    min="1"
-                    value={qtyRequired}
-                    onChange={(e) => setQtyRequired(e.target.value)}
-                    placeholder="Enter quantity needed"
-                    className={`w-full px-3 py-2 border rounded-md shadow-sm focus:ring-2 focus:ring-indigo-600 focus:border-indigo-600 transition-colors ${validationErrors.qtyRequired ? "border-red-500 bg-red-50" : "border-gray-300"
-                      }`}
-                  />
-                  {validationErrors.qtyRequired && (
-                    <p className="text-red-500 text-xs mt-1 flex items-center">
-                      <span className="mr-1">⚠</span>
-                      {validationErrors.qtyRequired}
-                    </p>
-                  )}
+              {/* Total Cost Calculation */}
+              {selectedItem && qtyRequired && !isNaN(qtyRequired) && parseInt(qtyRequired) > 0 && (
+                <div className="bg-blue-50 p-4 rounded-md">
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm font-medium text-gray-700">Total Estimated Cost:</span>
+                    <span className="text-lg font-bold text-blue-600">
+                      ₱{(parseFloat(selectedItem.cost || 0) * parseInt(qtyRequired)).toLocaleString()}
+                    </span>
+                  </div>
+                  <p className="text-xs text-gray-600 mt-1">
+                    {qtyRequired} × ₱{parseFloat(selectedItem.cost || 0).toLocaleString()} per unit
+                  </p>
                 </div>
-
-                {/* Quantity Available */}
-                <div className="space-y-2">
-                  <label className="block text-sm font-medium text-gray-700">
-                    Quantity Available <span className="text-red-500">*</span>
-                  </label>
-                  <input
-                    type="number"
-                    min="0"
-                    value={qtyAvailable}
-                    onChange={(e) => setQtyAvailable(e.target.value)}
-                    placeholder="Enter quantity currently available"
-                    className={`w-full px-3 py-2 border rounded-md shadow-sm focus:ring-2 focus:ring-indigo-600 focus:border-indigo-600 transition-colors ${validationErrors.qtyAvailable ? "border-red-500 bg-red-50" : "border-gray-300"
-                      }`}
-                  />
-                  {validationErrors.qtyAvailable && (
-                    <p className="text-red-500 text-xs mt-1 flex items-center">
-                      <span className="mr-1">⚠</span>
-                      {validationErrors.qtyAvailable}
-                    </p>
-                  )}
-                </div>
-              </div>
+              )}
             </div>
           </div>
 

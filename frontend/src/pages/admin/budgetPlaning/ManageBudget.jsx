@@ -42,9 +42,18 @@ export default function ManageBudget() {
   const itemsPerPage = 5;
 
   const filteredBudgets = budgets.filter((budget) => {
-    const matchesSearch = budget.department &&
-      typeof budget.department === "string" &&
-      budget.department.toLowerCase().includes(searchTerm.toLowerCase());
+    // Enhanced search functionality - search across all columns
+    const matchesSearch = !searchTerm || [
+      budget.department,
+      budget.fiscalYear?.toString(),
+      budget.budgetPeriod,
+      budget.budgetAllocation?.toString(),
+      budget.usedAmount?.toString(),
+      budget.availableBalance?.toString(),
+      budget.status
+    ].some(field => 
+      field && field.toString().toLowerCase().includes(searchTerm.toLowerCase())
+    );
     
     const matchesFiscalYear = !selectedFiscalYear || budget.fiscalYear === selectedFiscalYear;
     const matchesDepartment = !selectedDepartment || budget.department === selectedDepartment;
@@ -86,7 +95,7 @@ export default function ManageBudget() {
     // Refresh the entire budget list from the server
     fetchBudgets();
     setShowAddBudgetCard(false);
-    toast.success("Budget added successfully!");
+    //toast.success("Budget added successfully!");
   };
 
   const handleCancelClick = () => {
@@ -158,12 +167,12 @@ export default function ManageBudget() {
         <div className="p-6 border-b border-gray-200 bg-gray-50">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 items-end">
             <div className="relative">
-              <label className="block text-xs font-medium text-gray-700 mb-1">Search Department</label>
+              <label className="block text-xs font-medium text-gray-700 mb-1">Search All Columns</label>
               <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
               <input
                 className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 type="search"
-                placeholder="Search by department..."
+                placeholder="Search by department, year, period, amount, status..."
                 value={searchTerm}
                 onChange={handleSearchChange}
               />
