@@ -278,6 +278,7 @@ exports.getAdminStats = async (req, res) => {
 
     // Monthly purchase requests (filtered to filterStart/filterEnd)
     const monthlyRequests = [];
+    const monthlyRequestsDetails = []; // Added for more detailed data
     for (let i = 0; i < months.length; i++) {
       const d = months[i];
       const monthStart = new Date(d.getFullYear(), d.getMonth(), 1);
@@ -285,8 +286,32 @@ exports.getAdminStats = async (req, res) => {
       if (!monthList.length || monthList.includes(d.getMonth() + 1)) {
         const count = await ProcRequest.countDocuments({ createdAt: { $gte: monthStart, $lte: monthEnd } });
         monthlyRequests.push(count);
+        monthlyRequestsDetails.push({
+          month: monthNames[d.getMonth()],
+          year: d.getFullYear(),
+          count: count,
+          monthYear: monthNames[d.getMonth()] + ' ' + d.getFullYear()
+        });
       }
     }
+
+    // Calculate peak month and current month info for dynamic display
+    const peakMonth = monthlyRequestsDetails.reduce((max, current) => 
+      current.count > max.count ? current : max, 
+      { count: 0, monthYear: 'N/A' }
+    );
+    
+    // Get current month data (last month in the filtered range)
+    const currentMonth = monthlyRequestsDetails.length > 0 ? 
+      monthlyRequestsDetails[monthlyRequestsDetails.length - 1] : 
+      { count: 0, monthYear: 'N/A' };
+
+    // Calculate total requests in the filtered period
+    const totalRequestsInPeriod = monthlyRequests.reduce((sum, count) => sum + count, 0);
+
+    // Calculate average requests per month
+    const averageRequestsPerMonth = monthlyRequests.length > 0 ? 
+      Math.round(totalRequestsInPeriod / monthlyRequests.length) : 0;
 
       res.json({
         totalUsers,
@@ -308,6 +333,11 @@ exports.getAdminStats = async (req, res) => {
         budgetData,
         vendorStatus,
         monthlyRequests,
+        monthlyRequestsDetails,
+        peakMonth,
+        currentMonth,
+        totalRequestsInPeriod,
+        averageRequestsPerMonth,
         vendorTotal
       });
   } catch (err) {

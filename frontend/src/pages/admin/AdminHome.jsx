@@ -210,9 +210,37 @@ function AdminHome() {
   }
 
   // Destructure dashboard data
-  const { totalUsers, totalUsersFiltered, totalUsersChange, newUsersThisMonth, newUsersLastWeek, activeVendors, activeVendorsFiltered, inactiveVendorsFiltered, vendorTotalAllTime, activeVendorsChange, newVendorsThisMonth, newVendorsLastWeek, budgetRequests, budgetRequestsFiltered, budgetRequestsChange, requestsSinceLastWeek, budgetData, vendorStatus, monthlyRequests, vendorTotal } = dashboardData || {};
+  const { 
+    totalUsers, 
+    totalUsersFiltered, 
+    totalUsersChange, 
+    newUsersThisMonth, 
+    newUsersLastWeek, 
+    activeVendors, 
+    activeVendorsFiltered, 
+    inactiveVendorsFiltered, 
+    vendorTotalAllTime, 
+    activeVendorsChange, 
+    newVendorsThisMonth, 
+    newVendorsLastWeek, 
+    budgetRequests, 
+    budgetRequestsFiltered, 
+    budgetRequestsChange, 
+    requestsSinceLastWeek, 
+    budgetData, 
+    vendorStatus, 
+    monthlyRequests, 
+    monthlyRequestsDetails, 
+    peakMonth, 
+    currentMonth, 
+    totalRequestsInPeriod, 
+    averageRequestsPerMonth, 
+    vendorTotal 
+  } = dashboardData || {};
+  
   const vendorData = vendorStatus || [];
   const requestData = monthlyRequests || [];
+  const requestDetails = monthlyRequestsDetails || [];
   const maxRequests = requestData.length > 0 ? Math.max(...requestData) : 1;
   // For Monthly Requests Chart
   const monthsShort = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
@@ -308,10 +336,10 @@ function AdminHome() {
                   )}
                 </div>
               </div>
-              <h2 className="text-lg font-semibold text-gray-700 mb-1">Budget Requests</h2>
+              <h2 className="text-lg font-semibold text-gray-700 mb-1">Budget Allocations</h2>
               <span className="text-3xl font-bold text-gray-900 mb-3 block">{typeof budgetRequestsFiltered === 'number' ? budgetRequestsFiltered : budgetRequests}</span>
               <div className="text-sm text-gray-600 mb-4">
-                {requestsSinceLastWeek} requests since last week
+                {requestsSinceLastWeek} allocations since last week
               </div>
               <Link 
                 to="/ManageBudget" 
@@ -572,23 +600,41 @@ function AdminHome() {
               <div className="flex items-end justify-between h-40 space-x-2">
                 {requestData.map((requests, index) => {
                   const height = (requests / maxRequests) * 100;
+                  const monthDetail = requestDetails[index];
                   return (
                     <div key={index} className="flex-1 flex flex-col items-center">
                       <div className="w-full bg-gray-200 rounded-t relative" style={{ height: '120px' }}>
                         <div 
                           className="bg-gradient-to-t from-purple-500 to-purple-400 rounded-t w-full absolute bottom-0 flex items-end justify-center"
                           style={{ height: `${height}%` }}
+                          title={monthDetail ? `${monthDetail.monthYear}: ${requests} requests` : `${requests} requests`}
                         >
                           <span className="text-white text-xs font-semibold mb-1">{requests}</span>
                         </div>
                       </div>
-                      <span className="text-xs text-gray-600 mt-2">{monthsShort[index]}</span>
+                      <span className="text-xs text-gray-600 mt-2">
+                        {monthDetail ? monthDetail.month : monthsShort[index]}
+                      </span>
                     </div>
                   );
                 })}
               </div>
               <div className="mt-4 text-center text-sm text-gray-600">
-                Peak: 32 requests in May | Current: 25 requests in June
+                {peakMonth && currentMonth && (
+                  <>
+                    Peak: {peakMonth.count} requests in {peakMonth.monthYear} | 
+                    Current: {currentMonth.count} requests in {currentMonth.monthYear}
+                    {averageRequestsPerMonth && (
+                      <span className="block mt-1">
+                        Average: {averageRequestsPerMonth} requests/month | 
+                        Total: {totalRequestsInPeriod} requests in selected period
+                      </span>
+                    )}
+                  </>
+                )}
+                {(!peakMonth || !currentMonth) && (
+                  <span>No data available for the selected period</span>
+                )}
               </div>
             </div>
           </div>
